@@ -1,3 +1,0 @@
-/home/oberon/repo/cc/gl/code/build/CMakeFiles/GyroScope.dir
-/home/oberon/repo/cc/gl/code/build/CMakeFiles/edit_cache.dir
-/home/oberon/repo/cc/gl/code/build/CMakeFiles/rebuild_cache.dir

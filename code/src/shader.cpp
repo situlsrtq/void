@@ -31,6 +31,7 @@ int shader_t::Build(const char *InVPath, const char *InFPath)
 		printf("Could not open vertex file %s\n", VertPath);
 		return -1;
 	}
+
 	fseek(VertFile, 0, SEEK_END);
 	srclen = ftell(VertFile);
 	fseek(VertFile, 0, SEEK_SET);
@@ -44,16 +45,16 @@ int shader_t::Build(const char *InVPath, const char *InFPath)
 	VertSrc = (char *)malloc(srclen + 1);
 	if(VertSrc == 0x0)
 	{
-		printf("malloc error: vertext source\n");
+		printf("malloc error: vertex source\n");
+		return -1;
 	}
-	if( (fread(VertSrc, srclen, 1, VertFile)) != 1)
+	if( (fread(VertSrc, 1, srclen, VertFile)) != srclen)
 	{
 		printf("read error: vertex source\n");
 		return -1;
 	}
-
-	fclose(VertFile);
-
+	VertSrc[srclen] = '\0';
+	
 // Compile vertex shader
 
 	unsigned int VertexShader;
@@ -64,6 +65,7 @@ int shader_t::Build(const char *InVPath, const char *InFPath)
 	glGetShaderiv(VertexShader, GL_COMPILE_STATUS, &success);
 	if(!success)
 	{
+		glGetShaderInfoLog(VertexShader, 512, NULL, InfoLog);
 		printf("GL: Failed to compile vertex shader\n");
 		return -1;
 	}
@@ -91,12 +93,14 @@ int shader_t::Build(const char *InVPath, const char *InFPath)
 	FragSrc = (char *)malloc(srclen + 1);
 	if(FragSrc == 0x0)
 	{
-		printf("malloc error: fragmentt source\n");
+		printf("malloc error: fragment source\n");
+		return -1;
 	}
-	if( (fread(FragSrc, srclen, 1, FragFile)) != 1)
+	if( (fread(FragSrc, 1, srclen, FragFile)) != srclen)
 	{
 		printf("read error: fragment source\n");
 	}
+	FragSrc[srclen] = '\0';
 
 	fclose(FragFile);
 
@@ -110,6 +114,7 @@ int shader_t::Build(const char *InVPath, const char *InFPath)
 	glGetShaderiv(FragmentShader, GL_COMPILE_STATUS, &success);
 	if(!success)
 	{
+		glGetShaderInfoLog(FragmentShader, 512, NULL, InfoLog);
 		printf("GL: Failed to compile fragment shader\n");
 		return -1;
 	}
@@ -169,12 +174,14 @@ int shader_t::Rebuild()
 	if(VertSrc == 0x0)
 	{
 		printf("malloc error: vertext source\n");
+		return -1;
 	}
 	if( (fread(VertSrc, srclen, 1, VertFile)) != 1)
 	{
 		printf("read error: vertex source\n");
 		return -1;
 	}
+	VertSrc[srclen] = '\0';
 
 	fclose(VertFile);
 
@@ -216,11 +223,13 @@ int shader_t::Rebuild()
 	if(FragSrc == 0x0)
 	{
 		printf("malloc error: fragmentt source\n");
+		return -1;
 	}
 	if( (fread(FragSrc, srclen, 1, FragFile)) != 1)
 	{
 		printf("read error: fragment source\n");
 	}
+	FragSrc[srclen] = '\0';
 
 	fclose(FragFile);
 

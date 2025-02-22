@@ -1,0 +1,12 @@
+code/build/out
+code/build/shaders
+code/build/GyroScope
+code/build/Makefile
+code/build/build.ninja
+code/build/rules.ninja
+code/build/.ninja_deps
+code/build/.ninja_log
+code/build/CMakeCache.txt
+code/build/CMakeFiles
+code/build/cmake_install.cmake
+code/build/cmake_uninstall.cmake

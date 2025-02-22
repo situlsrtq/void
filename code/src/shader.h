@@ -19,6 +19,7 @@ struct shader_t
 	uint32_t ID;
 	uint32_t VertexShader;
 	uint32_t FragmentShader;
+	char InfoLog[512];
 	char VertPath[1024];
 	char FragPath[1024];
 

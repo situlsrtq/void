@@ -101,7 +101,7 @@ int main(void)
 	vec3f_t ScaleV = {1, 1, 1};
 	vec3f_t TranslateV = {0, 0, 0};
 
-	uint transloc = glGetUniformLocation(Shader.ID, "trans");
+	unsigned int transloc = glGetUniformLocation(Shader.ID, "trans");
 	float time;
 	float step;
 
