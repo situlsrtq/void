@@ -1,0 +1,5 @@
+# ninja log v6
+1	243	1740206076357243416	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/glad.c.o	7c6eb3b40d85351c
+2	330	1740206076358243416	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/shader.cpp.o	653dbe224246764f
+2	646	1740206076359444626	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/test.cpp.o	15a56bc12b1a9e50
+646	736	1740206077002243431	GyroScope	47f807da1ed124ec

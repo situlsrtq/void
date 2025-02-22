@@ -5,7 +5,7 @@
 #include <cmath>
 
 #include "shader.h"
-#include "types.h"
+#include "../include/util/u_math.h"
 
 
 void FrameResizeCallback(GLFWwindow *Window, int width, int height)
@@ -93,7 +93,7 @@ int main(void)
 	glBindVertexArray(0);
 
 	shader_t Shader;
-	Shader.Build("shaders/test.vert", "shaders/test.frag");
+	Shader.Build("../shaders/test.vert", "../shaders/test.frag");
 	int RenderMode = GL_TRIANGLES;
 
 	mat4f_t Transform = {};
