@@ -12,6 +12,10 @@
 #define R_AXIS_Z -1005
 
 
+namespace uMATH
+{
+
+
 struct vec3f_t
 {
 	float x, y, z;
@@ -36,7 +40,23 @@ inline void SetTransform(mat4f_t *t)
 	t->m[3][3] = 1;
 }
 
-inline void Rotate(mat4f_t *t, float theta, int axis)
+inline void SetFrustumHFOV(mat4f_t *t, float fov, float aratio, float near, float far)
+{
+	float radian = acos(-1.0f) / 180;
+
+	float ftan = tan(fov / 2 * radian);
+	float right = near * ftan;
+	float top = right / aratio;
+
+	t->m[0][0] = near / right;
+	t->m[1][1] = near / top;
+	t->m[2][2] = -(far + near) / (far - near);
+	t->m[2][3] = -(2 * far * near) / (far - near);
+	t->m[3][2] = -1.0f;
+	t->m[3][3] = 0.0f;		// In case this matrix was previously a Transform matrix
+}
+
+inline void EulerRotate(mat4f_t *t, float theta, int axis)
 {
 	if(axis == R_AXIS_Z)
 	{
@@ -61,18 +81,42 @@ inline void Rotate(mat4f_t *t, float theta, int axis)
 	}
 }
 
-inline void Scale(mat4f_t *t, vec3f_t *s)
+inline void MatrixRotate(mat4f_t* t, float theta, vec3f_t& r)
 {
-	t->m[0][0] *= s->x;
-	t->m[1][1] *= s->y;
-	t->m[2][2] *= s->z;
+	float c = cos(theta);
+	float s = sin(theta);
+	float vs = (1 - cos(theta));
+	float x2 = r.x * r.x;
+	float y2 = r.y * r.y;
+	float z2 = r.z * r.z;
+
+	t->m[0][0] = (vs * x2) + c;
+	t->m[0][1] = (vs * r.x * r.y) - (s * r.z);
+	t->m[0][2] = (vs * r.x * r.z) + (s * r.y);
+
+	t->m[1][0] = (vs * r.x * r.y) + (s * r.z);
+	t->m[1][1] = (vs * y2) + c;
+	t->m[1][2] = (vs * r.y * r.z) - (s * r.x);
+
+	t->m[2][0] = (vs * r.x * r.z) - (s * r.y);
+	t->m[2][1] = (vs * r.y * r.z) + (s * r.x);
+	t->m[2][2] = (vs * z2) + c;
 }
 
-inline void Translate(mat4f_t *t, vec3f_t *s)
+inline void Scale(mat4f_t *t, vec3f_t &s)
 {
-	t->m[0][3] += s->x;
-	t->m[1][3] += s->y;
-	t->m[2][3] += s->z;
+	t->m[0][0] *= s.x;
+	t->m[1][1] *= s.y;
+	t->m[2][2] *= s.z;
+}
+
+inline void Translate(mat4f_t *t, vec3f_t &s)
+{
+	t->m[0][3] += s.x;
+	t->m[1][3] += s.y;
+	t->m[2][3] += s.z;
+}
+
 }
 
 #endif

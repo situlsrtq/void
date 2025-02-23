@@ -291,13 +291,13 @@ int shader_t::SetUniform(const char *Uniform, int Type, void *Data)
 	{
 		case VEC3_F:
 		{
-			vec3f_t *Input = (vec3f_t *)Data; 
+			uMATH::vec3f_t *Input = (uMATH::vec3f_t *)Data; 
 			glUniform3f(UniformLocation, Input->x, Input->y, Input->z);
 			break;
 		}
 		case VEC4_F:
 		{
-			vec4f_t *Input = (vec4f_t *)Data; 
+			uMATH::vec4f_t *Input = (uMATH::vec4f_t *)Data; 
 			glUniform4f(UniformLocation, Input->x, Input->y, Input->z, Input->w);
 			break;
 		}

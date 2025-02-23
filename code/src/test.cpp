@@ -53,6 +53,7 @@ int main(void)
 	}
 
 	glfwMakeContextCurrent(Window);
+	glfwSetFramebufferSizeCallback(Window, FrameResizeCallback);
 
 // Load GLAD functions - overwrites all gl functions, can only be called after setting context
 
@@ -61,8 +62,6 @@ int main(void)
 		printf("GLAD: Failed getting function pointers\n");
 		return -1;
 	}
-
-	glfwSetFramebufferSizeCallback(Window, FrameResizeCallback);
 
 	float Vertices[] = {
 		0.5f, 0.5f, 0.0f, // top right
@@ -96,44 +95,40 @@ int main(void)
 	Shader.Build("../shaders/test.vert", "../shaders/test.frag");
 	int RenderMode = GL_TRIANGLES;
 
-	mat4f_t Transform = {};
-	SetTransform(&Transform);
-	vec3f_t ScaleV = {1, 1, 1};
-	vec3f_t TranslateV = {0, 0, 0};
+	uMATH::mat4f_t Model = {};
+	SetTransform(&Model);
+	uMATH::vec3f_t rVec = { 1.0f, 0.0f, 0.0f };
+	uMATH::MatrixRotate(&Model, -0.9599f, rVec);
 
-	unsigned int transloc = glGetUniformLocation(Shader.ID, "trans");
+	uMATH::mat4f_t View = {};
+	SetTransform(&View);
+	uMATH::vec3f_t vVec = { 0.0f, 0.0f, -6.0f };
+	uMATH::Translate(&View, vVec);
+
+	uMATH::mat4f_t Projection = {};
+	uMATH::SetFrustumHFOV(&Projection, 45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
+
+	unsigned int mloc = glGetUniformLocation(Shader.ID, "model");
+	unsigned int vloc = glGetUniformLocation(Shader.ID, "view");
+	unsigned int ploc = glGetUniformLocation(Shader.ID, "projection");
+
 	float time;
-	float step;
 
 	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-	while(!glfwWindowShouldClose(Window))
+	while (!glfwWindowShouldClose(Window))
 	{
 
 // Input
 
-		SetTransform(&Transform);
-
 		glfwPollEvents();
 		ProcessInput(Window);
-
-		time = glfwGetTime();
-		step = sin(time);
-		
-		ScaleV.x = step;
-		ScaleV.y = step;
-//		ScaleV.z = step;
-		TranslateV.x = step;
-		TranslateV.y = step;
-//		TranslateV.z = step;
-
-		Translate(&Transform, &TranslateV);
-		Rotate(&Transform, step*2, R_AXIS_Z);
-		Scale(&Transform, &ScaleV);
 
 //Render
 
 		Shader.Use();
-		glUniformMatrix4fv(transloc, 1, GL_FALSE, &Transform.m[0][0]);
+		glUniformMatrix4fv(mloc, 1, GL_FALSE, &Model.m[0][0]);
+		glUniformMatrix4fv(vloc, 1, GL_FALSE, &View.m[0][0]);
+		glUniformMatrix4fv(ploc, 1, GL_FALSE, &Projection.m[0][0]);
 		glBindVertexArray(VAO);
 		glDrawElements(RenderMode,6,GL_UNSIGNED_INT,0);
 		glBindVertexArray(0);
