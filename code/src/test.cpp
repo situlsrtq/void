@@ -64,11 +64,47 @@ int main(void)
 	}
 
 	float Vertices[] = {
-		0.5f, 0.5f, 0.0f, // top right
-		0.5f,-0.5f, 0.0f, // bottom right
-	   -0.5f,-0.5f, 0.0f, // bottom left
-       -0.5f, 0.5f, 0.0f // top left
-	};
+	-0.5f, -0.5f, -0.5f,  
+	 0.5f, -0.5f, -0.5f, 
+	 0.5f,  0.5f, -0.5f, 
+	 0.5f,  0.5f, -0.5f, 
+	-0.5f,  0.5f, -0.5f, 
+	-0.5f, -0.5f, -0.5f, 
+
+	-0.5f, -0.5f,  0.5f, 
+	 0.5f, -0.5f,  0.5f, 
+	 0.5f,  0.5f,  0.5f, 
+	 0.5f,  0.5f,  0.5f, 
+	-0.5f,  0.5f,  0.5f, 
+	-0.5f, -0.5f,  0.5f, 
+
+	-0.5f,  0.5f,  0.5f, 
+	-0.5f,  0.5f, -0.5f, 
+	-0.5f, -0.5f, -0.5f, 
+	-0.5f, -0.5f, -0.5f, 
+	-0.5f, -0.5f,  0.5f, 
+	-0.5f,  0.5f,  0.5f, 
+
+	 0.5f,  0.5f,  0.5f, 
+	 0.5f,  0.5f, -0.5f, 
+	 0.5f, -0.5f, -0.5f, 
+	 0.5f, -0.5f, -0.5f, 
+	 0.5f, -0.5f,  0.5f, 
+	 0.5f,  0.5f,  0.5f, 
+
+	-0.5f, -0.5f, -0.5f, 
+	 0.5f, -0.5f, -0.5f, 
+	 0.5f, -0.5f,  0.5f, 
+	 0.5f, -0.5f,  0.5f, 
+	-0.5f, -0.5f,  0.5f, 
+	-0.5f, -0.5f, -0.5f, 
+
+	-0.5f,  0.5f, -0.5f, 
+	 0.5f,  0.5f, -0.5f, 
+	 0.5f,  0.5f,  0.5f, 
+	 0.5f,  0.5f,  0.5f, 
+	-0.5f,  0.5f,  0.5f, 
+	-0.5f,  0.5f, -0.5f, };
 
 	unsigned int Indices[] = { 
 		0, 1, 3, 
@@ -79,17 +115,19 @@ int main(void)
 	glGenBuffers(1, &VBO);
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
-	unsigned int EBO;
-	glGenBuffers(1, &EBO);
+	//unsigned int EBO;
+	//glGenBuffers(1, &EBO);
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
 	glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
+
+	glEnable(GL_DEPTH_TEST);
 
 	shader_t Shader;
 	Shader.Build("../shaders/test.vert", "../shaders/test.frag");
@@ -97,8 +135,8 @@ int main(void)
 
 	uMATH::mat4f_t Model = {};
 	SetTransform(&Model);
-	uMATH::vec3f_t rVec = { 1.0f, 0.0f, 0.0f };
-	uMATH::MatrixRotate(&Model, -0.9599f, rVec);
+// TODO: Rotation vector must be unit vector - guarantee in uMATH MatrixRotate
+	uMATH::vec3f_t rVec = { 0.662f, 0.2f, 0.722f };
 
 	uMATH::mat4f_t View = {};
 	SetTransform(&View);
@@ -126,17 +164,18 @@ int main(void)
 //Render
 
 		Shader.Use();
+		uMATH::MatrixRotate(&Model, (float)glfwGetTime() * 0.9599f, rVec);
 		glUniformMatrix4fv(mloc, 1, GL_FALSE, &Model.m[0][0]);
 		glUniformMatrix4fv(vloc, 1, GL_FALSE, &View.m[0][0]);
 		glUniformMatrix4fv(ploc, 1, GL_FALSE, &Projection.m[0][0]);
 		glBindVertexArray(VAO);
-		glDrawElements(RenderMode,6,GL_UNSIGNED_INT,0);
+		glDrawArrays(RenderMode,0,36);
 		glBindVertexArray(0);
 
 // Blit
 
 		glfwSwapBuffers(Window);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
     glfwTerminate();
