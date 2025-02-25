@@ -3,7 +3,7 @@
 
 int shader_t::Build(const char *InVPath, const char *InFPath)
 {
-	int len = strlen(InVPath) + 1;
+	size_t len = strlen(InVPath) + 1;
 	if(len > TMAX_PATH_LEN)
 	{
 		printf("Shader Error: vertex file path longer than max\n");

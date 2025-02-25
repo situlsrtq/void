@@ -26,6 +26,6 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
 	target_link_libraries(${PROJECT_NAME} "${LIB_DIR}/glfw3.lib")
 	target_link_libraries(${PROJECT_NAME} opengl32.lib)
-	add_compile_options("/W4")
+	add_compile_options("/W4 /wd4996")
 
 endif()

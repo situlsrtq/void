@@ -136,7 +136,7 @@ int main(void)
 	uMATH::mat4f_t Model = {};
 	SetTransform(&Model);
 // TODO: Rotation vector must be unit vector - guarantee in uMATH MatrixRotate
-	uMATH::vec3f_t rVec = { 0.662f, 0.2f, 0.722f };
+	uMATH::vec3f_t rVec = { 1.0f, 0.5f, 0.25f };
 
 	uMATH::mat4f_t View = {};
 	SetTransform(&View);
@@ -164,7 +164,7 @@ int main(void)
 //Render
 
 		Shader.Use();
-		uMATH::MatrixRotate(&Model, (float)glfwGetTime() * 0.9599f, rVec);
+		uMATH::MatrixRotate(&Model, (float)glfwGetTime() * 55.0f, rVec);
 		glUniformMatrix4fv(mloc, 1, GL_FALSE, &Model.m[0][0]);
 		glUniformMatrix4fv(vloc, 1, GL_FALSE, &View.m[0][0]);
 		glUniformMatrix4fv(ploc, 1, GL_FALSE, &Projection.m[0][0]);
