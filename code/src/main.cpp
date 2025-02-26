@@ -7,6 +7,12 @@
 #include "shader.h"
 #include "../include/util/u_math.h"
 
+uMATH::vec3f_t CameraPosition = { 0.0f, 0.0f, 3.0f };
+uMATH::vec3f_t CameraFront = { 0.0f, 0.0f, -1.0f };
+uMATH::vec3f_t CameraUpAxis = { 0.0f, 1.0f, 0.0f };
+
+float DeltaTime = 0.0f;
+float PrevFrameTime = 0.0f;
 
 void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 {
@@ -16,6 +22,8 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 
 void ProcessInput(GLFWwindow *Window)
 {
+	float CameraSpeed = 2.5f * DeltaTime;
+
 	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
 		glfwSetWindowShouldClose(Window, true);
@@ -27,6 +35,22 @@ void ProcessInput(GLFWwindow *Window)
 	if(glfwGetKey(Window, GLFW_KEY_E) == GLFW_PRESS)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+	}
+	if(glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS)
+	{
+		CameraPosition += Scalar(CameraFront, CameraSpeed);
+	}
+	if(glfwGetKey(Window, GLFW_KEY_S) == GLFW_PRESS)
+	{
+		CameraPosition -= Scalar(CameraFront, CameraSpeed);
+	}
+	if(glfwGetKey(Window, GLFW_KEY_A) == GLFW_PRESS)
+	{
+		CameraPosition -= Scalar(uMATH::Normalize(uMATH::Cross(CameraFront, CameraUpAxis)), CameraSpeed);
+	}
+	if(glfwGetKey(Window, GLFW_KEY_D) == GLFW_PRESS)
+	{
+		CameraPosition += Scalar(uMATH::Normalize(uMATH::Cross(CameraFront, CameraUpAxis)), CameraSpeed);
 	}
 }
 
@@ -106,9 +130,17 @@ int main(void)
 	-0.5f,  0.5f,  0.5f, 
 	-0.5f,  0.5f, -0.5f, };
 
-	unsigned int Indices[] = { 
-		0, 1, 3, 
-		1, 2, 3 
+	uMATH::vec3f_t cubePositions[] = {
+		uMATH::vec3f_t{ 0.0f,  0.0f,  0.0f},
+		uMATH::vec3f_t{ 2.0f,  5.0f, -15.0f},
+		uMATH::vec3f_t{-1.5f, -2.2f, -2.5f},
+		uMATH::vec3f_t{-3.8f, -2.0f, -12.3f},
+		uMATH::vec3f_t{ 2.4f, -0.4f, -3.5f},
+		uMATH::vec3f_t{-1.7f,  3.0f, -7.5f},
+		uMATH::vec3f_t{ 1.3f, -2.0f, -2.5f},
+		uMATH::vec3f_t{ 1.5f,  2.0f, -2.5f},
+		uMATH::vec3f_t{ 1.5f,  0.2f, -1.5f},
+		uMATH::vec3f_t{-1.3f,  1.0f, -1.5f}
 	};
 
 	unsigned int VBO;
@@ -133,16 +165,6 @@ int main(void)
 	Shader.Build("../shaders/test.vert", "../shaders/test.frag");
 	int RenderMode = GL_TRIANGLES;
 
-	uMATH::mat4f_t Model = {};
-	SetTransform(&Model);
-// TODO: Rotation vector must be unit vector - guarantee in uMATH MatrixRotate
-	uMATH::vec3f_t rVec = { 1.0f, 0.5f, 0.25f };
-
-	uMATH::mat4f_t View = {};
-	SetTransform(&View);
-	uMATH::vec3f_t vVec = { 0.0f, 0.0f, -6.0f };
-	uMATH::Translate(&View, vVec);
-
 	uMATH::mat4f_t Projection = {};
 	uMATH::SetFrustumHFOV(&Projection, 45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
 
@@ -150,7 +172,9 @@ int main(void)
 	unsigned int vloc = glGetUniformLocation(Shader.ID, "view");
 	unsigned int ploc = glGetUniformLocation(Shader.ID, "projection");
 
-	float time;
+	uMATH::mat4f_t View = {};
+	uMATH::mat4f_t Model = {};
+	float CurrFrameTime = 0;
 
 	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 	while (!glfwWindowShouldClose(Window))
@@ -164,18 +188,38 @@ int main(void)
 //Render
 
 		Shader.Use();
-		uMATH::MatrixRotate(&Model, (float)glfwGetTime() * 55.0f, rVec);
-		glUniformMatrix4fv(mloc, 1, GL_FALSE, &Model.m[0][0]);
+
+		uMATH::SetTransform(&View);
+		uMATH::SetCameraView(&View, CameraPosition, CameraPosition+CameraFront, CameraUpAxis);
+
 		glUniformMatrix4fv(vloc, 1, GL_FALSE, &View.m[0][0]);
 		glUniformMatrix4fv(ploc, 1, GL_FALSE, &Projection.m[0][0]);
+		
 		glBindVertexArray(VAO);
-		glDrawArrays(RenderMode,0,36);
+		for (unsigned int i = 0; i < 10; i++)
+		{
+			float angle = 20.0f * i;
+			SetTransform(&Model);
+
+			uMATH::Translate(&Model, cubePositions[i]);
+			uMATH::vec3f_t rVec = { 1.0f, 0.3f, 0.5f };
+			uMATH::MatrixRotate(&Model, angle, rVec);
+			glUniformMatrix4fv(mloc, 1, GL_FALSE, &Model.m[0][0]);
+
+			glDrawArrays(RenderMode, 0, 36);
+		}
+
 		glBindVertexArray(0);
 
 // Blit
 
 		glfwSwapBuffers(Window);
+		glClearColor(0.42f, 0.40f, 0.38f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		CurrFrameTime = glfwGetTime();
+		DeltaTime = CurrFrameTime - PrevFrameTime;
+		PrevFrameTime = CurrFrameTime;
 	}
 
     glfwTerminate();

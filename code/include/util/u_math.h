@@ -20,6 +20,40 @@ namespace uMATH
 struct vec3f_t
 {
 	float x, y, z;
+
+	vec3f_t operator-(vec3f_t& s)
+	{
+		vec3f_t r;
+		r.x = this->x - s.x;
+		r.y = this->y - s.y;
+		r.z = this->z - s.z;
+		
+		return r;
+	}
+	
+	void operator-=(vec3f_t& s)
+	{
+		this->x -= s.x;
+		this->y -= s.y;
+		this->z -= s.z;
+	}
+
+	vec3f_t operator+(vec3f_t& s)
+	{
+		vec3f_t r;
+		r.x = this->x + s.x;
+		r.y = this->y + s.y;
+		r.z = this->z + s.z;
+		
+		return r;
+	}
+	
+	void operator+=(vec3f_t& s)
+	{
+		this->x += s.x;
+		this->y += s.y;
+		this->z += s.z;
+	}
 };
 
 struct vec4f_t
@@ -32,6 +66,26 @@ struct mat4f_t
 	float m[4][4];
 };
 
+
+inline vec3f_t Scalar(vec3f_t &v, float s)
+{
+	vec3f_t r;
+	r.x = v.x * s;
+	r.y = v.y * s;
+	r.z = v.z * s;
+
+	return r;
+}
+
+inline vec3f_t Cross(vec3f_t& v, vec3f_t& s)
+{
+	vec3f_t r;
+	r.x = (v.y * s.z) - (v.z * s.y);
+	r.y = (v.z * s.x) - (v.x * s.z);
+	r.z = (v.x * s.y) - (v.y * s.x);
+
+	return r;
+}
 
 inline vec3f_t Normalize(vec3f_t &v)
 {
@@ -50,6 +104,31 @@ inline void SetTransform(mat4f_t *t)
 	t->m[1][1] = 1;
 	t->m[2][2] = 1;
 	t->m[3][3] = 1;
+}
+
+inline void SetCameraView(mat4f_t* t, vec3f_t& position, vec3f_t& target, vec3f_t& upAxis)
+{
+	SetTransform(t);
+
+	vec3f_t direction = Normalize(position - target);
+	vec3f_t right = Normalize(Cross(upAxis, direction));
+	vec3f_t up = Cross(direction, right);
+
+	t->m[0][0] = right.x;
+	t->m[0][1] = right.y;
+	t->m[0][2] = right.z;
+	t->m[0][3] -= position.x;
+
+	t->m[1][0] = up.x;
+	t->m[1][1] = up.y;
+	t->m[1][2] = up.z;
+	t->m[1][3] -= position.y;
+
+	t->m[2][0] = direction.x;
+	t->m[2][1] = direction.y;
+	t->m[2][2] = direction.z;
+	t->m[2][3] -= position.z;
+
 }
 
 inline void SetFrustumHFOV(mat4f_t *t, float fov, float aratio, float near, float far)
