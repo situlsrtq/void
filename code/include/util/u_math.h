@@ -21,7 +21,7 @@ struct vec3f_t
 {
 	float x, y, z;
 
-	vec3f_t operator-(vec3f_t& s)
+	vec3f_t operator-(const vec3f_t& s) const
 	{
 		vec3f_t r;
 		r.x = this->x - s.x;
@@ -31,14 +31,14 @@ struct vec3f_t
 		return r;
 	}
 	
-	void operator-=(vec3f_t& s)
+	void operator-=(const vec3f_t& s)
 	{
 		this->x -= s.x;
 		this->y -= s.y;
 		this->z -= s.z;
 	}
 
-	vec3f_t operator+(vec3f_t& s)
+	vec3f_t operator+(const vec3f_t& s) const
 	{
 		vec3f_t r;
 		r.x = this->x + s.x;
@@ -48,7 +48,7 @@ struct vec3f_t
 		return r;
 	}
 	
-	void operator+=(vec3f_t& s)
+	void operator+=(const vec3f_t& s)
 	{
 		this->x += s.x;
 		this->y += s.y;
@@ -65,7 +65,7 @@ struct mat4f_t
 {
 	float m[4][4];
 
-	void operator *=(mat4f_t &s)
+	void operator *=(const mat4f_t &s)
 	{
 		m[0][0] = (m[0][0] * s.m[0][0]) + (m[0][1] * s.m[1][0]) + (m[0][2] * s.m[2][0]) + (m[0][3] * s.m[3][0]);
 		m[0][1] = (m[0][0] * s.m[0][1]) + (m[0][1] * s.m[1][1]) + (m[0][2] * s.m[2][1]) + (m[0][3] * s.m[3][1]);
@@ -90,7 +90,7 @@ struct mat4f_t
 };
 
 
-inline vec3f_t Scalar(vec3f_t &v, float s)
+inline vec3f_t Scalar(const vec3f_t &v, float s)
 {
 	vec3f_t r;
 	r.x = v.x * s;
@@ -100,7 +100,7 @@ inline vec3f_t Scalar(vec3f_t &v, float s)
 	return r;
 }
 
-inline vec3f_t Cross(vec3f_t& v, vec3f_t& s)
+inline vec3f_t Cross(const vec3f_t& v, const vec3f_t& s)
 {
 	vec3f_t r;
 	r.x = (v.y * s.z) - (v.z * s.y);
@@ -110,14 +110,15 @@ inline vec3f_t Cross(vec3f_t& v, vec3f_t& s)
 	return r;
 }
 
-inline vec3f_t Normalize(vec3f_t &v)
+inline vec3f_t Normalize(const vec3f_t &v)
 {
+	vec3f_t r;
 	float len = sqrtf((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
-	v.x /= len;
-	v.y /= len;
-	v.z /= len;
+	r.x = v.x / len;
+	r.y = v.y / len;
+	r.z = v.z / len;
 
-	return v;
+	return r;
 }
 
 inline void SetTransform(mat4f_t *t)
@@ -129,7 +130,7 @@ inline void SetTransform(mat4f_t *t)
 	t->m[3][3] = 1;
 }
 
-inline void SetCameraView(mat4f_t* t, vec3f_t& position, vec3f_t& target, vec3f_t& upAxis)
+inline void SetCameraView(mat4f_t* t, const vec3f_t& position, const vec3f_t& target, const vec3f_t& upAxis)
 {
 	SetTransform(t);
 
@@ -197,7 +198,7 @@ inline void EulerRotate(mat4f_t *t, float theta, int axis)
 	}
 }
 
-inline void MatrixRotate(mat4f_t* t, float d, vec3f_t& r)
+inline void MatrixRotate(mat4f_t* t, float d, const vec3f_t& r)
 {
 	float theta = d * RADIAN;
 	vec3f_t temp = Normalize(r);
@@ -222,14 +223,14 @@ inline void MatrixRotate(mat4f_t* t, float d, vec3f_t& r)
 	t->m[2][2] = (vs * z2) + c;
 }
 
-inline void Scale(mat4f_t *t, vec3f_t &s)
+inline void Scale(mat4f_t *t, const vec3f_t &s)
 {
 	t->m[0][0] *= s.x;
 	t->m[1][1] *= s.y;
 	t->m[2][2] *= s.z;
 }
 
-inline void Translate(mat4f_t *t, vec3f_t &s)
+inline void Translate(mat4f_t *t, const vec3f_t &s)
 {
 	t->m[0][3] += s.x;
 	t->m[1][3] += s.y;

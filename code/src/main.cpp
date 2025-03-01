@@ -281,7 +281,7 @@ int main(void)
 // Blit
 
 		glfwSwapBuffers(Window);
-		glClearColor(0.42f, 0.40f, 0.38f, 1.0f);
+//		glClearColor(0.42f, 0.40f, 0.38f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		CurrFrameTime = glfwGetTime();
