@@ -7,12 +7,26 @@
 #include "shader.h"
 #include "../include/util/u_math.h"
 
+
+//-----------------------------SYSTEM VALUES----------------------------------
+float DeltaTime = 0.0f;
+float PrevFrameTime = 0.0f;
+int FirstFrame = 1;
+//----------------------------------------------------------------------------
+
+
+// ----------------------------CAMERA VALUES----------------------------------
 uMATH::vec3f_t CameraPosition = { 0.0f, 0.0f, 3.0f };
 uMATH::vec3f_t CameraFront = { 0.0f, 0.0f, -1.0f };
 uMATH::vec3f_t CameraUpAxis = { 0.0f, 1.0f, 0.0f };
 
-float DeltaTime = 0.0f;
-float PrevFrameTime = 0.0f;
+float MouseSensitivity = 0.1f;
+float PrevMouseX = 800.0f/ 2.0f;
+float PrevMouseY = 600.0f/ 2.0f;
+float Yaw = -90.0f;
+float Pitch = 0.0f;
+//----------------------------------------------------------------------------
+
 
 void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 {
@@ -22,8 +36,6 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 
 void ProcessInput(GLFWwindow *Window)
 {
-	float CameraSpeed = 2.5f * DeltaTime;
-
 	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
 		glfwSetWindowShouldClose(Window, true);
@@ -36,6 +48,11 @@ void ProcessInput(GLFWwindow *Window)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 	}
+//--------------------------------CAMERA MOVEMENT----------------------------------
+	float CameraSpeed = 2.5f * DeltaTime;
+	uMATH::vec3f_t CameraRelativeXAxis = uMATH::Normalize(uMATH::Cross(CameraFront, CameraUpAxis));
+	uMATH::vec3f_t CameraRelativeYAxis = uMATH::Normalize(uMATH::Cross(CameraRelativeXAxis, CameraFront));
+
 	if(glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS)
 	{
 		CameraPosition += Scalar(CameraFront, CameraSpeed);
@@ -46,12 +63,60 @@ void ProcessInput(GLFWwindow *Window)
 	}
 	if(glfwGetKey(Window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		CameraPosition -= Scalar(uMATH::Normalize(uMATH::Cross(CameraFront, CameraUpAxis)), CameraSpeed);
+		CameraPosition -= Scalar(CameraRelativeXAxis, CameraSpeed);
 	}
 	if(glfwGetKey(Window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		CameraPosition += Scalar(uMATH::Normalize(uMATH::Cross(CameraFront, CameraUpAxis)), CameraSpeed);
+		CameraPosition += Scalar(CameraRelativeXAxis, CameraSpeed);
 	}
+	if(glfwGetKey(Window, GLFW_KEY_SPACE) == GLFW_PRESS)
+	{
+		CameraPosition += Scalar(CameraRelativeYAxis, CameraSpeed);
+	}
+	if(glfwGetKey(Window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+	{
+		CameraPosition -= Scalar(CameraRelativeYAxis, CameraSpeed);
+	}
+//---------------------------------------------------------------------------------
+}
+
+
+void MousePosCallback(GLFWwindow *Window, double MouseX, double MouseY)
+{
+	if (FirstFrame)
+	{
+		PrevMouseX = MouseX;
+		PrevMouseY = MouseY;
+		FirstFrame = 0;
+	}
+	
+	float xoffset = MouseX - PrevMouseX;
+	float yoffset = PrevMouseY - MouseY;
+	
+	PrevMouseX = MouseX;
+	PrevMouseY = MouseY;
+
+	xoffset *= MouseSensitivity;
+	yoffset *= MouseSensitivity;
+
+	Yaw += xoffset;
+	Pitch += yoffset;
+
+	if (Pitch > 89.0f)
+	{
+		Pitch = 89.0f;
+	}
+	if (Pitch < -89.0f)
+	{
+		Pitch = -89.0f;
+	}
+
+	uMATH::vec3f_t camdirection = {};
+	camdirection.x = cos((Yaw * RADIAN)) * cos((Pitch * RADIAN));
+	camdirection.y = sin((Pitch * RADIAN));
+	camdirection.z = sin((Yaw * RADIAN)) * cos((Pitch * RADIAN));
+
+	CameraFront = uMATH::Normalize(camdirection);
 }
 
 
@@ -86,6 +151,9 @@ int main(void)
 		printf("GLAD: Failed getting function pointers\n");
 		return -1;
 	}
+	
+	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(Window, MousePosCallback);
 
 	float Vertices[] = {
 	-0.5f, -0.5f, -0.5f,  
@@ -189,11 +257,10 @@ int main(void)
 
 		Shader.Use();
 
-		uMATH::SetTransform(&View);
-		uMATH::SetCameraView(&View, CameraPosition, CameraPosition+CameraFront, CameraUpAxis);
-
-		glUniformMatrix4fv(vloc, 1, GL_FALSE, &View.m[0][0]);
 		glUniformMatrix4fv(ploc, 1, GL_FALSE, &Projection.m[0][0]);
+
+		uMATH::SetCameraView(&View, CameraPosition, CameraPosition+CameraFront, CameraUpAxis);
+		glUniformMatrix4fv(vloc, 1, GL_FALSE, &View.m[0][0]);
 		
 		glBindVertexArray(VAO);
 		for (unsigned int i = 0; i < 10; i++)
