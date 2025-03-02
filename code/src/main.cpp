@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "shader.h"
+#include "camera.h"
 #include "../include/util/u_math.h"
 
 
@@ -12,19 +13,8 @@
 float DeltaTime = 0.0f;
 float PrevFrameTime = 0.0f;
 int FirstFrame = 1;
-//----------------------------------------------------------------------------
-
-
-// ----------------------------CAMERA VALUES----------------------------------
-uMATH::vec3f_t CameraPosition = { 0.0f, 0.0f, 3.0f };
-uMATH::vec3f_t CameraFront = { 0.0f, 0.0f, -1.0f };
-uMATH::vec3f_t CameraUpAxis = { 0.0f, 1.0f, 0.0f };
-
-float MouseSensitivity = 0.1f;
-float PrevMouseX = 800.0f/ 2.0f;
-float PrevMouseY = 600.0f/ 2.0f;
-float Yaw = -90.0f;
-float Pitch = 0.0f;
+double MouseX = 800.0f / 2.0f;
+double MouseY = 600.0f / 2.0f;
 //----------------------------------------------------------------------------
 
 
@@ -34,7 +24,7 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 }
 
 
-void ProcessInput(GLFWwindow *Window)
+void ProcessInput(GLFWwindow *Window, mbox_camera_t *Camera)
 {
 	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 	{
@@ -48,75 +38,18 @@ void ProcessInput(GLFWwindow *Window)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 	}
-//--------------------------------CAMERA MOVEMENT----------------------------------
-	float CameraSpeed = 2.5f * DeltaTime;
-	uMATH::vec3f_t CameraRelativeXAxis = uMATH::Normalize(uMATH::Cross(CameraFront, CameraUpAxis));
-	uMATH::vec3f_t CameraRelativeYAxis = uMATH::Normalize(uMATH::Cross(CameraRelativeXAxis, CameraFront));
 
-	if(glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS)
-	{
-		CameraPosition += Scalar(CameraFront, CameraSpeed);
-	}
-	if(glfwGetKey(Window, GLFW_KEY_S) == GLFW_PRESS)
-	{
-		CameraPosition -= Scalar(CameraFront, CameraSpeed);
-	}
-	if(glfwGetKey(Window, GLFW_KEY_A) == GLFW_PRESS)
-	{
-		CameraPosition -= Scalar(CameraRelativeXAxis, CameraSpeed);
-	}
-	if(glfwGetKey(Window, GLFW_KEY_D) == GLFW_PRESS)
-	{
-		CameraPosition += Scalar(CameraRelativeXAxis, CameraSpeed);
-	}
-	if(glfwGetKey(Window, GLFW_KEY_SPACE) == GLFW_PRESS)
-	{
-		CameraPosition += Scalar(CameraRelativeYAxis, CameraSpeed);
-	}
-	if(glfwGetKey(Window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-	{
-		CameraPosition -= Scalar(CameraRelativeYAxis, CameraSpeed);
-	}
-//---------------------------------------------------------------------------------
+	Camera->Speed = 2.5f * DeltaTime;
+	Camera->RelativeXAxis = uMATH::Normalize(uMATH::Cross(Camera->Eye, Camera->UpAxis));
+	Camera->RelativeYAxis = uMATH::Normalize(uMATH::Cross(Camera->RelativeXAxis, Camera->Eye));
+	Camera->Move(Window);
 }
 
 
-void MousePosCallback(GLFWwindow *Window, double MouseX, double MouseY)
+void MousePosCallback(GLFWwindow *Window, double mx, double my)
 {
-	if (FirstFrame)
-	{
-		PrevMouseX = MouseX;
-		PrevMouseY = MouseY;
-		FirstFrame = 0;
-	}
-	
-	float xoffset = MouseX - PrevMouseX;
-	float yoffset = PrevMouseY - MouseY;
-	
-	PrevMouseX = MouseX;
-	PrevMouseY = MouseY;
-
-	xoffset *= MouseSensitivity;
-	yoffset *= MouseSensitivity;
-
-	Yaw += xoffset;
-	Pitch += yoffset;
-
-	if (Pitch > 89.0f)
-	{
-		Pitch = 89.0f;
-	}
-	if (Pitch < -89.0f)
-	{
-		Pitch = -89.0f;
-	}
-
-	uMATH::vec3f_t camdirection = {};
-	camdirection.x = cos((Yaw * RADIAN)) * cos((Pitch * RADIAN));
-	camdirection.y = sin((Pitch * RADIAN));
-	camdirection.z = sin((Yaw * RADIAN)) * cos((Pitch * RADIAN));
-
-	CameraFront = uMATH::Normalize(camdirection);
+	MouseX = mx;
+	MouseY = my;
 }
 
 
@@ -229,6 +162,15 @@ int main(void)
 
 	glEnable(GL_DEPTH_TEST);
 
+	mbox_camera_t Camera;
+	Camera.Position = { 0.0f, 0.0f, 3.0f };
+	Camera.Eye = { 0.0f, 0.0f, -1.0f };
+	Camera.UpAxis = { 0.0f, 1.0f, 0.0f };
+	Camera.Sensitivity = 0.1f;
+	Camera.Yaw = -90.0f;
+	Camera.Pitch = 0.0f;
+
+
 	shader_t Shader;
 	Shader.Build("../shaders/test.vert", "../shaders/test.frag");
 	int RenderMode = GL_TRIANGLES;
@@ -247,11 +189,18 @@ int main(void)
 	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 	while (!glfwWindowShouldClose(Window))
 	{
+		if(FirstFrame)
+		{
+			Camera.PrevMX = MouseX;
+			Camera.PrevMY = MouseY;
+			FirstFrame = 0;
+		}
 
 // Input
 
 		glfwPollEvents();
-		ProcessInput(Window);
+		Camera.LookAtMouse(MouseX, MouseY);
+		ProcessInput(Window, &Camera);
 
 //Render
 
@@ -259,7 +208,7 @@ int main(void)
 
 		glUniformMatrix4fv(ploc, 1, GL_FALSE, &Projection.m[0][0]);
 
-		uMATH::SetCameraView(&View, CameraPosition, CameraPosition+CameraFront, CameraUpAxis);
+		uMATH::SetCameraView(&View, Camera.Position, Camera.Position+Camera.Eye, Camera.UpAxis);
 		glUniformMatrix4fv(vloc, 1, GL_FALSE, &View.m[0][0]);
 		
 		glBindVertexArray(VAO);
@@ -281,7 +230,7 @@ int main(void)
 // Blit
 
 		glfwSwapBuffers(Window);
-//		glClearColor(0.42f, 0.40f, 0.38f, 1.0f);
+		glClearColor(0.42f, 0.40f, 0.38f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		CurrFrameTime = glfwGetTime();

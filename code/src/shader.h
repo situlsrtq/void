@@ -1,5 +1,5 @@
-#ifndef TEST_SHADERS_H
-#define TEST_SHADERS_H
+#ifndef MBOX_SHADERS_H
+#define MBOX_SHADERS_H
 
 
 #include "../include/glad/glad.h"
