@@ -15,8 +15,8 @@ float PrevFrameTime = 0.0f;
 int FirstFrame = 1;
 double PrevMouseX = 800.0f / 2.0f;
 double PrevMouseY = 600.0f / 2.0f;
-double xoffset = 0.0f;
-double yoffset = 0.0f;
+
+mbox_camera_t Camera;
 //----------------------------------------------------------------------------
 
 
@@ -57,11 +57,13 @@ void MousePosCallback(GLFWwindow *Window, double mx, double my)
 		FirstFrame = 0;
 	}
 
-	xoffset = mx - PrevMouseX;
-	yoffset = PrevMouseY - my;
+	float xoffset = mx - PrevMouseX;
+	float yoffset = PrevMouseY - my;
 	
 	PrevMouseX = mx;
 	PrevMouseY = my;
+
+	Camera.LookAtMouse(xoffset, yoffset);
 }
 
 
@@ -174,15 +176,6 @@ int main(void)
 
 	glEnable(GL_DEPTH_TEST);
 
-	mbox_camera_t Camera;
-	Camera.Position = { 0.0f, 0.0f, 3.0f };
-	Camera.Eye = { 0.0f, 0.0f, -1.0f };
-	Camera.UpAxis = { 0.0f, 1.0f, 0.0f };
-	Camera.Sensitivity = 0.1f;
-	Camera.Yaw = -90.0f;
-	Camera.Pitch = 0.0f;
-
-
 	shader_t Shader;
 	Shader.Build("../shaders/test.vert", "../shaders/test.frag");
 	int RenderMode = GL_TRIANGLES;
@@ -205,7 +198,6 @@ int main(void)
 // Input
 
 		glfwPollEvents();
-		Camera.LookAtMouse(xoffset, yoffset);
 		ProcessInput(Window, &Camera);
 
 //Render
@@ -242,8 +234,6 @@ int main(void)
 		CurrFrameTime = glfwGetTime();
 		DeltaTime = CurrFrameTime - PrevFrameTime;
 		PrevFrameTime = CurrFrameTime;
-		xoffset = 0.0f;
-		yoffset = 0.0f;
 	}
 
     glfwTerminate();
