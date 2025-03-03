@@ -13,8 +13,10 @@
 float DeltaTime = 0.0f;
 float PrevFrameTime = 0.0f;
 int FirstFrame = 1;
-double MouseX = 800.0f / 2.0f;
-double MouseY = 600.0f / 2.0f;
+double PrevMouseX = 800.0f / 2.0f;
+double PrevMouseY = 600.0f / 2.0f;
+double xoffset = 0.0f;
+double yoffset = 0.0f;
 //----------------------------------------------------------------------------
 
 
@@ -48,8 +50,18 @@ void ProcessInput(GLFWwindow *Window, mbox_camera_t *Camera)
 
 void MousePosCallback(GLFWwindow *Window, double mx, double my)
 {
-	MouseX = mx;
-	MouseY = my;
+	if(FirstFrame)
+	{
+		PrevMouseX = mx;
+		PrevMouseY = my;
+		FirstFrame = 0;
+	}
+
+	xoffset = mx - PrevMouseX;
+	yoffset = PrevMouseY - my;
+	
+	PrevMouseX = mx;
+	PrevMouseY = my;
 }
 
 
@@ -189,17 +201,11 @@ int main(void)
 	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 	while (!glfwWindowShouldClose(Window))
 	{
-		if(FirstFrame)
-		{
-			Camera.PrevMX = MouseX;
-			Camera.PrevMY = MouseY;
-			FirstFrame = 0;
-		}
 
 // Input
 
 		glfwPollEvents();
-		Camera.LookAtMouse(MouseX, MouseY);
+		Camera.LookAtMouse(xoffset, yoffset);
 		ProcessInput(Window, &Camera);
 
 //Render
@@ -236,6 +242,8 @@ int main(void)
 		CurrFrameTime = glfwGetTime();
 		DeltaTime = CurrFrameTime - PrevFrameTime;
 		PrevFrameTime = CurrFrameTime;
+		xoffset = 0.0f;
+		yoffset = 0.0f;
 	}
 
     glfwTerminate();
