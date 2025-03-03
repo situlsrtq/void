@@ -102,48 +102,48 @@ int main(void)
 	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(Window, MousePosCallback);
 
-	float Vertices[] = {
-	-0.5f, -0.5f, -0.5f,  
-	 0.5f, -0.5f, -0.5f, 
-	 0.5f,  0.5f, -0.5f, 
-	 0.5f,  0.5f, -0.5f, 
-	-0.5f,  0.5f, -0.5f, 
-	-0.5f, -0.5f, -0.5f, 
+	float VertexData[] = {
+	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
-	-0.5f, -0.5f,  0.5f, 
-	 0.5f, -0.5f,  0.5f, 
-	 0.5f,  0.5f,  0.5f, 
-	 0.5f,  0.5f,  0.5f, 
-	-0.5f,  0.5f,  0.5f, 
-	-0.5f, -0.5f,  0.5f, 
+	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
 
-	-0.5f,  0.5f,  0.5f, 
-	-0.5f,  0.5f, -0.5f, 
-	-0.5f, -0.5f, -0.5f, 
-	-0.5f, -0.5f, -0.5f, 
-	-0.5f, -0.5f,  0.5f, 
-	-0.5f,  0.5f,  0.5f, 
+	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-	 0.5f,  0.5f,  0.5f, 
-	 0.5f,  0.5f, -0.5f, 
-	 0.5f, -0.5f, -0.5f, 
-	 0.5f, -0.5f, -0.5f, 
-	 0.5f, -0.5f,  0.5f, 
-	 0.5f,  0.5f,  0.5f, 
+	 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+	 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+	 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+	 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-	-0.5f, -0.5f, -0.5f, 
-	 0.5f, -0.5f, -0.5f, 
-	 0.5f, -0.5f,  0.5f, 
-	 0.5f, -0.5f,  0.5f, 
-	-0.5f, -0.5f,  0.5f, 
-	-0.5f, -0.5f, -0.5f, 
+	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+	 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-	-0.5f,  0.5f, -0.5f, 
-	 0.5f,  0.5f, -0.5f, 
-	 0.5f,  0.5f,  0.5f, 
-	 0.5f,  0.5f,  0.5f, 
-	-0.5f,  0.5f,  0.5f, 
-	-0.5f,  0.5f, -0.5f, };
+	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f };
 
 	uMATH::vec3f_t cubePositions[] = {
 		uMATH::vec3f_t{ 0.0f,  0.0f,  0.0f},
@@ -167,11 +167,13 @@ int main(void)
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(VertexData), VertexData, GL_STATIC_DRAW);
 	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 	glBindVertexArray(0);
 
 	glEnable(GL_DEPTH_TEST);
@@ -180,18 +182,25 @@ int main(void)
 	Shader.Build("../shaders/test.vert", "../shaders/test.frag");
 	int RenderMode = GL_TRIANGLES;
 
-	uMATH::mat4f_t Projection = {};
-	uMATH::SetFrustumHFOV(&Projection, 45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
-
 	unsigned int mloc = glGetUniformLocation(Shader.ID, "model");
 	unsigned int vloc = glGetUniformLocation(Shader.ID, "view");
 	unsigned int ploc = glGetUniformLocation(Shader.ID, "projection");
+	unsigned int lploc = glGetUniformLocation(Shader.ID, "lightpos");
+	unsigned int cloc = glGetUniformLocation(Shader.ID, "objcolor");
+	unsigned int lloc = glGetUniformLocation(Shader.ID, "lightcolor");
+	unsigned int aloc = glGetUniformLocation(Shader.ID, "ambientstrength");
 
 	uMATH::mat4f_t View = {};
 	uMATH::mat4f_t Model = {};
+	uMATH::mat4f_t Projection = {};
+	uMATH::SetFrustumHFOV(&Projection, 45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
+
+	uMATH::vec3f_t LightPosition = { 1.2f, 1.0f, 2.0f };
+	uMATH::vec3f_t lightScale = { 0.2f, 0.2f, 0.2f };
+
 	float CurrFrameTime = 0;
 
-	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 	while (!glfwWindowShouldClose(Window))
 	{
 
@@ -203,6 +212,12 @@ int main(void)
 //Render
 
 		Shader.Use();
+
+	//------------------------------------Draw Objects
+		glUniform1f(aloc, 0.1f);
+		glUniform3f(cloc, 1.0f, 0.5f, 0.31f);
+		glUniform3f(lloc, 1.0f, 1.0f, 1.0f);
+		glUniform3f(lploc, LightPosition.x, LightPosition.y, LightPosition.z);
 
 		glUniformMatrix4fv(ploc, 1, GL_FALSE, &Projection.m[0][0]);
 
@@ -223,12 +238,21 @@ int main(void)
 			glDrawArrays(RenderMode, 0, 36);
 		}
 
+	//----------------------------------Draw Light Sources
+		glUniform1f(aloc, 1.0f);
+		glUniform3f(cloc, 1.0f, 1.0f, 1.0f);
+		SetTransform(&Model);
+		uMATH::Translate(&Model, LightPosition);
+		uMATH::Scale(&Model, lightScale);
+		glUniformMatrix4fv(mloc, 1, GL_FALSE, &Model.m[0][0]);
+		glDrawArrays(RenderMode, 0, 36);
+
 		glBindVertexArray(0);
 
 // Blit
 
 		glfwSwapBuffers(Window);
-		glClearColor(0.42f, 0.40f, 0.38f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		CurrFrameTime = glfwGetTime();

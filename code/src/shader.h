@@ -20,8 +20,8 @@ struct shader_t
 	uint32_t VertexShader;
 	uint32_t FragmentShader;
 	char InfoLog[512];
-	char VertPath[1024];
-	char FragPath[1024];
+	char VertPath[TMAX_PATH_LEN];
+	char FragPath[TMAX_PATH_LEN];
 
 	int Build(const char *VertPath, const char *FragPath);
 	int Rebuild();

@@ -100,6 +100,14 @@ inline vec3f_t Scalar(const vec3f_t &v, float s)
 	return r;
 }
 
+inline float Dot(const vec3f_t& v, const vec3f_t& s)
+{
+	float r;
+	r = (v.x * s.x) + (v.y * s.y) + (v.z * s.z);
+
+	return r;
+}
+
 inline vec3f_t Cross(const vec3f_t& v, const vec3f_t& s)
 {
 	vec3f_t r;

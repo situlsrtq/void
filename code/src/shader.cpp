@@ -67,6 +67,7 @@ int shader_t::Build(const char *InVPath, const char *InFPath)
 	{
 		glGetShaderInfoLog(VertexShader, 512, NULL, InfoLog);
 		printf("GL: Failed to compile vertex shader\n");
+		printf("%s\n", InfoLog);
 		return -1;
 	}
 
@@ -116,6 +117,7 @@ int shader_t::Build(const char *InVPath, const char *InFPath)
 	{
 		glGetShaderInfoLog(FragmentShader, 512, NULL, InfoLog);
 		printf("GL: Failed to compile fragment shader\n");
+		printf("%s\n", InfoLog);
 		return -1;
 	}
 
@@ -299,6 +301,12 @@ int shader_t::SetUniform(const char *Uniform, int Type, void *Data)
 		{
 			uMATH::vec4f_t *Input = (uMATH::vec4f_t *)Data; 
 			glUniform4f(UniformLocation, Input->x, Input->y, Input->z, Input->w);
+			break;
+		}
+		case MAT4_F:
+		{
+			uMATH::mat4f_t *Input = (uMATH::mat4f_t *)Data; 
+			glUniformMatrix4fv(UniformLocation, 1, GL_FALSE, &Input->m[0][0]);
 			break;
 		}
 		default:
