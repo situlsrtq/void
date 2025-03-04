@@ -189,6 +189,7 @@ int main(void)
 	unsigned int cloc = glGetUniformLocation(Shader.ID, "objcolor");
 	unsigned int lloc = glGetUniformLocation(Shader.ID, "lightcolor");
 	unsigned int aloc = glGetUniformLocation(Shader.ID, "ambientstrength");
+	unsigned int vdloc = glGetUniformLocation(Shader.ID, "viewpos");
 
 	uMATH::mat4f_t View = {};
 	uMATH::mat4f_t Model = {};
@@ -223,6 +224,7 @@ int main(void)
 
 		uMATH::SetCameraView(&View, Camera.Position, Camera.Position+Camera.Eye, Camera.UpAxis);
 		glUniformMatrix4fv(vloc, 1, GL_FALSE, &View.m[0][0]);
+		glUniform3f(vdloc, Camera.Position.x, Camera.Position.y, Camera.Position.z);
 		
 		glBindVertexArray(VAO);
 		for (unsigned int i = 0; i < 10; i++)

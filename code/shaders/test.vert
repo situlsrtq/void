@@ -14,5 +14,6 @@ void main()
 {
 	gl_Position = vec4(aPos, 1.0) * model * view * projection;
 	WorldPos = vec3(vec4(aPos, 1.0) * model);
-	Normal = aNormal * mat3(transpose(inverse(model)));
+	// Right now, just cast model to mat3 - implement inverse transpose on CPU if non-uniform scaling/shear support becomes necessary
+	Normal = aNormal * mat3(model);
 }
