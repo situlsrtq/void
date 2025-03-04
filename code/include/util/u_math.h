@@ -144,7 +144,7 @@ inline void SetCameraView(mat4f_t* t, const vec3f_t& position, const vec3f_t& ta
 
 	vec3f_t direction = Normalize(position - target);
 	vec3f_t right = Normalize(Cross(upAxis, direction));
-	vec3f_t up = Cross(direction, right);
+	vec3f_t up = Normalize(Cross(direction, right));
 
 	t->m[0][0] = right.x;
 	t->m[0][1] = right.y;
