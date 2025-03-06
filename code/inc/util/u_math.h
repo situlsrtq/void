@@ -16,6 +16,7 @@
 namespace uMATH
 {
 
+//-------------------------------STRUCTURES-------------------------------
 
 struct vec3f_t
 {
@@ -88,6 +89,9 @@ struct mat4f_t
 		m[3][3] = (m[3][0] * s.m[0][3]) + (m[3][1] * s.m[1][3]) + (m[3][2] * s.m[2][3]) + (m[3][3] * s.m[3][3]);
 	}
 };
+
+
+//-----------------------------------FUNCTIONS---------------------------------------
 
 
 inline vec3f_t Scalar(const vec3f_t &v, float s)
@@ -231,11 +235,11 @@ inline void MatrixRotate(mat4f_t* t, float d, const vec3f_t& r)
 	t->m[2][2] = (vs * z2) + c;
 }
 
-inline void Scale(mat4f_t *t, const vec3f_t &s)
+inline void Scale(mat4f_t *t, float s)
 {
-	t->m[0][0] *= s.x;
-	t->m[1][1] *= s.y;
-	t->m[2][2] *= s.z;
+	t->m[0][0] *= s;
+	t->m[1][1] *= s;
+	t->m[2][2] *= s;
 }
 
 inline void Translate(mat4f_t *t, const vec3f_t &s)

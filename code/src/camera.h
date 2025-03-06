@@ -1,8 +1,10 @@
 #ifndef MBOX_CAMERA_H
 #define MBOX_CAMERA_H
 
+
 #include <GLFW/glfw3.h>
 #include "../inc/util/u_math.h"
+
 
 struct mbox_camera_t
 {
@@ -20,5 +22,6 @@ struct mbox_camera_t
 	void LookAtMouse(double XOffset, double YOffset);
 	void Move(GLFWwindow *Window);
 };
+
 
 #endif

@@ -26,6 +26,7 @@ void mbox_camera_t::LookAtMouse(double XOffset, double YOffset)
 	Eye = uMATH::Normalize(direction);
 }
 
+
 void mbox_camera_t::Move(GLFWwindow *Window)
 {
 	if(glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS)

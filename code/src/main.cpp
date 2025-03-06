@@ -197,7 +197,7 @@ int main(void)
 	uMATH::SetFrustumHFOV(&Projection, 45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
 
 	uMATH::vec3f_t LightPosition = { 1.2f, 1.0f, 2.0f };
-	uMATH::vec3f_t lightScale = { 0.2f, 0.2f, 0.2f };
+	float lightScale = 0.2f;
 
 	float CurrFrameTime = 0;
 
