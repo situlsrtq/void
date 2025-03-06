@@ -2,7 +2,7 @@
 #define MBOX_CAMERA_H
 
 #include <GLFW/glfw3.h>
-#include "../include/util/u_math.h"
+#include "../inc/util/u_math.h"
 
 struct mbox_camera_t
 {

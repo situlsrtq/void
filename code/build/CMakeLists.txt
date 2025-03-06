@@ -8,7 +8,7 @@ set(CMAKE_BUILD_TYPE Debug)
 # set(CMAKE_BUILD_TYPE Release)
 get_filename_component(LIB_DIR "../lib" REALPATH)
 
-include_directories(../include)
+include_directories(../inc)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	file(GLOB SOURCES "../src/*.cpp" "../src/*.c")
@@ -20,7 +20,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_compile_options(-Wall -Wextra -O0)
 
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/*.h" "../include/util/*.h")
+	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/*.h" "../inc/util/*.h")
 
 	add_executable(${PROJECT_NAME} ${SOURCES})
 

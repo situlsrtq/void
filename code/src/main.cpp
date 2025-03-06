@@ -1,4 +1,4 @@
-#include "../include/glad/glad.h"
+#include "../inc/glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <cstdio>
 #include <iostream>
@@ -6,7 +6,7 @@
 
 #include "shader.h"
 #include "camera.h"
-#include "../include/util/u_math.h"
+#include "../inc/util/u_math.h"
 
 
 //-----------------------------SYSTEM VALUES----------------------------------

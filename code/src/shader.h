@@ -2,13 +2,13 @@
 #define MBOX_SHADERS_H
 
 
-#include "../include/glad/glad.h"
+#include "../inc/glad/glad.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "../include/util/u_math.h"
+#include "../inc/util/u_math.h"
 
 
 #define TMAX_PATH_LEN 1024
