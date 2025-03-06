@@ -251,4 +251,5 @@ inline void Translate(mat4f_t *t, const vec3f_t &s)
 
 }
 
+
 #endif
