@@ -14,6 +14,7 @@ double PrevMouseX = 800.0f / 2.0f;
 double PrevMouseY = 600.0f / 2.0f;
 
 mbox_camera_t Camera;
+shader_t Shader;
 //----------------------------------------------------------------------------
 
 
@@ -36,6 +37,10 @@ void ProcessInput(GLFWwindow *Window, mbox_camera_t *Camera)
 	if(glfwGetKey(Window, GLFW_KEY_E) == GLFW_PRESS)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+	}
+	if(glfwGetKey(Window, GLFW_KEY_P) == GLFW_PRESS)
+	{
+		Shader.Rebuild();
 	}
 
 	Camera->Speed = 2.5f * DeltaTime;
@@ -175,8 +180,7 @@ int main(void)
 
 	glEnable(GL_DEPTH_TEST);
 
-	shader_t Shader;
-	Shader.Build("../shaders/test.vert", "../shaders/test.frag");
+	Shader.Create("../shaders/test.vert", "../shaders/test.frag");
 	int RenderMode = GL_TRIANGLES;
 
 	unsigned int mloc = glGetUniformLocation(Shader.ID, "model");

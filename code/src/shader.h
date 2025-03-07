@@ -12,21 +12,24 @@
 
 
 #define TMAX_PATH_LEN 1024
+#define SHADER_INFOLOG_SIZE 512
 
 
 struct shader_t
 {
 	uint32_t ID;
-	uint32_t VertexShader;
-	uint32_t FragmentShader;
-	char InfoLog[512];
+	char InfoLog[SHADER_INFOLOG_SIZE];
 	char VertPath[TMAX_PATH_LEN];
 	char FragPath[TMAX_PATH_LEN];
 
-	int Build(const char *VertPath, const char *FragPath);
+	uint32_t Build(const char *FilePath, int ShaderType);
+	int Create(const char *VertPath, const char *FragPath);
 	int Rebuild();
 	void Use();
+
+	/* SetUniform() needs a more complex implementation in order to avoid looking up uniform locations every frame
 	int SetUniform(const char* Uniform, int Type, void *Data);
+	*/
 };
 
 
