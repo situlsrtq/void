@@ -1,8 +1,9 @@
-#ifndef TEST_TYPES_H
-#define TEST_TYPES_H
+#ifndef MBOX_UMATH_H
+#define MBOX_UMATH_H
 
 #include <string.h>
 #include <math.h>
+
 
 #define VEC3_F -1000
 #define VEC4_F -1001
@@ -13,10 +14,13 @@
 
 #define RADIAN 0.0174532924f
 
+
 namespace uMATH
 {
 
+
 //-------------------------------STRUCTURES-------------------------------
+
 
 struct vec3f_t
 {
@@ -57,10 +61,12 @@ struct vec3f_t
 	}
 };
 
+
 struct vec4f_t
 {
 	float x, y, z, w;
 };
+
 
 struct mat4f_t
 {
@@ -104,6 +110,7 @@ inline vec3f_t Scalar(const vec3f_t &v, float s)
 	return r;
 }
 
+
 inline float Dot(const vec3f_t& v, const vec3f_t& s)
 {
 	float r;
@@ -111,6 +118,7 @@ inline float Dot(const vec3f_t& v, const vec3f_t& s)
 
 	return r;
 }
+
 
 inline vec3f_t Cross(const vec3f_t& v, const vec3f_t& s)
 {
@@ -121,6 +129,7 @@ inline vec3f_t Cross(const vec3f_t& v, const vec3f_t& s)
 
 	return r;
 }
+
 
 inline vec3f_t Normalize(const vec3f_t &v)
 {
@@ -133,6 +142,7 @@ inline vec3f_t Normalize(const vec3f_t &v)
 	return r;
 }
 
+
 inline void SetTransform(mat4f_t *t)
 {
 	memset(t->m, 0, sizeof(float) * 16);
@@ -141,6 +151,7 @@ inline void SetTransform(mat4f_t *t)
 	t->m[2][2] = 1;
 	t->m[3][3] = 1;
 }
+
 
 inline void SetCameraView(mat4f_t* t, const vec3f_t& position, const vec3f_t& target, const vec3f_t& upAxis)
 {
@@ -171,6 +182,7 @@ inline void SetCameraView(mat4f_t* t, const vec3f_t& position, const vec3f_t& ta
 	*t *= translate;
 }
 
+
 inline void SetFrustumHFOV(mat4f_t *t, float fov, float aratio, float near, float far)
 {
 	float ftan = tanf(fov / 2.0f * RADIAN);
@@ -184,6 +196,7 @@ inline void SetFrustumHFOV(mat4f_t *t, float fov, float aratio, float near, floa
 	t->m[3][2] = -1.0f;
 	t->m[3][3] = 0.0f;		// In case this matrix was previously a Transform matrix
 }
+
 
 inline void EulerRotate(mat4f_t *t, float theta, int axis)
 {
@@ -210,6 +223,7 @@ inline void EulerRotate(mat4f_t *t, float theta, int axis)
 	}
 }
 
+
 inline void MatrixRotate(mat4f_t* t, float d, const vec3f_t& r)
 {
 	float theta = d * RADIAN;
@@ -235,12 +249,14 @@ inline void MatrixRotate(mat4f_t* t, float d, const vec3f_t& r)
 	t->m[2][2] = (vs * z2) + c;
 }
 
+
 inline void Scale(mat4f_t *t, float s)
 {
 	t->m[0][0] *= s;
 	t->m[1][1] *= s;
 	t->m[2][2] *= s;
 }
+
 
 inline void Translate(mat4f_t *t, const vec3f_t &s)
 {

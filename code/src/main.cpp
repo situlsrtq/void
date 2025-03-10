@@ -3,7 +3,8 @@
 
 #include "shader.h"
 #include "camera.h"
-#include "../inc/util/u_math.h"
+#include "util/u_math.h"
+#include "util/u_mem.h"
 
 
 //-----------------------------SYSTEM VALUES----------------------------------
@@ -79,7 +80,7 @@ int main(void)
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	
 	GLFWwindow * Window = glfwCreateWindow(800,600,"TestPlatform",0,0);
@@ -192,6 +193,34 @@ int main(void)
 	unsigned int aloc = glGetUniformLocation(Shader.ID, "ambientstrength");
 	unsigned int vdloc = glGetUniformLocation(Shader.ID, "viewpos");
 
+	geometry_state_t *GeometryObjects = (geometry_state_t *)calloc(1, sizeof(geometry_state_t));
+	if (!GeometryObjects)
+	{
+		printf("System: calloc error, GeometryObjects\n");
+		return -1;
+	}
+
+	uMATH::mat4f_t GeometryModel = {};
+	geometry_create_info_t CreateInfo;
+	CreateInfo.Scale = 1.0f;
+	CreateInfo.Intensity = 0.5f;
+	CreateInfo.Color = { 1.0f, 0.5f, 0.31f };
+
+	for (int i = 0; i < 10; i++)
+	{
+		float angle = 20.0f * i;
+		uMATH::vec3f_t rVec = { 1.0f, 0.3f, 0.5f };
+		SetTransform(&GeometryModel);
+
+		uMATH::Scale(&GeometryModel, CreateInfo.Scale);
+		uMATH::MatrixRotate(&GeometryModel, angle, rVec);
+		uMATH::Translate(&GeometryModel, cubePositions[i]);
+
+		CreateInfo.Model = GeometryModel;
+		GeometryObjects->Alloc(CreateInfo);
+	}
+
+
 	uMATH::mat4f_t View = {};
 	uMATH::mat4f_t Model = {};
 	uMATH::mat4f_t Projection = {};
@@ -228,16 +257,9 @@ int main(void)
 		glUniform3f(vdloc, Camera.Position.x, Camera.Position.y, Camera.Position.z);
 		
 		glBindVertexArray(VAO);
-		for (unsigned int i = 0; i < 10; i++)
+		for (unsigned int i = 0; i < GeometryObjects->Position; i++)
 		{
-			float angle = 20.0f * i;
-			SetTransform(&Model);
-
-			uMATH::Translate(&Model, cubePositions[i]);
-			uMATH::vec3f_t rVec = { 1.0f, 0.3f, 0.5f };
-			uMATH::MatrixRotate(&Model, angle, rVec);
-			glUniformMatrix4fv(mloc, 1, GL_FALSE, &Model.m[0][0]);
-
+			glUniformMatrix4fv(mloc, 1, GL_FALSE, &GeometryObjects->Model[i].m[0][0]);
 			glDrawArrays(RenderMode, 0, 36);
 		}
 
@@ -245,13 +267,13 @@ int main(void)
 		glUniform1f(aloc, 1.0f);
 		glUniform3f(cloc, 1.0f, 1.0f, 1.0f);
 		SetTransform(&Model);
-		uMATH::Translate(&Model, LightPosition);
 		uMATH::Scale(&Model, lightScale);
+		uMATH::Translate(&Model, LightPosition);
 		glUniformMatrix4fv(mloc, 1, GL_FALSE, &Model.m[0][0]);
 		glDrawArrays(RenderMode, 0, 36);
 
 		glBindVertexArray(0);
-
+		glUseProgram(0);
 // Blit
 
 		glfwSwapBuffers(Window);

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../inc/util/u_math.h"
+#include "util/u_math.h"
 
 
 #define TMAX_PATH_LEN 1024
