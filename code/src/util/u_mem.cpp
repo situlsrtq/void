@@ -68,14 +68,14 @@ void geometry_state_t::Alloc(const geometry_create_info_t &CreateInfo)
 	else
 	{
 		index = Position;
-		Position++;
-	}
 
-	if(index >= PROGRAM_MAX_OBJECTS)
-	{
-		printf("System: Object Limit Reached\n");
-		Position--;
-		return;
+		if (index >= PROGRAM_MAX_OBJECTS)
+		{
+			printf("System: Object Limit Reached\n");
+			return;
+		}
+
+		Position++;
 	}
 
 	Visible[index] = VIS_STATUS_VISIBLE;
@@ -88,12 +88,7 @@ void geometry_state_t::Alloc(const geometry_create_info_t &CreateInfo)
 
 void geometry_state_t::Free(uint8_t FreedIndex)
 {
-	if (FreedIndex >= PROGRAM_MAX_OBJECTS)
-	{
-		printf("System: Object array overrun, this is bad stuff\n");
-		return;
-	}
-	if (FreedIndex == 0 && Position == 1)
+	if (Position == 0)
 	{
 		printf("System: Object array empty, nothing to free\n");
 		return;
