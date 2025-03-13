@@ -265,6 +265,50 @@ inline void Translate(mat4f_t *t, const vec3f_t &s)
 	t->m[2][3] += s.z;
 }
 
+
+inline mat4f_t InverseM4(const mat4f_t& m)
+{
+	float s0 = m.m[0][0] * m.m[1][1] - m.m[1][0] * m.m[0][1];
+	float s1 = m.m[0][0] * m.m[1][2] - m.m[1][0] * m.m[0][2];
+	float s2 = m.m[0][0] * m.m[1][3] - m.m[1][0] * m.m[0][3];
+	float s3 = m.m[0][1] * m.m[1][2] - m.m[1][1] * m.m[0][2];
+	float s4 = m.m[0][1] * m.m[1][3] - m.m[1][1] * m.m[0][3];
+	float s5 = m.m[0][2] * m.m[1][3] - m.m[1][2] * m.m[0][3];
+
+	float c5 = m.m[2][2] * m.m[3][3] - m.m[3][2] * m.m[2][3];
+	float c4 = m.m[2][1] * m.m[3][3] - m.m[3][1] * m.m[2][3];
+	float c3 = m.m[2][1] * m.m[3][2] - m.m[3][1] * m.m[2][2];
+	float c2 = m.m[2][0] * m.m[3][3] - m.m[3][0] * m.m[2][3];
+	float c1 = m.m[2][0] * m.m[3][2] - m.m[3][0] * m.m[2][2];
+	float c0 = m.m[2][0] * m.m[3][1] - m.m[3][0] * m.m[2][1];
+
+	float invdet = 1.0f / (s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0);
+
+	mat4f_t res;
+
+	res.m[0][0] = (m.m[1][1] * c5 - m.m[1][2] * c4 + m.m[1][3] * c3) * invdet;
+	res.m[0][1] = (-m.m[0][1] * c5 + m.m[0][2] * c4 - m.m[0][3] * c3) * invdet;
+	res.m[0][2] = (m.m[3][1] * s5 - m.m[3][2] * s4 + m.m[3][3] * s3) * invdet;
+	res.m[0][3] = (-m.m[2][1] * s5 + m.m[2][2] * s4 - m.m[2][3] * s3) * invdet;
+
+	res.m[1][0] = (-m.m[1][0] * c5 + m.m[1][2] * c2 - m.m[1][3] * c1) * invdet;
+	res.m[1][1] = (m.m[0][0] * c5 - m.m[0][2] * c2 + m.m[0][3] * c1) * invdet;
+	res.m[1][2] = (-m.m[3][0] * s5 + m.m[3][2] * s2 - m.m[3][3] * s1) * invdet;
+	res.m[1][3] = (m.m[2][0] * s5 - m.m[2][2] * s2 + m.m[2][3] * s1) * invdet;
+
+	res.m[2][0] = (m.m[1][0] * c4 - m.m[1][1] * c2 + m.m[1][3] * c0) * invdet;
+	res.m[2][1] = (-m.m[0][0] * c4 + m.m[0][1] * c2 - m.m[0][3] * c0) * invdet;
+	res.m[2][2] = (m.m[3][0] * s4 - m.m[3][1] * s2 + m.m[3][3] * s0) * invdet;
+	res.m[2][3] = (-m.m[2][0] * s4 + m.m[2][1] * s2 - m.m[2][3] * s0) * invdet;
+
+	res.m[3][0] = (-m.m[1][0] * c3 + m.m[1][1] * c1 - m.m[1][2] * c0) * invdet;
+	res.m[3][1] = (m.m[0][0] * c3 - m.m[0][1] * c1 + m.m[0][2] * c0) * invdet;
+	res.m[3][2] = (-m.m[3][0] * s3 + m.m[3][1] * s1 - m.m[3][2] * s0) * invdet;
+	res.m[3][3] = (m.m[2][0] * s3 - m.m[2][1] * s1 + m.m[2][2] * s0) * invdet;
+
+	return res;
+}
+
 }
 
 

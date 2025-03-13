@@ -5,69 +5,16 @@
 #include "camera.h"
 #include "util/u_math.h"
 #include "util/u_mem.h"
+#include "window.h"
 
 
-//-----------------------------SYSTEM VALUES----------------------------------
-float DeltaTime = 0.0f;
-float PrevFrameTime = 0.0f;
-int FirstFrame = 1;
-double PrevMouseX = 800.0f / 2.0f;
-double PrevMouseY = 600.0f / 2.0f;
-
-mbox_camera_t Camera;
-shader_t Shader;
-//----------------------------------------------------------------------------
+#define SCREEN_X_DIM 800
+#define SCREEN_Y_DIM 600
 
 
-void FrameResizeCallback(GLFWwindow *Window, int width, int height)
-{
-	glViewport(0,0,width,height);
-}
-
-
-void ProcessInput(GLFWwindow *Window, mbox_camera_t *Camera)
-{
-	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-	{
-		glfwSetWindowShouldClose(Window, true);
-	}
-	if(glfwGetKey(Window, GLFW_KEY_Q) == GLFW_PRESS)
-	{
-		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-	}
-	if(glfwGetKey(Window, GLFW_KEY_E) == GLFW_PRESS)
-	{
-		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-	}
-	if(glfwGetKey(Window, GLFW_KEY_P) == GLFW_PRESS)
-	{
-		Shader.Rebuild();
-	}
-
-	Camera->Speed = 2.5f * DeltaTime;
-	Camera->RelativeXAxis = uMATH::Normalize(uMATH::Cross(Camera->Eye, Camera->UpAxis));
-	Camera->RelativeYAxis = uMATH::Normalize(uMATH::Cross(Camera->RelativeXAxis, Camera->Eye));
-	Camera->Move(Window);
-}
-
-
-void MousePosCallback(GLFWwindow *Window, double mx, double my)
-{
-	if(FirstFrame)
-	{
-		PrevMouseX = mx;
-		PrevMouseY = my;
-		FirstFrame = 0;
-	}
-
-	float xoffset = mx - PrevMouseX;
-	float yoffset = PrevMouseY - my;
-	
-	PrevMouseX = mx;
-	PrevMouseY = my;
-
-	Camera.LookAtMouse(xoffset, yoffset);
-}
+void FrameResizeCallback(GLFWwindow* Window, int width, int height);
+void ProcessInput(GLFWwindow* Window);
+void MousePosCallback(GLFWwindow* Window, double mx, double my);
 
 
 int main(void)
@@ -101,6 +48,14 @@ int main(void)
 		printf("GLAD: Failed getting function pointers\n");
 		return -1;
 	}
+
+	window_handler_t* WinHND = InitWindowHandler(SCREEN_X_DIM, SCREEN_Y_DIM);
+	if (!WinHND)
+	{
+		printf("System: Could not allocate core window handler\n");
+		return -1;
+	}
+	glfwSetWindowUserPointer(Window, (void *)WinHND);
 	
 	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(Window, MousePosCallback);
@@ -179,26 +134,16 @@ int main(void)
 	glEnableVertexAttribArray(1);
 	glBindVertexArray(0);
 
-	glEnable(GL_DEPTH_TEST);
+	WinHND->Shader.Create("../shaders/test.vert", "../shaders/test.frag");
 
-	Shader.Create("../shaders/test.vert", "../shaders/test.frag");
-	int RenderMode = GL_TRIANGLES;
-
-	unsigned int mloc = glGetUniformLocation(Shader.ID, "model");
-	unsigned int vloc = glGetUniformLocation(Shader.ID, "view");
-	unsigned int ploc = glGetUniformLocation(Shader.ID, "projection");
-	unsigned int lploc = glGetUniformLocation(Shader.ID, "lightpos");
-	unsigned int cloc = glGetUniformLocation(Shader.ID, "objcolor");
-	unsigned int lloc = glGetUniformLocation(Shader.ID, "lightcolor");
-	unsigned int aloc = glGetUniformLocation(Shader.ID, "ambientstrength");
-	unsigned int vdloc = glGetUniformLocation(Shader.ID, "viewpos");
-
-	geometry_state_t *GeometryObjects = (geometry_state_t *)calloc(1, sizeof(geometry_state_t));
-	if (!GeometryObjects)
-	{
-		printf("System: calloc error, GeometryObjects\n");
-		return -1;
-	}
+	unsigned int model_uni = glGetUniformLocation(WinHND->Shader.ID, "model");
+	unsigned int view_uni = glGetUniformLocation(WinHND->Shader.ID, "view");
+	unsigned int viewpos_uni = glGetUniformLocation(WinHND->Shader.ID, "viewpos");
+	unsigned int projection_uni = glGetUniformLocation(WinHND->Shader.ID, "projection");
+	unsigned int lightpos_uni = glGetUniformLocation(WinHND->Shader.ID, "lightpos");
+	unsigned int objcolor_uni = glGetUniformLocation(WinHND->Shader.ID, "objcolor");
+	unsigned int lloc = glGetUniformLocation(WinHND->Shader.ID, "lightcolor");
+	unsigned int ambistrgth_uni = glGetUniformLocation(WinHND->Shader.ID, "ambientstrength");
 
 	uMATH::mat4f_t GeometryModel = {};
 	geometry_create_info_t CreateInfo;
@@ -217,59 +162,71 @@ int main(void)
 		uMATH::Translate(&GeometryModel, cubePositions[i]);
 
 		CreateInfo.Model = GeometryModel;
-		GeometryObjects->Alloc(CreateInfo);
+		WinHND->GeometryObjects.Alloc(CreateInfo);
 	}
 
+	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
 
-	uMATH::mat4f_t View = {};
 	uMATH::mat4f_t Model = {};
-	uMATH::mat4f_t Projection = {};
-	uMATH::SetFrustumHFOV(&Projection, 45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
-
 	uMATH::vec3f_t LightPosition = { 1.2f, 1.0f, 2.0f };
 	float lightScale = 0.2f;
 
 	float CurrFrameTime = 0;
 
+	glEnable(GL_DEPTH_TEST);
+	int RenderMode = GL_TRIANGLES;
 	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+
 	while (!glfwWindowShouldClose(Window))
 	{
 
 // Input
 
 		glfwPollEvents();
-		ProcessInput(Window, &Camera);
+		ProcessInput(Window);
 
 //Render
 
-		Shader.Use();
+		WinHND->Shader.Use();
 
 	//------------------------------------Draw Objects
-		glUniform1f(aloc, 0.1f);
-		glUniform3f(cloc, 1.0f, 0.5f, 0.31f);
+		glUniform1f(ambistrgth_uni, 0.1f);
+		glUniform3f(objcolor_uni, 1.0f, 0.5f, 0.31f);
 		glUniform3f(lloc, 1.0f, 1.0f, 1.0f);
-		glUniform3f(lploc, LightPosition.x, LightPosition.y, LightPosition.z);
+		glUniform3f(lightpos_uni, LightPosition.x, LightPosition.y, LightPosition.z);
 
-		glUniformMatrix4fv(ploc, 1, GL_FALSE, &Projection.m[0][0]);
+		glUniformMatrix4fv(projection_uni, 1, GL_FALSE, &WinHND->Projection.m[0][0]);
 
-		uMATH::SetCameraView(&View, Camera.Position, Camera.Position+Camera.Eye, Camera.UpAxis);
-		glUniformMatrix4fv(vloc, 1, GL_FALSE, &View.m[0][0]);
-		glUniform3f(vdloc, Camera.Position.x, Camera.Position.y, Camera.Position.z);
+		glUniformMatrix4fv(view_uni, 1, GL_FALSE, &WinHND->View.m[0][0]);
+		glUniform3f(viewpos_uni, WinHND->Camera.Position.x, WinHND->Camera.Position.y, WinHND->Camera.Position.z);
 		
 		glBindVertexArray(VAO);
-		for (unsigned int i = 0; i < GeometryObjects->Position; i++)
+		for (unsigned int i = 0; i < WinHND->GeometryObjects.Position; i++)
 		{
-			glUniformMatrix4fv(mloc, 1, GL_FALSE, &GeometryObjects->Model[i].m[0][0]);
+			if (WinHND->GeometryObjects.Visible[i] == VIS_STATUS_FREED)
+			{
+				continue;
+			}
+
+			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
 			glDrawArrays(RenderMode, 0, 36);
 		}
 
+		if (WinHND->ActiveSelection == 1)
+		{
+			WinHND->GeometryObjects.Alloc(WinHND->Active);
+			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->Active.Model.m[0][0]);
+			glDrawArrays(RenderMode, 0, 36);
+			WinHND->ActiveSelection = 0;
+		}
+
 	//----------------------------------Draw Light Sources
-		glUniform1f(aloc, 1.0f);
-		glUniform3f(cloc, 1.0f, 1.0f, 1.0f);
+		glUniform1f(ambistrgth_uni, 1.0f);
+		glUniform3f(objcolor_uni, 1.0f, 1.0f, 1.0f);
 		SetTransform(&Model);
 		uMATH::Scale(&Model, lightScale);
 		uMATH::Translate(&Model, LightPosition);
-		glUniformMatrix4fv(mloc, 1, GL_FALSE, &Model.m[0][0]);
+		glUniformMatrix4fv(model_uni, 1, GL_FALSE, &Model.m[0][0]);
 		glDrawArrays(RenderMode, 0, 36);
 
 		glBindVertexArray(0);
@@ -281,10 +238,78 @@ int main(void)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		CurrFrameTime = glfwGetTime();
-		DeltaTime = CurrFrameTime - PrevFrameTime;
-		PrevFrameTime = CurrFrameTime;
+		WinHND->DeltaTime = CurrFrameTime - WinHND->PrevFrameTime;
+		WinHND->PrevFrameTime = CurrFrameTime;
 	}
 
     glfwTerminate();
     return 0;
+}
+
+
+void FrameResizeCallback(GLFWwindow *Window, int width, int height)
+{
+	glViewport(0,0,width,height);
+}
+
+
+void ProcessInput(GLFWwindow *Window)
+{
+	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
+
+	WinHND->Camera.Speed = 2.5f * WinHND->DeltaTime;
+	WinHND->Camera.RelativeXAxis = uMATH::Normalize(uMATH::Cross(WinHND->Camera.Eye, WinHND->Camera.UpAxis));
+	WinHND->Camera.RelativeYAxis = uMATH::Normalize(uMATH::Cross(WinHND->Camera.RelativeXAxis, WinHND->Camera.Eye));
+	WinHND->Camera.Move(Window);
+	uMATH::SetCameraView(&WinHND->View, WinHND->Camera.Position, WinHND->Camera.Position + WinHND->Camera.Eye, WinHND->Camera.UpAxis);
+
+	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(Window, true);
+	}
+	if(glfwGetKey(Window, GLFW_KEY_Q) == GLFW_PRESS)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+	}
+	if(glfwGetKey(Window, GLFW_KEY_E) == GLFW_PRESS)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+	}
+	if(glfwGetKey(Window, GLFW_KEY_P) == GLFW_PRESS)
+	{
+		WinHND->Shader.Rebuild();
+	}
+	if (glfwGetKey(Window, GLFW_KEY_N) == GLFW_PRESS)
+	{
+		uMATH::vec3f_t p = { 0.0f,0.0f,4.5f };
+		WinHND->Active.Model = WinHND->View;
+		uMATH::Translate(&WinHND->Active.Model, p);
+		WinHND->Active.Model = uMATH::InverseM4(WinHND->Active.Model);
+		WinHND->ActiveSelection = 1;
+	}
+	if (glfwGetKey(Window, GLFW_KEY_R) == GLFW_PRESS)
+	{
+	WinHND->GeometryObjects.Free(WinHND->GeometryObjects.Position-1);
+	}
+}
+
+
+void MousePosCallback(GLFWwindow *Window, double mx, double my)
+{
+	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
+
+	if(WinHND->FirstCameraMove)
+	{
+		WinHND->PrevMouseX = mx;
+		WinHND->PrevMouseY = my;
+		WinHND->FirstCameraMove = 0;
+	}
+
+	float xoffset = mx - WinHND->PrevMouseX;
+	float yoffset = WinHND->PrevMouseY - my;
+	
+	WinHND->PrevMouseX = mx;
+	WinHND->PrevMouseY = my;
+
+	WinHND->Camera.LookAtMouse(xoffset, yoffset);
 }

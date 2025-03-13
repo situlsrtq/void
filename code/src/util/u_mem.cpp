@@ -23,8 +23,8 @@ void free_list_t::Push(uint8_t FreedIndex)
 		return;
 	}
 
-	NextFreePosition++;
 	OpenPositions[NextFreePosition] = FreedIndex;
+	NextFreePosition++;
 	NumFree++;
 }
 
@@ -71,13 +71,14 @@ void geometry_state_t::Alloc(const geometry_create_info_t &CreateInfo)
 		Position++;
 	}
 
-	if(index == PROGRAM_MAX_OBJECTS)
+	if(index >= PROGRAM_MAX_OBJECTS)
 	{
 		printf("System: Object Limit Reached\n");
+		Position--;
 		return;
 	}
 
-	Visible[index] = 1;
+	Visible[index] = VIS_STATUS_VISIBLE;
 	Scale[index] = CreateInfo.Scale;
 	Intensity[index] = CreateInfo.Intensity;
 	Color[index] = CreateInfo.Color;
@@ -87,6 +88,21 @@ void geometry_state_t::Alloc(const geometry_create_info_t &CreateInfo)
 
 void geometry_state_t::Free(uint8_t FreedIndex)
 {
+	if (FreedIndex >= PROGRAM_MAX_OBJECTS)
+	{
+		printf("System: Object array overrun, this is bad stuff\n");
+		return;
+	}
+	if (FreedIndex == 0 && Position == 1)
+	{
+		printf("System: Object array empty, nothing to free\n");
+		return;
+	}
+
 	FreeList.Push(FreedIndex);
 	Visible[FreedIndex] = VIS_STATUS_FREED;
+	if (FreedIndex + 1 == Position)
+	{
+		Position--;
+	}
 }

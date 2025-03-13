@@ -11,7 +11,7 @@
 #define PROGRAM_MAX_OBJECTS 64
 #define VIS_STATUS_VISIBLE 1
 #define VIS_STATUS_INVISIBLE 0
-#define VIS_STATUS_FREED -1
+#define VIS_STATUS_FREED 2
 
 
 struct free_list_t
