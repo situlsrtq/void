@@ -16,6 +16,8 @@ void FrameResizeCallback(GLFWwindow* Window, int width, int height);
 void ProcessInput(GLFWwindow* Window);
 void MousePosCallback(GLFWwindow* Window, double mx, double my);
 
+uint8_t NKeyWasDown;
+uint8_t RKeyWasDown;
 
 int main(void)
 {
@@ -281,15 +283,31 @@ void ProcessInput(GLFWwindow *Window)
 	}
 	if (glfwGetKey(Window, GLFW_KEY_N) == GLFW_PRESS)
 	{
-		uMATH::vec3f_t p = { 0.0f,0.0f,4.5f };
-		WinHND->Active.Model = WinHND->View;
-		uMATH::Translate(&WinHND->Active.Model, p);
-		WinHND->Active.Model = uMATH::InverseM4(WinHND->Active.Model);
-		WinHND->ActiveSelection = 1;
+		NKeyWasDown = 1;
+	}
+	if (glfwGetKey(Window, GLFW_KEY_N) == GLFW_RELEASE)
+	{
+		if (NKeyWasDown)
+		{
+			uMATH::vec3f_t p = { 0.0f,0.0f,4.5f };
+			WinHND->Active.Model = WinHND->View;
+			uMATH::Translate(&WinHND->Active.Model, p);
+			WinHND->Active.Model = uMATH::InverseM4(WinHND->Active.Model);
+			WinHND->ActiveSelection = 1;
+		}
+		NKeyWasDown = 0;
 	}
 	if (glfwGetKey(Window, GLFW_KEY_R) == GLFW_PRESS)
 	{
-	WinHND->GeometryObjects.Free(WinHND->GeometryObjects.Position-1);
+		RKeyWasDown = 1;
+	}
+	if (glfwGetKey(Window, GLFW_KEY_R) == GLFW_RELEASE)
+	{
+		if (RKeyWasDown)
+		{
+			//WinHND->GeometryObjects.Free();
+		}
+		RKeyWasDown = 0;
 	}
 }
 

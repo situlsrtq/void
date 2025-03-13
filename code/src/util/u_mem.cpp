@@ -93,11 +93,12 @@ void geometry_state_t::Free(uint8_t FreedIndex)
 		printf("System: Object array empty, nothing to free\n");
 		return;
 	}
+	if (FreedIndex >= Position || FreedIndex >= PROGRAM_MAX_OBJECTS)
+	{
+		printf("System: Out of bounds on free list\n");
+		return;
+	}
 
 	FreeList.Push(FreedIndex);
 	Visible[FreedIndex] = VIS_STATUS_FREED;
-	if (FreedIndex + 1 == Position)
-	{
-		Position--;
-	}
 }

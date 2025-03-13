@@ -43,6 +43,7 @@ uint32_t shader_t::Build(const char* InFilePath, int ShaderType)
 	if (srclen <= 0)
 	{
 		printf("Error getting shader source size %s\n", InFilePath);
+		fclose(SFile);
 		return -1;
 	}
 
@@ -50,6 +51,7 @@ uint32_t shader_t::Build(const char* InFilePath, int ShaderType)
 	if (FileSrc == 0x0)
 	{
 		printf("malloc error: shader source\n");
+		fclose(SFile);
 		return -1;
 	}
 	if ((fread(FileSrc, 1, srclen, SFile)) != srclen)
@@ -57,9 +59,11 @@ uint32_t shader_t::Build(const char* InFilePath, int ShaderType)
 		printf("read error: shader source\n");
 		free(FileSrc);
 		FileSrc = 0x0;
+		fclose(SFile);
 		return -1;
 	}
 	FileSrc[srclen] = '\0';
+	fclose(SFile);
 
 // Compile shader
 
