@@ -10,6 +10,9 @@ window_handler_t* InitWindowHandler(float ScreenX, float ScreenY)
 		return 0x0;
 	}
 
+	res->Width = ScreenX;
+	res->Height = ScreenY;
+	res->DeltaTime = 0.0f;
 	res->DeltaTime = 0.0f;
 	res->PrevFrameTime = 0.0f;
 	res->FirstCameraMove = 1;

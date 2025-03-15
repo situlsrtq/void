@@ -15,6 +15,8 @@
 
 struct window_handler_t
 {
+	int Width;
+	int Height;
 	float DeltaTime;
 	float PrevFrameTime;
 	uint16_t FirstCameraMove;
@@ -27,6 +29,7 @@ struct window_handler_t
 	mbox_camera_t Camera;
 	uMATH::mat4f_t View;
 	uMATH::mat4f_t Projection;
+	uMATH::mat4f_t InverseProjection;
 	geometry_create_info_t Active;
 	geometry_state_t GeometryObjects;
 };

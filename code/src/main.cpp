@@ -3,9 +3,10 @@
 
 #include "shader.h"
 #include "camera.h"
+#include "window.h"
 #include "util/u_math.h"
 #include "util/u_mem.h"
-#include "window.h"
+#include "util/u_phys.h"
 
 
 #define SCREEN_X_DIM 800
@@ -18,6 +19,7 @@ void MousePosCallback(GLFWwindow* Window, double mx, double my);
 
 uint8_t NKeyWasDown;
 uint8_t RKeyWasDown;
+uint8_t LMouseWasDown;
 
 int main(void)
 {
@@ -59,7 +61,7 @@ int main(void)
 	}
 	glfwSetWindowUserPointer(Window, (void *)WinHND);
 	
-	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(Window, MousePosCallback);
 
 	float VertexData[] = {
@@ -168,6 +170,7 @@ int main(void)
 	}
 
 	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
+	WinHND->InverseProjection = InverseM4(WinHND->Projection);							// Projection matrix is essentially static so precalculate
 
 	uMATH::mat4f_t Model = {};
 	uMATH::vec3f_t LightPosition = { 1.2f, 1.0f, 2.0f };
@@ -233,7 +236,8 @@ int main(void)
 
 		glBindVertexArray(0);
 		glUseProgram(0);
-// Blit
+
+// Blit, Upkeep data
 
 		glfwSwapBuffers(Window);
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -251,6 +255,9 @@ int main(void)
 
 void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 {
+	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
+	WinHND->Width = width;
+	WinHND->Height = height;
 	glViewport(0,0,width,height);
 }
 
@@ -305,9 +312,51 @@ void ProcessInput(GLFWwindow *Window)
 	{
 		if (RKeyWasDown)
 		{
-			//WinHND->GeometryObjects.Free();
 		}
 		RKeyWasDown = 0;
+	}
+	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+	{
+		LMouseWasDown = 1;
+	}
+	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
+	{
+		if(LMouseWasDown)
+		{
+			int xpos, ypos;
+			glfwGetWindowPos(Window, &xpos, &ypos);
+			uMATH::vec3f_t ray = uPHYS::CastWorldRay((float)xpos, (float) ypos, *WinHND);
+
+			uMATH::vec3f_t minAABB = { -1.0f,-1.0f,-1.0f };
+			uMATH::vec3f_t maxAABB = { 1.0f, 1.0f, 1.0f };
+			uMATH::vec3f_t origin = { WinHND->Camera.Position.x,WinHND->Camera.Position.y,WinHND->Camera.Position.z };
+			float distance = 0.0f;
+			float dmax = 100000.0f;
+			uint8_t foundindex = 0;
+			bool ret = false;
+			bool found = false;
+
+			for (int i = 0; i < WinHND->GeometryObjects.Position; i++)
+			{
+				ret = uPHYS::CheckRayOBBCollision(origin, ray, minAABB, maxAABB, WinHND->GeometryObjects.Model[i], &distance);
+				if (ret)
+				{
+					if (distance < dmax)
+					{
+						foundindex = i;
+						dmax = distance;
+						found = true;
+					}
+				}
+			}
+
+			if (found)
+			{
+				WinHND->GeometryObjects.Free(foundindex);
+			}
+		}
+
+		LMouseWasDown = 0;
 	}
 }
 

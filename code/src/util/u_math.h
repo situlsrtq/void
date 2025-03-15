@@ -111,6 +111,18 @@ inline vec3f_t Scalar(const vec3f_t &v, float s)
 }
 
 
+inline vec4f_t Scalar(const vec4f_t &v, float s)
+{
+	vec4f_t r;
+	r.x = v.x * s;
+	r.y = v.y * s;
+	r.z = v.z * s;
+	r.w = v.w * s;
+
+	return r;
+}
+
+
 inline float Dot(const vec3f_t& v, const vec3f_t& s)
 {
 	float r;
@@ -263,6 +275,19 @@ inline void Translate(mat4f_t *t, const vec3f_t &s)
 	t->m[0][3] += s.x;
 	t->m[1][3] += s.y;
 	t->m[2][3] += s.z;
+}
+
+
+inline vec4f_t MultiplyV4_M4(const vec4f_t &v, const mat4f_t &m)
+{
+	vec4f_t res;
+
+	res.x = (v.x * m.m[0][0]) + (v.x * m.m[0][1]) + (v.x * m.m[0][2]) + (v.x * m.m[0][3]);
+	res.y = (v.y * m.m[1][0]) + (v.y * m.m[1][1]) + (v.y * m.m[1][2]) + (v.y * m.m[1][3]);
+	res.z = (v.z * m.m[2][0]) + (v.z * m.m[2][1]) + (v.z * m.m[2][2]) + (v.z * m.m[2][3]);
+	res.w = (v.w * m.m[3][0]) + (v.w * m.m[3][1]) + (v.w * m.m[3][2]) + (v.w * m.m[3][3]);
+
+	return res;
 }
 
 
