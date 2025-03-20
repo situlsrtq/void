@@ -188,7 +188,6 @@ int main(void)
 	}
 
 	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
-	WinHND->InverseProjection = InverseM4(WinHND->Projection);							// Projection matrix is essentially static so precalculate
 
 	uMATH::mat4f_t Model = {};
 	uMATH::vec3f_t LightPosition = { 1.2f, 1.0f, 2.0f };
@@ -210,6 +209,22 @@ int main(void)
 		MousePicking.Bind_W();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		Shader2.Use();
+
+		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, &WinHND->Projection.m[0][0]);
+		glUniformMatrix4fv(view_uni, 1, GL_FALSE, &WinHND->View.m[0][0]);
+
+		for (unsigned int i = 0; i < WinHND->GeometryObjects.Position; i++)
+		{
+			if (WinHND->GeometryObjects.Visible[i] == VIS_STATUS_FREED)
+			{
+				continue;
+			}
+
+			glUniform1f(pickingindex_uni, float(i + 1));
+
+			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
+			glDrawArrays(RenderMode, 0, 36);
+		}
 
 
 	//------------------------------------Draw Objects
