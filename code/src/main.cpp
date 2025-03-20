@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #include "shader.h"
+#include "picking.h"
 #include "camera.h"
 #include "window.h"
 #include "util/u_math.h"
@@ -61,7 +62,7 @@ int main(void)
 	}
 	glfwSetWindowUserPointer(Window, (void *)WinHND);
 	
-	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(Window, MousePosCallback);
 
 	float VertexData[] = {
@@ -138,7 +139,7 @@ int main(void)
 	glEnableVertexAttribArray(1);
 	glBindVertexArray(0);
 
-	WinHND->Shader.Create("../shaders/test.vert", "../shaders/test.frag");
+	WinHND->Shader.Create("../shaders/main.vert", "../shaders/main.frag");
 
 	unsigned int model_uni = glGetUniformLocation(WinHND->Shader.ID, "model");
 	unsigned int view_uni = glGetUniformLocation(WinHND->Shader.ID, "view");
@@ -148,6 +149,23 @@ int main(void)
 	unsigned int objcolor_uni = glGetUniformLocation(WinHND->Shader.ID, "objcolor");
 	unsigned int lloc = glGetUniformLocation(WinHND->Shader.ID, "lightcolor");
 	unsigned int ambistrgth_uni = glGetUniformLocation(WinHND->Shader.ID, "ambientstrength");
+
+	fb_mpick_t MousePicking = {};
+	int success = MousePicking.Init(WinHND->Width, WinHND->Height);
+	if (success != 0)
+	{
+		printf("System: Failed to initialize framebuffer\n");
+		return -1;
+	}
+
+	shader_t Shader2 = {};
+	Shader2.Create("../shaders/pick.vert", "../shaders/pick.frag");
+
+	unsigned int pickingmodel_uni = glGetUniformLocation(Shader2.ID, "model");
+	unsigned int pickingview_uni = glGetUniformLocation(Shader2.ID, "view");
+	unsigned int pickingprojection_uni = glGetUniformLocation(Shader2.ID, "projection");
+	unsigned int pickingindex_uni = glGetUniformLocation(Shader2.ID, "index");
+	unsigned int pickingtype_uni = glGetUniformLocation(Shader2.ID, "type");
 
 	uMATH::mat4f_t GeometryModel = {};
 	geometry_create_info_t CreateInfo;
@@ -185,16 +203,19 @@ int main(void)
 	while (!glfwWindowShouldClose(Window))
 	{
 
-// Input
-
-		glfwPollEvents();
-		ProcessInput(Window);
-
 //Render
+
+	//-----------------------------------Draw Framebuffers
+
+		MousePicking.Bind_W();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		Shader2.Use();
+
+
+	//------------------------------------Draw Objects
 
 		WinHND->Shader.Use();
 
-	//------------------------------------Draw Objects
 		glUniform1f(ambistrgth_uni, 0.1f);
 		glUniform3f(objcolor_uni, 1.0f, 0.5f, 0.31f);
 		glUniform3f(lloc, 1.0f, 1.0f, 1.0f);
@@ -246,6 +267,10 @@ int main(void)
 		CurrFrameTime = glfwGetTime();
 		WinHND->DeltaTime = CurrFrameTime - WinHND->PrevFrameTime;
 		WinHND->PrevFrameTime = CurrFrameTime;
+// Input
+
+		glfwPollEvents();
+		ProcessInput(Window);
 	}
 
     glfwTerminate();
@@ -325,35 +350,6 @@ void ProcessInput(GLFWwindow *Window)
 		{
 			int xpos, ypos;
 			glfwGetWindowPos(Window, &xpos, &ypos);
-			uMATH::vec3f_t ray = uPHYS::CastWorldRay((float)xpos, (float) ypos, *WinHND);
-
-			uMATH::vec3f_t minAABB = { -1.0f,-1.0f,-1.0f };
-			uMATH::vec3f_t maxAABB = { 1.0f, 1.0f, 1.0f };
-			uMATH::vec3f_t origin = { WinHND->Camera.Position.x,WinHND->Camera.Position.y,WinHND->Camera.Position.z };
-			float distance = 0.0f;
-			float dmax = 100000.0f;
-			uint8_t foundindex = 0;
-			bool ret = false;
-			bool found = false;
-
-			for (int i = 0; i < WinHND->GeometryObjects.Position; i++)
-			{
-				ret = uPHYS::CheckRayOBBCollision(origin, ray, minAABB, maxAABB, WinHND->GeometryObjects.Model[i], &distance);
-				if (ret)
-				{
-					if (distance < dmax)
-					{
-						foundindex = i;
-						dmax = distance;
-						found = true;
-					}
-				}
-			}
-
-			if (found)
-			{
-				WinHND->GeometryObjects.Free(foundindex);
-			}
 		}
 
 		LMouseWasDown = 0;

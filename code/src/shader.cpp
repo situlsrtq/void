@@ -6,7 +6,7 @@ uint32_t shader_t::Build(const char* InFilePath, int ShaderType)
 	size_t len = strlen(InFilePath) + 1;
 	if (len > TMAX_PATH_LEN)
 	{
-		printf("Shader Error: file path longer than max\n");
+		printf("Shader %s: file path longer than max\n", InFilePath);
 		return -1;
 	}
 
@@ -19,7 +19,7 @@ uint32_t shader_t::Build(const char* InFilePath, int ShaderType)
 			strcpy(FragPath, InFilePath);
 			break;
 		default:
-			printf("Shader Error: Shader type not supported\n");
+			printf("Shader %s: Shader type not supported\n", InFilePath);
 			break;
 	}
 
@@ -56,7 +56,7 @@ uint32_t shader_t::Build(const char* InFilePath, int ShaderType)
 	}
 	if ((fread(FileSrc, 1, srclen, SFile)) != srclen)
 	{
-		printf("read error: shader source\n");
+		printf("read error: shader source %s\n", InFilePath);
 		free(FileSrc);
 		FileSrc = 0x0;
 		fclose(SFile);
@@ -76,7 +76,7 @@ uint32_t shader_t::Build(const char* InFilePath, int ShaderType)
 	if (!success)
 	{
 		glGetShaderInfoLog(Shader, 512, NULL, InfoLog);
-		printf("GL: Failed to compile shader\n");
+		printf("GL: Failed to compile shader %s\n", InFilePath);
 		printf("%s\n", InfoLog);
 		free(FileSrc);
 		FileSrc = 0x0;

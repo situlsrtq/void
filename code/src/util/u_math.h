@@ -282,10 +282,10 @@ inline vec4f_t MultiplyV4_M4(const vec4f_t &v, const mat4f_t &m)
 {
 	vec4f_t res;
 
-	res.x = (v.x * m.m[0][0]) + (v.x * m.m[0][1]) + (v.x * m.m[0][2]) + (v.x * m.m[0][3]);
-	res.y = (v.y * m.m[1][0]) + (v.y * m.m[1][1]) + (v.y * m.m[1][2]) + (v.y * m.m[1][3]);
-	res.z = (v.z * m.m[2][0]) + (v.z * m.m[2][1]) + (v.z * m.m[2][2]) + (v.z * m.m[2][3]);
-	res.w = (v.w * m.m[3][0]) + (v.w * m.m[3][1]) + (v.w * m.m[3][2]) + (v.w * m.m[3][3]);
+	res.x = (v.x * m.m[0][0]) + (v.x * m.m[1][0]) + (v.x * m.m[2][0]) + (v.x * m.m[3][0]);
+	res.y = (v.y * m.m[0][1]) + (v.y * m.m[1][1]) + (v.y * m.m[2][1]) + (v.y * m.m[3][1]);
+	res.z = (v.z * m.m[0][2]) + (v.z * m.m[1][2]) + (v.z * m.m[2][2]) + (v.z * m.m[3][2]);
+	res.w = (v.w * m.m[0][3]) + (v.w * m.m[1][3]) + (v.w * m.m[2][3]) + (v.w * m.m[3][3]);
 
 	return res;
 }
