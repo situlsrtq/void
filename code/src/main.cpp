@@ -10,8 +10,8 @@
 #include "util/u_phys.h"
 
 
-#define SCREEN_X_DIM 800
-#define SCREEN_Y_DIM 600
+#define SCREEN_X_DIM 800.0f
+#define SCREEN_Y_DIM 600.0f
 
 
 void FrameResizeCallback(GLFWwindow* Window, int width, int height);
@@ -21,6 +21,7 @@ void MousePosCallback(GLFWwindow* Window, double mx, double my);
 uint8_t NKeyWasDown;
 uint8_t RKeyWasDown;
 uint8_t LMouseWasDown;
+fb_mpick_t MousePicking = {};
 
 int main(void)
 {
@@ -62,7 +63,7 @@ int main(void)
 	}
 	glfwSetWindowUserPointer(Window, (void *)WinHND);
 	
-	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(Window, MousePosCallback);
 
 	float VertexData[] = {
@@ -150,7 +151,6 @@ int main(void)
 	unsigned int lloc = glGetUniformLocation(WinHND->Shader.ID, "lightcolor");
 	unsigned int ambistrgth_uni = glGetUniformLocation(WinHND->Shader.ID, "ambientstrength");
 
-	fb_mpick_t MousePicking = {};
 	int success = MousePicking.Init(WinHND->Width, WinHND->Height);
 	if (success != 0)
 	{
@@ -187,7 +187,7 @@ int main(void)
 		WinHND->GeometryObjects.Alloc(CreateInfo);
 	}
 
-	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, 800.0f / 600.0f, 0.1f, 100.0f);
+	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, SCREEN_X_DIM / SCREEN_Y_DIM, 0.1f, 100.0f);
 
 	uMATH::mat4f_t Model = {};
 	uMATH::vec3f_t LightPosition = { 1.2f, 1.0f, 2.0f };
@@ -196,6 +196,8 @@ int main(void)
 	float CurrFrameTime = 0;
 
 	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
 	int RenderMode = GL_TRIANGLES;
 	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
@@ -206,7 +208,11 @@ int main(void)
 
 	//-----------------------------------Draw Framebuffers
 
+		glBindVertexArray(VAO);
+
 		MousePicking.Bind_W();
+
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		Shader2.Use();
 
@@ -221,11 +227,13 @@ int main(void)
 			}
 
 			glUniform1f(pickingindex_uni, float(i + 1));
+			glUniform1f(pickingtype_uni, float(1));
 
 			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
 			glDrawArrays(RenderMode, 0, 36);
 		}
 
+		MousePicking.Unbind_W();
 
 	//------------------------------------Draw Objects
 
@@ -241,7 +249,6 @@ int main(void)
 		glUniformMatrix4fv(view_uni, 1, GL_FALSE, &WinHND->View.m[0][0]);
 		glUniform3f(viewpos_uni, WinHND->Camera.Position.x, WinHND->Camera.Position.y, WinHND->Camera.Position.z);
 		
-		glBindVertexArray(VAO);
 		for (unsigned int i = 0; i < WinHND->GeometryObjects.Position; i++)
 		{
 			if (WinHND->GeometryObjects.Visible[i] == VIS_STATUS_FREED)
@@ -274,6 +281,7 @@ int main(void)
 		glUseProgram(0);
 
 // Blit, Upkeep data
+
 
 		glfwSwapBuffers(Window);
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -363,8 +371,8 @@ void ProcessInput(GLFWwindow *Window)
 	{
 		if(LMouseWasDown)
 		{
-			int xpos, ypos;
-			glfwGetWindowPos(Window, &xpos, &ypos);
+			texel_info_t res = MousePicking.GetInfo((uint32_t)WinHND->PrevMouseX, (uint32_t)(WinHND->Height - WinHND->PrevMouseY));
+			printf("Index: %f | Type: %f\n", res.ID, res.Type);
 		}
 
 		LMouseWasDown = 0;
@@ -389,5 +397,6 @@ void MousePosCallback(GLFWwindow *Window, double mx, double my)
 	WinHND->PrevMouseX = mx;
 	WinHND->PrevMouseY = my;
 
+//	printf("mx: %lf\nmy: %lf\n", mx, my);
 	WinHND->Camera.LookAtMouse(xoffset, yoffset);
 }
