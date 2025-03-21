@@ -23,6 +23,22 @@ uint8_t RKeyWasDown;
 uint8_t LMouseWasDown;
 fb_mpick_t MousePicking = {};
 
+
+void GLAPIENTRY
+MessageCallback(GLenum source,
+	GLenum type,
+	GLuint id,
+	GLenum severity,
+	GLsizei length,
+	const GLchar* message,
+	const void* userParam)
+{
+	fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+		(type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
+		type, severity, message);
+}
+
+
 int main(void)
 {
 
@@ -122,6 +138,10 @@ int main(void)
 		uMATH::vec3f_t{-1.3f,  1.0f, -1.5f}
 	};
 
+	glEnable(GL_DEBUG_OUTPUT);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	glDebugMessageCallback(MessageCallback, 0);
+
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
 	unsigned int VAO;
@@ -217,7 +237,7 @@ int main(void)
 		Shader2.Use();
 
 		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, &WinHND->Projection.m[0][0]);
-		glUniformMatrix4fv(view_uni, 1, GL_FALSE, &WinHND->View.m[0][0]);
+		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, &WinHND->View.m[0][0]);
 
 		for (unsigned int i = 0; i < WinHND->GeometryObjects.Position; i++)
 		{
