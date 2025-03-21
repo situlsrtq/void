@@ -379,17 +379,20 @@ void ProcessInput(GLFWwindow *Window)
 	}
 	if(glfwGetKey(Window, GLFW_KEY_P) == GLFW_RELEASE)
 	{
-		WinHND->MainShader.Rebuild();
-		unsigned int model_uni = glGetUniformLocation(WinHND->MainShader.ID, "model");
-		unsigned int view_uni = glGetUniformLocation(WinHND->MainShader.ID, "view");
-		unsigned int viewpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "viewpos");
-		unsigned int projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
-		unsigned int lightpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightpos");
-		unsigned int objcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "objcolor");
-		unsigned int lloc = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
-		unsigned int ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
+		if (PKeyWasDown)
+		{
+			WinHND->MainShader.Rebuild();
+			unsigned int model_uni = glGetUniformLocation(WinHND->MainShader.ID, "model");
+			unsigned int view_uni = glGetUniformLocation(WinHND->MainShader.ID, "view");
+			unsigned int viewpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "viewpos");
+			unsigned int projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
+			unsigned int lightpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightpos");
+			unsigned int objcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "objcolor");
+			unsigned int lloc = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
+			unsigned int ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
 
-		PKeyWasDown = 0;
+			PKeyWasDown = 0;
+		}
 	}
 	if (glfwGetKey(Window, GLFW_KEY_N) == GLFW_PRESS)
 	{
