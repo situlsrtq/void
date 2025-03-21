@@ -420,6 +420,10 @@ void ProcessInput(GLFWwindow *Window)
 		{
 			texel_info_t res = WinHND->PickPass.GetInfo((uint32_t)WinHND->PrevMouseX, (uint32_t)(WinHND->Height - WinHND->PrevMouseY));
 			printf("Index: %f | Type: %f\n", res.ID, res.Type);
+			if (res.ID > 0)
+			{
+				WinHND->GeometryObjects.Free(res.ID - 1);
+			}
 		}
 
 		LMouseWasDown = 0;

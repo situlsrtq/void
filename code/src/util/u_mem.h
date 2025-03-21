@@ -16,9 +16,8 @@
 
 struct free_list_t
 {
-	uint8_t NumFree = 0;
 	uint8_t NextFreePosition = 0;
-	uint8_t OpenPositions[PROGRAM_MAX_OBJECTS] = {0};
+	uint8_t OpenPositions[PROGRAM_MAX_OBJECTS];
 
 	void Push(uint8_t Index);
 	uint8_t Pop();
@@ -43,12 +42,16 @@ struct geometry_state_t
 	uMATH::vec3f_t Color[PROGRAM_MAX_OBJECTS];
 	uMATH::mat4f_t Model[PROGRAM_MAX_OBJECTS];
 
-	free_list_t FreeList;
 	uint8_t Position;
 
 	void Alloc();
 	void Alloc(const geometry_create_info_t &CreateInfo);
 	void Free(uint8_t FreedIndex);
+	
+	private:
+	
+	// Prevent Push() or Pop() being called outside of provided Alloc(), Free() functions
+	free_list_t FreeList;
 };
 
 

@@ -3,14 +3,9 @@
 
 uint8_t free_list_t::Pop()
 {
+	NextFreePosition--;
+
 	uint8_t res = OpenPositions[NextFreePosition];
-
-	if(NextFreePosition > 0)
-	{
-		NextFreePosition--;
-	}
-
-	NumFree--;
 	return res;
 }
 
@@ -25,7 +20,6 @@ void free_list_t::Push(uint8_t FreedIndex)
 
 	OpenPositions[NextFreePosition] = FreedIndex;
 	NextFreePosition++;
-	NumFree++;
 }
 
 
@@ -33,7 +27,7 @@ void geometry_state_t::Alloc()
 {
 	uint8_t index;
 
-	if(FreeList.NumFree > 0)
+	if(FreeList.NextFreePosition > 0)
 	{
 		index = FreeList.Pop();
 	}
@@ -61,7 +55,7 @@ void geometry_state_t::Alloc(const geometry_create_info_t &CreateInfo)
 {
 	uint8_t index;
 
-	if(FreeList.NumFree > 0)
+	if(FreeList.NextFreePosition > 0)
 	{
 		index = FreeList.Pop();
 	}
