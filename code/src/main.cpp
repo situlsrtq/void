@@ -7,7 +7,6 @@
 #include "window.h"
 #include "util/u_math.h"
 #include "util/u_mem.h"
-#include "util/u_phys.h"
 
 
 #define SCREEN_X_DIM 800.0f
@@ -18,39 +17,34 @@ void FrameResizeCallback(GLFWwindow* Window, int width, int height);
 void ProcessInput(GLFWwindow* Window);
 void MousePosCallback(GLFWwindow* Window, double mx, double my);
 
-uint8_t NKeyWasDown;
-uint8_t RKeyWasDown;
-uint8_t LMouseWasDown;
-fb_mpick_t MousePicking = {};
-
-
+#ifdef DEBUG
 void GLAPIENTRY
-MessageCallback(GLenum source,
-	GLenum type,
-	GLuint id,
-	GLenum severity,
-	GLsizei length,
-	const GLchar* message,
-	const void* userParam)
+MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
 	fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
 		(type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
 		type, severity, message);
 }
+#endif
+
+
+uint8_t NKeyWasDown;
+uint8_t RKeyWasDown;
+uint8_t PKeyWasDown;
+uint8_t LMouseWasDown;
 
 
 int main(void)
 {
 
-// Initialize GLFW
+// Initialize Core Systems
 
     if (!glfwInit())
         return -1;
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	
 	GLFWwindow * Window = glfwCreateWindow(800,600,"TestPlatform",0,0);
 	if(!Window)
@@ -63,7 +57,7 @@ int main(void)
 	glfwMakeContextCurrent(Window);
 	glfwSetFramebufferSizeCallback(Window, FrameResizeCallback);
 
-// Load GLAD functions - overwrites all gl functions, can only be called after setting context
+	// /!\ gladLoadGLLoader() overwrites all gl functions, can only be called after successfully setting a current context 
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
@@ -138,9 +132,13 @@ int main(void)
 		uMATH::vec3f_t{-1.3f,  1.0f, -1.5f}
 	};
 
+#ifdef DEBUG
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(MessageCallback, 0);
+#endif
+
+// Initialize Core VBO, VAO, Render passes
 
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
@@ -160,32 +158,43 @@ int main(void)
 	glEnableVertexAttribArray(1);
 	glBindVertexArray(0);
 
-	WinHND->Shader.Create("../shaders/main.vert", "../shaders/main.frag");
-
-	unsigned int model_uni = glGetUniformLocation(WinHND->Shader.ID, "model");
-	unsigned int view_uni = glGetUniformLocation(WinHND->Shader.ID, "view");
-	unsigned int viewpos_uni = glGetUniformLocation(WinHND->Shader.ID, "viewpos");
-	unsigned int projection_uni = glGetUniformLocation(WinHND->Shader.ID, "projection");
-	unsigned int lightpos_uni = glGetUniformLocation(WinHND->Shader.ID, "lightpos");
-	unsigned int objcolor_uni = glGetUniformLocation(WinHND->Shader.ID, "objcolor");
-	unsigned int lloc = glGetUniformLocation(WinHND->Shader.ID, "lightcolor");
-	unsigned int ambistrgth_uni = glGetUniformLocation(WinHND->Shader.ID, "ambientstrength");
-
-	int success = MousePicking.Init(WinHND->Width, WinHND->Height);
+	int success = WinHND->MainShader.Create("../shaders/main.vert", "../shaders/main.frag");
 	if (success != 0)
 	{
-		printf("System: Failed to initialize framebuffer\n");
+		printf("System: Failed to initialize main pass shaders\n");
 		return -1;
 	}
 
-	shader_t Shader2 = {};
-	Shader2.Create("../shaders/pick.vert", "../shaders/pick.frag");
+	unsigned int model_uni = glGetUniformLocation(WinHND->MainShader.ID, "model");
+	unsigned int view_uni = glGetUniformLocation(WinHND->MainShader.ID, "view");
+	unsigned int viewpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "viewpos");
+	unsigned int projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
+	unsigned int lightpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightpos");
+	unsigned int objcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "objcolor");
+	unsigned int lloc = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
+	unsigned int ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
 
-	unsigned int pickingmodel_uni = glGetUniformLocation(Shader2.ID, "model");
-	unsigned int pickingview_uni = glGetUniformLocation(Shader2.ID, "view");
-	unsigned int pickingprojection_uni = glGetUniformLocation(Shader2.ID, "projection");
-	unsigned int pickingindex_uni = glGetUniformLocation(Shader2.ID, "index");
-	unsigned int pickingtype_uni = glGetUniformLocation(Shader2.ID, "type");
+	success = WinHND->PickPass.Init(WinHND->Width, WinHND->Height);
+	if (success != 0)
+	{
+		printf("System: Failed to initialize pick pass framebuffer\n");
+		return -1;
+	}
+
+	success = WinHND->PickShader.Create("../shaders/pick.vert", "../shaders/pick.frag");
+	if (success != 0)
+	{
+		printf("System: Failed to initialize pick pass shaders\n");
+		return -1;
+	}
+
+	unsigned int pickingmodel_uni = glGetUniformLocation(WinHND->PickShader.ID, "model");
+	unsigned int pickingview_uni = glGetUniformLocation(WinHND->PickShader.ID, "view");
+	unsigned int pickingprojection_uni = glGetUniformLocation(WinHND->PickShader.ID, "projection");
+	unsigned int pickingindex_uni = glGetUniformLocation(WinHND->PickShader.ID, "index");
+	unsigned int pickingtype_uni = glGetUniformLocation(WinHND->PickShader.ID, "type");
+
+// Initialize first-frame data
 
 	uMATH::mat4f_t GeometryModel = {};
 	geometry_create_info_t CreateInfo;
@@ -216,25 +225,30 @@ int main(void)
 	float CurrFrameTime = 0;
 
 	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
 	int RenderMode = GL_TRIANGLES;
 	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+
+// Frame loop
 
 	while (!glfwWindowShouldClose(Window))
 	{
 
+// Input
+
+		glfwPollEvents();
+		ProcessInput(Window);
+
 //Render
 
-	//-----------------------------------Draw Framebuffers
+	//-----------------------------------Mouse Picking Pass----------------------------------------
 
 		glBindVertexArray(VAO);
 
-		MousePicking.Bind_W();
+		WinHND->PickPass.Bind_W();
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		Shader2.Use();
+		WinHND->PickShader.Use();
 
 		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, &WinHND->Projection.m[0][0]);
 		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, &WinHND->View.m[0][0]);
@@ -253,11 +267,11 @@ int main(void)
 			glDrawArrays(RenderMode, 0, 36);
 		}
 
-		MousePicking.Unbind_W();
+		WinHND->PickPass.Unbind_W();
 
-	//------------------------------------Draw Objects
+	//------------------------------------Object Geometry Pass---------------------------------------
 
-		WinHND->Shader.Use();
+		WinHND->MainShader.Use();
 
 		glUniform1f(ambistrgth_uni, 0.1f);
 		glUniform3f(objcolor_uni, 1.0f, 0.5f, 0.31f);
@@ -288,7 +302,8 @@ int main(void)
 			WinHND->ActiveSelection = 0;
 		}
 
-	//----------------------------------Draw Light Sources
+	//----------------------------------Light Geometry Pass----------------------------------------
+
 		glUniform1f(ambistrgth_uni, 1.0f);
 		glUniform3f(objcolor_uni, 1.0f, 1.0f, 1.0f);
 		SetTransform(&Model);
@@ -300,8 +315,7 @@ int main(void)
 		glBindVertexArray(0);
 		glUseProgram(0);
 
-// Blit, Upkeep data
-
+// Blit, pasrse inter-frame data
 
 		glfwSwapBuffers(Window);
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -310,13 +324,14 @@ int main(void)
 		CurrFrameTime = glfwGetTime();
 		WinHND->DeltaTime = CurrFrameTime - WinHND->PrevFrameTime;
 		WinHND->PrevFrameTime = CurrFrameTime;
-// Input
-
-		glfwPollEvents();
-		ProcessInput(Window);
 	}
 
+// Free resources and exit
+
     glfwTerminate();
+	free(WinHND);
+	WinHND = 0x0;
+
     return 0;
 }
 
@@ -324,8 +339,14 @@ int main(void)
 void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 {
 	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
+
 	WinHND->Width = width;
 	WinHND->Height = height;
+
+	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, width / height, 0.1f, 100.0f);
+	WinHND->PickPass.Release();
+	WinHND->PickPass.Init(width, height);
+
 	glViewport(0,0,width,height);
 }
 
@@ -352,9 +373,23 @@ void ProcessInput(GLFWwindow *Window)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 	}
-	if(glfwGetKey(Window, GLFW_KEY_P) == GLFW_PRESS)
+	if (glfwGetKey(Window, GLFW_KEY_P) == GLFW_PRESS)
 	{
-		WinHND->Shader.Rebuild();
+		PKeyWasDown = 1;
+	}
+	if(glfwGetKey(Window, GLFW_KEY_P) == GLFW_RELEASE)
+	{
+		WinHND->MainShader.Rebuild();
+		unsigned int model_uni = glGetUniformLocation(WinHND->MainShader.ID, "model");
+		unsigned int view_uni = glGetUniformLocation(WinHND->MainShader.ID, "view");
+		unsigned int viewpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "viewpos");
+		unsigned int projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
+		unsigned int lightpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightpos");
+		unsigned int objcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "objcolor");
+		unsigned int lloc = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
+		unsigned int ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
+
+		PKeyWasDown = 0;
 	}
 	if (glfwGetKey(Window, GLFW_KEY_N) == GLFW_PRESS)
 	{
@@ -372,17 +407,6 @@ void ProcessInput(GLFWwindow *Window)
 		}
 		NKeyWasDown = 0;
 	}
-	if (glfwGetKey(Window, GLFW_KEY_R) == GLFW_PRESS)
-	{
-		RKeyWasDown = 1;
-	}
-	if (glfwGetKey(Window, GLFW_KEY_R) == GLFW_RELEASE)
-	{
-		if (RKeyWasDown)
-		{
-		}
-		RKeyWasDown = 0;
-	}
 	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 	{
 		LMouseWasDown = 1;
@@ -391,7 +415,7 @@ void ProcessInput(GLFWwindow *Window)
 	{
 		if(LMouseWasDown)
 		{
-			texel_info_t res = MousePicking.GetInfo((uint32_t)WinHND->PrevMouseX, (uint32_t)(WinHND->Height - WinHND->PrevMouseY));
+			texel_info_t res = WinHND->PickPass.GetInfo((uint32_t)WinHND->PrevMouseX, (uint32_t)(WinHND->Height - WinHND->PrevMouseY));
 			printf("Index: %f | Type: %f\n", res.ID, res.Type);
 		}
 
@@ -417,6 +441,5 @@ void MousePosCallback(GLFWwindow *Window, double mx, double my)
 	WinHND->PrevMouseX = mx;
 	WinHND->PrevMouseY = my;
 
-//	printf("mx: %lf\nmy: %lf\n", mx, my);
 	WinHND->Camera.LookAtMouse(xoffset, yoffset);
 }

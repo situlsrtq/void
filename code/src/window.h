@@ -5,6 +5,7 @@
 #include "u_math.h"
 #include "u_mem.h"
 #include "shader.h"
+#include "picking.h"
 #include "camera.h"
 
 
@@ -25,7 +26,9 @@ struct window_handler_t
 	double PrevMouseX;
 	double PrevMouseY;
 
-	shader_t Shader;
+	shader_t MainShader;
+	shader_t PickShader;
+	fb_mpick_t PickPass;
 	mbox_camera_t Camera;
 	uMATH::mat4f_t View;
 	uMATH::mat4f_t Projection;

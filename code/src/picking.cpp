@@ -3,6 +3,14 @@
 
 int fb_mpick_t::Init(uint32_t Width, uint32_t Height)
 {
+	/*					As written, this error check is not compatible with GLFW's callback format
+	if (FBO != 0)
+	{
+		printf("System: attempt to initialize existing framebuffer. Call Release() first\n");
+		return -1;
+	}
+	*/
+
 	glGenFramebuffers(1, &FBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 
@@ -34,6 +42,25 @@ int fb_mpick_t::Init(uint32_t Width, uint32_t Height)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	return 0;
+}
+
+
+void fb_mpick_t::Release()
+{
+	if (FBO != 0)
+	{
+		glDeleteFramebuffers(1, &FBO);
+	}
+
+	if (IndexTex != 0)
+	{
+		glDeleteTextures(1, &IndexTex);
+	}
+
+	if (DepthTex != 0)
+	{
+		glDeleteTextures(1, &DepthTex);
+	}
 }
 
 

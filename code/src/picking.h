@@ -23,6 +23,7 @@ struct fb_mpick_t
 	texel_info_t Info;
 
 	int Init(uint32_t WindowWidth, uint32_t WindowHeight);
+	void Release();
 	void Bind_W();
 	void Unbind_W();
 	texel_info_t GetInfo(uint32_t X, uint32_t Y);
