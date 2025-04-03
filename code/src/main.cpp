@@ -14,8 +14,8 @@
 
 
 void FrameResizeCallback(GLFWwindow* Window, int width, int height);
-void ProcessInput(GLFWwindow* Window);
 void MousePosCallback(GLFWwindow* Window, double mx, double my);
+void ProcessInput(GLFWwindow* Window);
 
 #ifdef DEBUG
 void GLAPIENTRY
@@ -32,6 +32,7 @@ uint8_t NKeyWasDown;
 uint8_t RKeyWasDown;
 uint8_t PKeyWasDown;
 uint8_t LMouseWasDown;
+uint8_t RMouseWasDown;
 
 
 int main(void)
@@ -428,6 +429,23 @@ void ProcessInput(GLFWwindow *Window)
 
 		LMouseWasDown = 0;
 	}
+	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	{
+		if (!RMouseWasDown)
+		{
+			glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		}
+		RMouseWasDown = 1;
+	}
+	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE)
+	{
+		if (RMouseWasDown)
+		{
+			glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
+
+		RMouseWasDown = 0;
+	}
 }
 
 
@@ -448,5 +466,8 @@ void MousePosCallback(GLFWwindow *Window, double mx, double my)
 	WinHND->PrevMouseX = mx;
 	WinHND->PrevMouseY = my;
 
-	WinHND->Camera.LookAtMouse(xoffset, yoffset);
+	if (RMouseWasDown)
+	{
+		WinHND->Camera.LookAtMouse(xoffset, yoffset);
+	}
 }
