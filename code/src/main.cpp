@@ -285,11 +285,11 @@ int main(void)
 
 			ImGui::Begin("Object Parameters");
 
-			ImGui::Checkbox("Demo Window", &showwindow);
-			ImGui::Checkbox("Another Window", &showwindow);
 			ImGui::Text("");
 			ImGui::SliderFloat("Scale", &f, 0.1f, 20.0f);
+			ImGui::Text("");
 			ImGui::ColorEdit3("Color", (float*)&Color);
+			ImGui::Text("");
 
 			ImGui::Text("Frame time: %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
 			ImGui::End();
