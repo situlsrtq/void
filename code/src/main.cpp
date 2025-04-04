@@ -1,3 +1,6 @@
+#include "../inc/imgui/imgui.h"
+#include "../inc/imgui/imgui_impl_glfw.h"
+#include "../inc/imgui/imgui_impl_opengl3.h"
 #include "../inc/glad/glad.h"
 #include <GLFW/glfw3.h>
 
@@ -43,11 +46,12 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+	const char* GLSLVersion = "#version 460";
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	
-	GLFWwindow * Window = glfwCreateWindow(800,600,"TestPlatform",0,0);
+	GLFWwindow * Window = glfwCreateWindow(800,600,"mBox",0,0);
 	if(!Window)
 	{	
 		printf("GLFW: Failed to create window\n");
@@ -77,7 +81,37 @@ int main(void)
 	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(Window, MousePosCallback);
 
-	float VertexData[] = {
+// Initialize ImGui Context
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	WinHND->ImIO = ImGui::GetIO(); (void)WinHND->ImIO;
+	WinHND->ImIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	WinHND->ImIO.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	ImGui::StyleColorsDark();
+
+	ImGuiStyle& UIStyle = ImGui::GetStyle();
+	if (WinHND->ImIO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		UIStyle.WindowRounding = 0.0f;
+		UIStyle.Colors[ImGuiCol_WindowBg].w = 1.0f;
+	}
+
+	bool uisuccess = false;
+	uisuccess = ImGui_ImplGlfw_InitForOpenGL(Window, true);
+	if (!uisuccess)
+	{
+		printf("System: Could not initialize imgui context for GLFW\n");
+		return -1;
+	}
+	uisuccess = ImGui_ImplOpenGL3_Init(GLSLVersion);
+	if (!uisuccess)
+	{
+		printf("System: Could not initialize imgui context for OpenGL\n");
+		return -1;
+	}
+
+	float CubeMesh[] = {
 	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 	 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 	 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -133,26 +167,22 @@ int main(void)
 		uMATH::vec3f_t{-1.3f,  1.0f, -1.5f}
 	};
 
+// Initialize Core VBO, VAO, Render passes
+
 #ifdef DEBUG
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(MessageCallback, 0);
 #endif
 
-// Initialize Core VBO, VAO, Render passes
-
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
-	//unsigned int EBO;
-	//glGenBuffers(1, &EBO);
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(VertexData), VertexData, GL_STATIC_DRAW);
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(CubeMesh), CubeMesh, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3 * sizeof(float)));
@@ -231,14 +261,45 @@ int main(void)
 
 // Frame loop
 
+	bool showwindow = true;
+	uMATH::vec3f_t Color = {};
 	while (!glfwWindowShouldClose(Window))
 	{
 
 // Input
 
 		glfwPollEvents();
+		WinHND->ImIO = ImGui::GetIO();
 		ProcessInput(Window);
 
+// UI Framegen
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		if(showwindow)
+		{
+			ImGui::ShowDemoWindow(&showwindow);
+			static float f = 0.0f;
+			static int counter = 0;
+
+			ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+			ImGui::Checkbox("Demo Window", &showwindow);      // Edit bools storing our window open/close state
+			ImGui::Checkbox("Another Window", &showwindow);
+
+			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+			ImGui::ColorEdit3("clear color", (float*)&Color); // Edit 3 floats representing a color
+
+			if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+				counter++;
+			ImGui::SameLine();
+			ImGui::Text("counter = %d", counter);
+
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
+			ImGui::End();
+		}
 //Render
 
 	//-----------------------------------Mouse Picking Pass----------------------------------------
@@ -292,6 +353,7 @@ int main(void)
 			}
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
+			glUniform3fv(objcolor_uni, 1, &WinHND->GeometryObjects.Color[i].x);
 			glDrawArrays(RenderMode, 0, 36);
 		}
 
@@ -316,7 +378,18 @@ int main(void)
 		glBindVertexArray(0);
 		glUseProgram(0);
 
-// Blit, pasrse inter-frame data
+// Blit, parse inter-frame data
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		if (WinHND->ImIO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			GLFWwindow* context = glfwGetCurrentContext();
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+			glfwMakeContextCurrent(context);
+		}
 
 		glfwSwapBuffers(Window);
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -328,6 +401,10 @@ int main(void)
 	}
 
 // Free resources and exit
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 
     glfwTerminate();
 	free(WinHND);
@@ -344,6 +421,8 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 	WinHND->Width = width;
 	WinHND->Height = height;
 
+	// Also resize camera frustum and attached framebuffers
+
 	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, width / height, 0.1f, 100.0f);
 	WinHND->PickPass.Release();
 	WinHND->PickPass.Init(width, height);
@@ -355,6 +434,12 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 void ProcessInput(GLFWwindow *Window)
 {
 	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
+	
+	// Check if the UI should be pulling focus
+	if (WinHND->ImIO.WantCaptureKeyboard)
+	{
+		return;
+	}
 
 	WinHND->Camera.Speed = 2.5f * WinHND->DeltaTime;
 	WinHND->Camera.RelativeXAxis = uMATH::Normalize(uMATH::Cross(WinHND->Camera.Eye, WinHND->Camera.UpAxis));
@@ -411,6 +496,13 @@ void ProcessInput(GLFWwindow *Window)
 		}
 		NKeyWasDown = 0;
 	}
+
+	// Have to separately check if the UI should be pulling mouse button inputs, as they aren't tracked by WantCaptureKeyboard
+
+	if (WinHND->ImIO.WantCaptureMouse)
+	{
+		return;
+	}
 	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 	{
 		LMouseWasDown = 1;
@@ -452,6 +544,12 @@ void ProcessInput(GLFWwindow *Window)
 void MousePosCallback(GLFWwindow *Window, double mx, double my)
 {
 	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
+
+	// Check if the UI should be pulling focus
+	if (WinHND->ImIO.WantCaptureMouse)
+	{
+		return;
+	}
 
 	if(WinHND->FirstCameraMove)
 	{

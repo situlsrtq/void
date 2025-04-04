@@ -2,6 +2,7 @@
 #define MBOX_WINDOW_H
 
 
+#include "../inc/imgui/imgui.h"
 #include "u_math.h"
 #include "u_mem.h"
 #include "shader.h"
@@ -34,6 +35,7 @@ struct window_handler_t
 	uMATH::mat4f_t Projection;
 	geometry_create_info_t Active;
 	geometry_state_t GeometryObjects;
+	ImGuiIO ImIO;
 };
 
 

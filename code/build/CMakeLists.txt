@@ -12,7 +12,7 @@ get_filename_component(LIB_DIR "../lib" REALPATH)
 include_directories(../inc ../src/util)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-	file(GLOB SOURCES "../src/*.cpp" "../src/*.c")
+	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../inc/imgui/*.cpp")
 
 	add_executable(${PROJECT_NAME} ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:Debug>:DEBUG>)
@@ -22,7 +22,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_compile_options(-Wall -Wextra -O0)
 
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/*.h" "../src/util/*.cpp" "../src/util/*.h")
+	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/*.h" "../src/util/*.cpp" "../src/util/*.h" "../inc/imgui/*.cpp")
 
 	add_executable(${PROJECT_NAME} ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:Debug>:DEBUG>)
