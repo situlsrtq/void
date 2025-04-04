@@ -86,7 +86,6 @@ int main(void)
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	WinHND->ImIO = ImGui::GetIO(); (void)WinHND->ImIO;
-	WinHND->ImIO.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	WinHND->ImIO.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::StyleColorsDark();
 
@@ -270,6 +269,7 @@ int main(void)
 
 		glfwPollEvents();
 		WinHND->ImIO = ImGui::GetIO();
+		WinHND->ImIO.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 		ProcessInput(Window);
 
 // UI Framegen
@@ -283,21 +283,15 @@ int main(void)
 			static float f = 0.0f;
 			static int counter = 0;
 
-			ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+			ImGui::Begin("Object Parameters");
 
-			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-			ImGui::Checkbox("Demo Window", &showwindow);      // Edit bools storing our window open/close state
+			ImGui::Checkbox("Demo Window", &showwindow);
 			ImGui::Checkbox("Another Window", &showwindow);
+			ImGui::Text("");
+			ImGui::SliderFloat("Scale", &f, 0.1f, 20.0f);
+			ImGui::ColorEdit3("Color", (float*)&Color);
 
-			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-			ImGui::ColorEdit3("clear color", (float*)&Color); // Edit 3 floats representing a color
-
-			if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-				counter++;
-			ImGui::SameLine();
-			ImGui::Text("counter = %d", counter);
-
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
+			ImGui::Text("Frame time: %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
 			ImGui::End();
 		}
 //Render
