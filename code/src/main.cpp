@@ -263,13 +263,13 @@ int main(void)
 	while (!glfwWindowShouldClose(Window))
 	{
 
-// Input
+	// Input
 
 		glfwPollEvents();
 		WinHND->ImIO = ImGui::GetIO();
 		ProcessInput(Window);
 
-// UI Framegen
+	// UI Framegen
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -312,6 +312,9 @@ int main(void)
 			ImGui::Text("");
 			ImGui::Text("Hold Right Mouse button to control camera with mouse movement");
 			ImGui::Text("");
+			ImGui::Text("UI elements capture mouse commands when hovered.");
+			ImGui::Text("Move the mouse outside the menu to interact with the scene");
+			ImGui::Text("");
 			if (ImGui::Button("Close"))
 			{
 				helpwindow = false;
@@ -327,8 +330,6 @@ int main(void)
 		{
 			ImGui::Begin("Scene Controls");
 
-			ImGui::Text("Frame time: %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
-			ImGui::Text("");
 			if (ImGui::Button("New Object"))
 			{
 				WinHND->Active.New = true;
@@ -343,10 +344,13 @@ int main(void)
 			{
 				demowindow = true;
 			}
+			ImGui::SameLine();
+			ImGui::Text("Frame time: %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
 
 			ImGui::End();
 		}
-//Render
+
+	//Render
 
 	//-----------------------------------Mouse Picking Pass----------------------------------------
 
@@ -423,7 +427,7 @@ int main(void)
 		glBindVertexArray(0);
 		glUseProgram(0);
 
-// Blit, parse inter-frame data
+	// Blit, parse inter-frame data
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
