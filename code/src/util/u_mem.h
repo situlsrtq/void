@@ -26,10 +26,16 @@ struct free_list_t
 
 struct geometry_create_info_t
 {
-	float Scale;
+	int RefNumber;
 	float Intensity;
+	float Scale;
+	uMATH::vec3f_t Rotation;
+	uMATH::vec3f_t Position;
 	uMATH::vec3f_t Color;
 	uMATH::mat4f_t Model;
+
+	void DecomposeModelM4();
+	void ComposeModelM4();
 };
 
 

@@ -12,8 +12,8 @@
 #include "util/u_mem.h"
 
 
-#define SCREEN_X_DIM 800.0f
-#define SCREEN_Y_DIM 600.0f
+#define SCREEN_X_DIM 1000.0f
+#define SCREEN_Y_DIM 800.0f
 
 
 void FrameResizeCallback(GLFWwindow* Window, int width, int height);
@@ -51,7 +51,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	
-	GLFWwindow * Window = glfwCreateWindow(800,600,"mBox",0,0);
+	GLFWwindow * Window = glfwCreateWindow(SCREEN_X_DIM,SCREEN_Y_DIM,"mBox",0,0);
 	if(!Window)
 	{	
 		printf("GLFW: Failed to create window\n");
@@ -86,15 +86,9 @@ int main(void)
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	WinHND->ImIO = ImGui::GetIO(); (void)WinHND->ImIO;
-	WinHND->ImIO.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::StyleColorsDark();
 
 	ImGuiStyle& UIStyle = ImGui::GetStyle();
-	if (WinHND->ImIO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		UIStyle.WindowRounding = 0.0f;
-		UIStyle.Colors[ImGuiCol_WindowBg].w = 1.0f;
-	}
 
 	bool uisuccess = false;
 	uisuccess = ImGui_ImplGlfw_InitForOpenGL(Window, true);
@@ -109,6 +103,8 @@ int main(void)
 		printf("System: Could not initialize imgui context for OpenGL\n");
 		return -1;
 	}
+
+// Load mesh data and positions
 
 	float CubeMesh[] = {
 	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -201,7 +197,7 @@ int main(void)
 	unsigned int projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
 	unsigned int lightpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightpos");
 	unsigned int objcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "objcolor");
-	unsigned int lloc = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
+	unsigned int lightcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
 	unsigned int ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
 
 	success = WinHND->PickPass.Init(WinHND->Width, WinHND->Height);
@@ -246,6 +242,8 @@ int main(void)
 		WinHND->GeometryObjects.Alloc(CreateInfo);
 	}
 
+	CreateInfo.Color = { 0.5f, 1.0f, 0.31f };
+
 	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, SCREEN_X_DIM / SCREEN_Y_DIM, 0.1f, 100.0f);
 
 	uMATH::mat4f_t Model = {};
@@ -260,8 +258,7 @@ int main(void)
 
 // Frame loop
 
-	bool showwindow = true;
-	uMATH::vec3f_t Color = {};
+	bool demowindow = false;
 	while (!glfwWindowShouldClose(Window))
 	{
 
@@ -269,7 +266,6 @@ int main(void)
 
 		glfwPollEvents();
 		WinHND->ImIO = ImGui::GetIO();
-		WinHND->ImIO.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 		ProcessInput(Window);
 
 // UI Framegen
@@ -277,21 +273,37 @@ int main(void)
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-		if(showwindow)
+		if(WinHND->ActiveSelection)
 		{
-			ImGui::ShowDemoWindow(&showwindow);
-			static float f = 0.0f;
-			static int counter = 0;
+			if (demowindow)
+			{
+				ImGui::ShowDemoWindow(&demowindow);
+			}
 
 			ImGui::Begin("Object Parameters");
 
 			ImGui::Text("");
-			ImGui::SliderFloat("Scale", &f, 0.1f, 20.0f);
+			ImGui::SliderFloat("Scale", &WinHND->Active.Scale, 0.1f, 2.5f);
 			ImGui::Text("");
-			ImGui::ColorEdit3("Color", (float*)&Color);
+			ImGui::Text("Rotation");
+			ImGui::SliderFloat("rX", &WinHND->Active.Rotation.x, -9.0f, 9.0f);
+			ImGui::SliderFloat("rY", &WinHND->Active.Rotation.y, -9.0f, 9.0f);
+			ImGui::SliderFloat("rZ", &WinHND->Active.Rotation.z, -9.0f, 9.0f);
 			ImGui::Text("");
-
+			ImGui::Text("Position");
+			ImGui::SliderFloat("X", &WinHND->Active.Position.x, -20.0f, 20.0f);
+			ImGui::SliderFloat("Y", &WinHND->Active.Position.y, -20.0f, 20.0f);
+			ImGui::SliderFloat("Z", &WinHND->Active.Position.z, -20.0f, 20.0f);
+			ImGui::Text("");
+			ImGui::ColorEdit3("Color", (float*)&WinHND->Active.Color);
+			ImGui::Text("");
 			ImGui::Text("Frame time: %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
+			ImGui::Text("");
+			if (ImGui::Button("Show Demo Window"))
+			{
+				demowindow = true;
+			}
+
 			ImGui::End();
 		}
 //Render
@@ -330,8 +342,7 @@ int main(void)
 		WinHND->MainShader.Use();
 
 		glUniform1f(ambistrgth_uni, 0.1f);
-		glUniform3f(objcolor_uni, 1.0f, 0.5f, 0.31f);
-		glUniform3f(lloc, 1.0f, 1.0f, 1.0f);
+		glUniform3f(lightcolor_uni, 1.0f, 1.0f, 1.0f);
 		glUniform3f(lightpos_uni, LightPosition.x, LightPosition.y, LightPosition.z);
 
 		glUniformMatrix4fv(projection_uni, 1, GL_FALSE, &WinHND->Projection.m[0][0]);
@@ -353,10 +364,10 @@ int main(void)
 
 		if (WinHND->ActiveSelection == 1)
 		{
-			WinHND->GeometryObjects.Alloc(WinHND->Active);
+			WinHND->Active.ComposeModelM4();
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->Active.Model.m[0][0]);
+			glUniform3fv(objcolor_uni, 1, &WinHND->Active.Color.x);
 			glDrawArrays(RenderMode, 0, 36);
-			WinHND->ActiveSelection = 0;
 		}
 
 	//----------------------------------Light Geometry Pass----------------------------------------
@@ -376,14 +387,6 @@ int main(void)
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-		if (WinHND->ImIO.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-		{
-			GLFWwindow* context = glfwGetCurrentContext();
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-			glfwMakeContextCurrent(context);
-		}
 
 		glfwSwapBuffers(Window);
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -468,7 +471,7 @@ void ProcessInput(GLFWwindow *Window)
 			unsigned int projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
 			unsigned int lightpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightpos");
 			unsigned int objcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "objcolor");
-			unsigned int lloc = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
+			unsigned int lightcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
 			unsigned int ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
 
 			PKeyWasDown = 0;
@@ -506,13 +509,22 @@ void ProcessInput(GLFWwindow *Window)
 		if(LMouseWasDown)
 		{
 			texel_info_t res = WinHND->PickPass.GetInfo((uint32_t)WinHND->PrevMouseX, (uint32_t)(WinHND->Height - WinHND->PrevMouseY));
-			printf("Index: %f | Type: %f\n", res.ID, res.Type);
+			if (WinHND->ActiveSelection && (res.ID - 1) != WinHND->Active.RefNumber)
+			{
+				WinHND->Active.ComposeModelM4();
+				WinHND->GeometryObjects.Alloc(WinHND->Active);
+				WinHND->ActiveSelection = 0;
+			}
 			if (res.ID > 0)
 			{
-				WinHND->GeometryObjects.Free(res.ID - 1);
+				WinHND->Active.RefNumber = (int)res.ID - 1;
+				WinHND->Active.Model = WinHND->GeometryObjects.Model[WinHND->Active.RefNumber];
+				WinHND->Active.Color = WinHND->GeometryObjects.Color[WinHND->Active.RefNumber];
+				WinHND->Active.DecomposeModelM4();
+				WinHND->GeometryObjects.Free(WinHND->Active.RefNumber);
+				WinHND->ActiveSelection = 1;
 			}
 		}
-
 		LMouseWasDown = 0;
 	}
 	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
