@@ -259,6 +259,7 @@ int main(void)
 // Frame loop
 
 	bool demowindow = false;
+	bool helpwindow = false;
 	while (!glfwWindowShouldClose(Window))
 	{
 
@@ -273,13 +274,9 @@ int main(void)
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
 		if(WinHND->ActiveSelection)
 		{
-			if (demowindow)
-			{
-				ImGui::ShowDemoWindow(&demowindow);
-			}
-
 			ImGui::Begin("Object Parameters");
 
 			ImGui::Text("");
@@ -297,8 +294,51 @@ int main(void)
 			ImGui::Text("");
 			ImGui::ColorEdit3("Color", (float*)&WinHND->Active.Color);
 			ImGui::Text("");
+			if (ImGui::Button("Delete Object"))
+			{
+				WinHND->Active.Deleted = true;
+				WinHND->ActiveSelection = 0;
+			}
+
+			ImGui::End();
+		}
+		else if(helpwindow)
+		{
+			ImGui::Begin("Help");
+
+			ImGui::Text("Use WASD keys to move left, right, forward, and backward");
+			ImGui::Text("");
+			ImGui::Text("Use LShift to move down. Use Spacebar to move up");
+			ImGui::Text("");
+			ImGui::Text("Hold Right Mouse button to control camera with mouse movement");
+			ImGui::Text("");
+			if (ImGui::Button("Close"))
+			{
+				helpwindow = false;
+			}
+
+			ImGui::End();
+		}
+		else if (demowindow)
+		{
+			ImGui::ShowDemoWindow(&demowindow);
+		}
+		else 
+		{
+			ImGui::Begin("Scene Controls");
+
 			ImGui::Text("Frame time: %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
 			ImGui::Text("");
+			if (ImGui::Button("New Object"))
+			{
+				WinHND->Active.New = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Help"))
+			{
+				helpwindow = true;
+			}
+			ImGui::SameLine();
 			if (ImGui::Button("Show Demo Window"))
 			{
 				demowindow = true;
@@ -483,12 +523,14 @@ void ProcessInput(GLFWwindow *Window)
 	}
 	if (glfwGetKey(Window, GLFW_KEY_N) == GLFW_RELEASE)
 	{
-		if (NKeyWasDown)
+		if (NKeyWasDown || WinHND->Active.New == true)
 		{
 			uMATH::vec3f_t p = { 0.0f,0.0f,4.5f };
 			WinHND->Active.Model = WinHND->View;
 			uMATH::Translate(&WinHND->Active.Model, p);
 			WinHND->Active.Model = uMATH::InverseM4(WinHND->Active.Model);
+			WinHND->Active.DecomposeModelM4();
+			WinHND->Active.New = false;
 			WinHND->ActiveSelection = 1;
 		}
 		NKeyWasDown = 0;
@@ -509,7 +551,7 @@ void ProcessInput(GLFWwindow *Window)
 		if(LMouseWasDown)
 		{
 			texel_info_t res = WinHND->PickPass.GetInfo((uint32_t)WinHND->PrevMouseX, (uint32_t)(WinHND->Height - WinHND->PrevMouseY));
-			if (WinHND->ActiveSelection && (res.ID - 1) != WinHND->Active.RefNumber)
+			if (WinHND->ActiveSelection && WinHND->Active.Deleted != true)
 			{
 				WinHND->Active.ComposeModelM4();
 				WinHND->GeometryObjects.Alloc(WinHND->Active);

@@ -29,6 +29,7 @@ window_handler_t* InitWindowHandler(float ScreenX, float ScreenY)
 	res->Camera.Eye = {0.0f,0.0f,-1.0f};
 	res->Camera.UpAxis = {0.0f,1.0f,0.0f};
 
+	res->Active.Deleted = false;
 	res->Active.Scale = 1.0f;
 	res->Active.Intensity = 0.5f;
 	res->Active.Color = {1.0f, 0.5f, 0.31f};
