@@ -288,16 +288,16 @@ int main(void)
 			ImGui::SliderFloat("rZ", &WinHND->Active.Rotation.z, -9.0f, 9.0f);
 			ImGui::Text("");
 			ImGui::Text("Position");
-			ImGui::SliderFloat("X", &WinHND->Active.Position.x, -20.0f, 20.0f);
-			ImGui::SliderFloat("Y", &WinHND->Active.Position.y, -20.0f, 20.0f);
-			ImGui::SliderFloat("Z", &WinHND->Active.Position.z, -20.0f, 20.0f);
+			ImGui::SliderFloat("X", &WinHND->Active.Position.x, -15.0f, 15.0f);
+			ImGui::SliderFloat("Y", &WinHND->Active.Position.y, -15.0f, 15.0f);
+			ImGui::SliderFloat("Z", &WinHND->Active.Position.z, -15.0f, 15.0f);
 			ImGui::Text("");
 			ImGui::ColorEdit3("Color", (float*)&WinHND->Active.Color);
 			ImGui::Text("");
 			if (ImGui::Button("Delete Object"))
 			{
 				WinHND->Active.Deleted = true;
-				WinHND->ActiveSelection = 0;
+				WinHND->ActiveSelection = false;
 			}
 
 			ImGui::End();
@@ -335,6 +335,11 @@ int main(void)
 				WinHND->Active.New = true;
 			}
 			ImGui::SameLine();
+			if (ImGui::Button("Reload Shaders"))
+			{
+				WinHND->ReloadShaders = true;
+			}
+			ImGui::SameLine();
 			if (ImGui::Button("Help"))
 			{
 				helpwindow = true;
@@ -343,6 +348,11 @@ int main(void)
 			if (ImGui::Button("Show Demo Window"))
 			{
 				demowindow = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Exit"))
+			{
+				WinHND->ShouldExit = true;
 			}
 			ImGui::SameLine();
 			ImGui::Text("Frame time: %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
@@ -406,7 +416,7 @@ int main(void)
 			glDrawArrays(RenderMode, 0, 36);
 		}
 
-		if (WinHND->ActiveSelection == 1)
+		if (WinHND->ActiveSelection)
 		{
 			WinHND->Active.ComposeModelM4();
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->Active.Model.m[0][0]);
@@ -488,7 +498,7 @@ void ProcessInput(GLFWwindow *Window)
 	WinHND->Camera.Move(Window);
 	uMATH::SetCameraView(&WinHND->View, WinHND->Camera.Position, WinHND->Camera.Position + WinHND->Camera.Eye, WinHND->Camera.UpAxis);
 
-	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS || WinHND->ShouldExit)
 	{
 		glfwSetWindowShouldClose(Window, true);
 	}
@@ -506,7 +516,7 @@ void ProcessInput(GLFWwindow *Window)
 	}
 	if(glfwGetKey(Window, GLFW_KEY_P) == GLFW_RELEASE)
 	{
-		if (PKeyWasDown)
+		if (PKeyWasDown || WinHND->ReloadShaders)
 		{
 			WinHND->MainShader.Rebuild();
 			unsigned int model_uni = glGetUniformLocation(WinHND->MainShader.ID, "model");
@@ -535,7 +545,7 @@ void ProcessInput(GLFWwindow *Window)
 			WinHND->Active.Model = uMATH::InverseM4(WinHND->Active.Model);
 			WinHND->Active.DecomposeModelM4();
 			WinHND->Active.New = false;
-			WinHND->ActiveSelection = 1;
+			WinHND->ActiveSelection = true;
 		}
 		NKeyWasDown = 0;
 	}
@@ -559,7 +569,7 @@ void ProcessInput(GLFWwindow *Window)
 			{
 				WinHND->Active.ComposeModelM4();
 				WinHND->GeometryObjects.Alloc(WinHND->Active);
-				WinHND->ActiveSelection = 0;
+				WinHND->ActiveSelection = false;
 			}
 			if (res.ID > 0)
 			{
@@ -568,7 +578,7 @@ void ProcessInput(GLFWwindow *Window)
 				WinHND->Active.Color = WinHND->GeometryObjects.Color[WinHND->Active.RefNumber];
 				WinHND->Active.DecomposeModelM4();
 				WinHND->GeometryObjects.Free(WinHND->Active.RefNumber);
-				WinHND->ActiveSelection = 1;
+				WinHND->ActiveSelection = true;
 			}
 		}
 		LMouseWasDown = 0;

@@ -23,7 +23,9 @@ struct window_handler_t
 	float PrevFrameTime;
 	uint16_t FirstCameraMove;
 	uint16_t EditorMode;
-	unsigned int ActiveSelection;
+	bool ActiveSelection;
+	bool ReloadShaders;
+	bool ShouldExit;
 	double PrevMouseX;
 	double PrevMouseY;
 

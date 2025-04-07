@@ -19,7 +19,7 @@ void geometry_create_info_t::ComposeModelM4()
 {
 	uMATH::SetTransform(&Model);
 	uMATH::Scale(&Model, Scale);
-	uMATH::MatrixRotate(&Model, 40.0f, Rotation);
+	//uMATH::MatrixRotate(&Model, 40.0f, Rotation);
 	uMATH::Translate(&Model, Position);
 }
 
