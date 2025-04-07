@@ -22,6 +22,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_compile_options(-Wall -Wextra -O0)
 
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	# Including .h files here due to a quirk of Visual Studio's CMAKE implementation - necessary for seeing files in editor
 	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/*.h" "../src/util/*.cpp" "../src/util/*.h" "../inc/imgui/*.cpp")
 
 	add_executable(${PROJECT_NAME} ${SOURCES})

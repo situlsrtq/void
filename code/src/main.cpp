@@ -19,6 +19,7 @@
 void FrameResizeCallback(GLFWwindow* Window, int width, int height);
 void MousePosCallback(GLFWwindow* Window, double mx, double my);
 void ProcessInput(GLFWwindow* Window);
+void GenerateInterfaceElements(window_handler_t* WinHND, bool* HelpWindow, bool* DemoWindow);
 
 #ifdef DEBUG
 void GLAPIENTRY
@@ -258,8 +259,8 @@ int main(void)
 
 // Frame loop
 
-	bool demowindow = false;
-	bool helpwindow = false;
+	bool HelpWindow = false;
+	bool DemoWindow = false;
 	while (!glfwWindowShouldClose(Window))
 	{
 
@@ -275,90 +276,7 @@ int main(void)
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		if(WinHND->ActiveSelection)
-		{
-			ImGui::Begin("Object Parameters");
-
-			ImGui::Text("");
-			ImGui::SliderFloat("Scale", &WinHND->Active.Scale, 0.1f, 2.5f);
-			ImGui::Text("");
-			ImGui::Text("Rotation");
-			ImGui::SliderFloat("rX", &WinHND->Active.Rotation.x, -9.0f, 9.0f);
-			ImGui::SliderFloat("rY", &WinHND->Active.Rotation.y, -9.0f, 9.0f);
-			ImGui::SliderFloat("rZ", &WinHND->Active.Rotation.z, -9.0f, 9.0f);
-			ImGui::Text("");
-			ImGui::Text("Position");
-			ImGui::SliderFloat("X", &WinHND->Active.Position.x, -15.0f, 15.0f);
-			ImGui::SliderFloat("Y", &WinHND->Active.Position.y, -15.0f, 15.0f);
-			ImGui::SliderFloat("Z", &WinHND->Active.Position.z, -15.0f, 15.0f);
-			ImGui::Text("");
-			ImGui::ColorEdit3("Color", (float*)&WinHND->Active.Color);
-			ImGui::Text("");
-			if (ImGui::Button("Delete Object"))
-			{
-				WinHND->Active.Deleted = true;
-				WinHND->ActiveSelection = false;
-			}
-
-			ImGui::End();
-		}
-		else if(helpwindow)
-		{
-			ImGui::Begin("Help");
-
-			ImGui::Text("Use WASD keys to move left, right, forward, and backward");
-			ImGui::Text("");
-			ImGui::Text("Use LShift to move down. Use Spacebar to move up");
-			ImGui::Text("");
-			ImGui::Text("Hold Right Mouse button to control camera with mouse movement");
-			ImGui::Text("");
-			ImGui::Text("UI elements capture mouse commands when hovered.");
-			ImGui::Text("Move the mouse outside the menu to interact with the scene");
-			ImGui::Text("");
-			if (ImGui::Button("Close"))
-			{
-				helpwindow = false;
-			}
-
-			ImGui::End();
-		}
-		else if (demowindow)
-		{
-			ImGui::ShowDemoWindow(&demowindow);
-		}
-		else 
-		{
-			ImGui::Begin("Scene Controls");
-
-			if (ImGui::Button("New Object"))
-			{
-				WinHND->Active.New = true;
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Reload Shaders"))
-			{
-				WinHND->ReloadShaders = true;
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Help"))
-			{
-				helpwindow = true;
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Show Demo Window"))
-			{
-				demowindow = true;
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Exit"))
-			{
-				WinHND->ShouldExit = true;
-			}
-			ImGui::SameLine();
-			ImGui::Text("Frame time: %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
-
-			ImGui::End();
-		}
+		GenerateInterfaceElements(WinHND, &HelpWindow, &DemoWindow);
 
 	//Render
 
@@ -629,5 +547,99 @@ void MousePosCallback(GLFWwindow *Window, double mx, double my)
 	if (RMouseWasDown)
 	{
 		WinHND->Camera.LookAtMouse(xoffset, yoffset);
+	}
+}
+
+
+void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool *DemoWindow)
+{
+	if(WinHND->ActiveSelection)
+	{
+		ImGui::Begin("Object Parameters");
+
+		ImGui::Text("");
+		ImGui::SliderFloat("Scale", &WinHND->Active.Scale, 0.1f, 2.5f);
+		ImGui::Text("");
+		ImGui::Text("Rotation");
+		ImGui::SliderFloat("rX", &WinHND->Active.Rotation.x, -9.0f, 9.0f);
+		ImGui::SliderFloat("rY", &WinHND->Active.Rotation.y, -9.0f, 9.0f);
+		ImGui::SliderFloat("rZ", &WinHND->Active.Rotation.z, -9.0f, 9.0f);
+		ImGui::Text("");
+		ImGui::Text("Position");
+		ImGui::SliderFloat("X", &WinHND->Active.Position.x, -15.0f, 15.0f);
+		ImGui::SliderFloat("Y", &WinHND->Active.Position.y, -15.0f, 15.0f);
+		ImGui::SliderFloat("Z", &WinHND->Active.Position.z, -15.0f, 15.0f);
+		ImGui::Text("");
+		ImGui::ColorEdit3("Color", (float*)&WinHND->Active.Color);
+		ImGui::Text("");
+		if (ImGui::Button("Delete Object"))
+		{
+			WinHND->Active.Deleted = true;
+			WinHND->ActiveSelection = false;
+		}
+
+		ImGui::End();
+	}
+	else if(*HelpWindow)
+	{
+		ImGui::Begin("Help");
+
+		ImGui::Text("Use WASD keys to move left, right, forward, and backward");
+		ImGui::Text("");
+		ImGui::Text("Use LShift to move down. Use Spacebar to move up");
+		ImGui::Text("");
+		ImGui::Text("Hold Right Mouse button to control camera with mouse movement");
+		ImGui::Text("");
+		ImGui::Text("UI elements capture mouse commands when hovered.");
+		ImGui::Text("Move the mouse outside the menu to interact with the scene");
+		ImGui::Text("");
+		if (ImGui::Button("Close"))
+		{
+			*HelpWindow = false;
+		}
+
+		ImGui::End();
+	}
+#ifdef DEBUG
+	else if (*DemoWindow)
+	{
+		ImGui::ShowDemoWindow(DemoWindow);
+	}
+#endif
+	else 
+	{
+		ImGui::Begin("Scene Controls");
+
+		ImGui::Text("");
+		if (ImGui::Button("New Object"))
+		{
+			WinHND->Active.New = true;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Reload Shaders"))
+		{
+			WinHND->ReloadShaders = true;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Help"))
+		{
+			*HelpWindow = true;
+		}
+#ifdef DEBUG
+		ImGui::SameLine();
+		if (ImGui::Button("Show Demo Window"))
+		{
+			*DemoWindow = true;
+		}
+#endif
+		ImGui::SameLine();
+		if (ImGui::Button("Exit"))
+		{
+			WinHND->ShouldExit = true;
+		}
+		ImGui::SameLine();
+		ImGui::Text("Frame time: %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
+
+		ImGui::End();
 	}
 }
