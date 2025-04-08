@@ -491,11 +491,10 @@ void ProcessInput(GLFWwindow *Window)
 			}
 			if (res.ID > 0)
 			{
-				WinHND->Active.RefNumber = (int)res.ID - 1;
-				WinHND->Active.Model = WinHND->GeometryObjects.Model[WinHND->Active.RefNumber];
-				WinHND->Active.Color = WinHND->GeometryObjects.Color[WinHND->Active.RefNumber];
+				WinHND->Active.Model = WinHND->GeometryObjects.Model[(int)res.ID - 1];
+				WinHND->Active.Color = WinHND->GeometryObjects.Color[(int)res.ID - 1];
 				WinHND->Active.DecomposeModelM4();
-				WinHND->GeometryObjects.Free(WinHND->Active.RefNumber);
+				WinHND->GeometryObjects.Free((int)res.ID - 1);
 				WinHND->ActiveSelection = true;
 			}
 		}
@@ -561,9 +560,10 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 		ImGui::SliderFloat("Scale", &WinHND->Active.Scale, 0.1f, 2.5f);
 		ImGui::Text("");
 		ImGui::Text("Rotation");
-		ImGui::SliderFloat("rX", &WinHND->Active.Rotation.x, -9.0f, 9.0f);
-		ImGui::SliderFloat("rY", &WinHND->Active.Rotation.y, -9.0f, 9.0f);
-		ImGui::SliderFloat("rZ", &WinHND->Active.Rotation.z, -9.0f, 9.0f);
+		ImGui::SliderFloat("Angle", &WinHND->Active.RotationAngle, 0.0f, 180.0f);
+		ImGui::SliderFloat("rX", &WinHND->Active.RotationAxis.x, 0.0f, 1.0f);
+		ImGui::SliderFloat("rY", &WinHND->Active.RotationAxis.y, 0.0f, 1.0f);
+		ImGui::SliderFloat("rZ", &WinHND->Active.RotationAxis.z, 0.0f, 1.0f);
 		ImGui::Text("");
 		ImGui::Text("Position");
 		ImGui::SliderFloat("X", &WinHND->Active.Position.x, -15.0f, 15.0f);

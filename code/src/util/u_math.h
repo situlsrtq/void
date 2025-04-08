@@ -13,6 +13,7 @@
 #define R_AXIS_Z -1005
 
 #define RADIAN 0.0174532924f
+#define DIVIDE_BY_ZERO -1
 
 
 namespace uMATH
@@ -170,10 +171,19 @@ inline vec3f_t Cross(const vec3f_t& v, const vec3f_t& s)
 }
 
 
-inline vec3f_t Normalize(const vec3f_t &v)
+inline vec3f_t Normalize(const vec3f_t &v /*, int* res*/)
 {
 	vec3f_t r;
 	float len = sqrtf((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
+	if (len < 0.0001f)
+	{
+		r.x = 0.0f;
+		r.y = 0.0f;
+		r.z = 1.0f;
+		// *res = DIVIDE_BY_ZERO;
+		return r;
+	}
+
 	r.x = v.x / len;
 	r.y = v.y / len;
 	r.z = v.z / len;
@@ -286,6 +296,52 @@ inline void MatrixRotate(mat4f_t* t, float d, const vec3f_t& r)
 	t->m[2][0] = (vs * temp.x * temp.z) - (s * temp.y);
 	t->m[2][1] = (vs * temp.y * temp.z) + (s * temp.x);
 	t->m[2][2] = (vs * z2) + c;
+}
+
+
+inline void ExtractRotationM4(const mat4f_t& t, float* theta, vec3f_t* axis)
+{
+	float trace = t.m[0][0] + t.m[1][1] + t.m[2][2];
+	float cosT = (trace - 1.0f) / 2.0f;
+
+	if (cosT > 1.0f) cosT = 1.0f;
+	if (cosT < -1.0f) cosT = -1.0f;
+
+	// /!\ Return angle in degrees rather than radians, as Rotate() takes angle in degrees and converts to rad
+	*theta = acosf(cosT) / RADIAN;
+
+	// Check for degenerate cases (theta ~= 0 and theta ~=180)
+	if (*theta < 0.1f)
+	{
+		axis->x = 0.0f;
+		axis->y = 0.0f;
+		axis->z = 1.0f;
+		*theta = 0.0f;
+	}
+	else if (*theta > 179.9f)
+	{
+		axis->x = sqrtf((t.m[0][0] + 1.0f) / 2.0f);
+		axis->y = sqrtf((t.m[1][1] + 1.0f) / 2.0f);
+		axis->z = sqrtf((t.m[2][2] + 1.0f) / 2.0f);
+
+		if (t.m[0][1] < 0) axis->y = -axis->y;
+		//if (t.m[0][2] < 0) axis->z = -axis->z;
+
+		*axis = Normalize(*axis);
+		*theta = 180.0f;
+	}
+	// Normal case
+	else
+	{
+
+		//float inv2SinT = 1.0f / sqrtf((1.0f + cosT) * 2.0f);
+
+		axis->x = (t.m[2][1] - t.m[1][2]);
+		axis->y = (t.m[0][2] - t.m[2][0]);
+		axis->z = (t.m[1][0] - t.m[0][1]);
+
+		*axis = Normalize(*axis);
+	}
 }
 
 

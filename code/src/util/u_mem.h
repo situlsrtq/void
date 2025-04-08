@@ -26,12 +26,12 @@ struct free_list_t
 
 struct geometry_create_info_t
 {
-	int RefNumber;
 	bool New;
 	bool Deleted;
 	float Intensity;
 	float Scale;
-	uMATH::vec3f_t Rotation;
+	float RotationAngle;
+	uMATH::vec3f_t RotationAxis;
 	uMATH::vec3f_t Position;
 	uMATH::vec3f_t Color;
 	uMATH::mat4f_t Model;
