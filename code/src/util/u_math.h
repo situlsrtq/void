@@ -171,6 +171,7 @@ inline vec3f_t Cross(const vec3f_t& v, const vec3f_t& s)
 }
 
 
+// TODO: Add a flagging method so calling code can see when normalization would have failed (len ~= 0)
 inline vec3f_t Normalize(const vec3f_t &v /*, int* res*/)
 {
 	vec3f_t r;
