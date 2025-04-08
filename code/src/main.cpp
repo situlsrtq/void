@@ -447,6 +447,7 @@ void ProcessInput(GLFWwindow *Window)
 			unsigned int ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
 
 			PKeyWasDown = 0;
+			WinHND->ReloadShaders = false;
 		}
 	}
 	if (glfwGetKey(Window, GLFW_KEY_N) == GLFW_PRESS)
@@ -499,6 +500,7 @@ void ProcessInput(GLFWwindow *Window)
 			}
 		}
 		LMouseWasDown = 0;
+		WinHND->Active.Deleted = false;
 	}
 	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
@@ -600,12 +602,14 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 
 		ImGui::End();
 	}
+/*
 #ifdef DEBUG
 	else if (*DemoWindow)
 	{
 		ImGui::ShowDemoWindow(DemoWindow);
 	}
 #endif
+*/
 	else 
 	{
 		ImGui::Begin("Scene Controls");
@@ -625,6 +629,7 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 		{
 			*HelpWindow = true;
 		}
+/*
 #ifdef DEBUG
 		ImGui::SameLine();
 		if (ImGui::Button("Show Demo Window"))
@@ -632,6 +637,7 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 			*DemoWindow = true;
 		}
 #endif
+*/
 		ImGui::SameLine();
 		if (ImGui::Button("Exit"))
 		{

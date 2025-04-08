@@ -302,13 +302,14 @@ inline void MatrixRotate(mat4f_t* t, float d, const vec3f_t& r)
 
 inline void ExtractRotationM4(const mat4f_t& t, float* theta, vec3f_t* axis)
 {
+	// /!\ This function uses a pure rotation matrix as input (scale must be stripped out)
 	float trace = t.m[0][0] + t.m[1][1] + t.m[2][2];
 	float cosT = (trace - 1.0f) / 2.0f;
 
 	if (cosT > 1.0f) cosT = 1.0f;
 	if (cosT < -1.0f) cosT = -1.0f;
 
-	// /!\ Return angle in degrees rather than radians, as Rotate() takes angle in degrees and converts to rad
+	// Return angle in degrees rather than radians, as Rotate() takes angle in degrees and converts to rad
 	*theta = acosf(cosT) / RADIAN;
 
 	// Check for degenerate cases (theta ~= 0 and theta ~=180)
@@ -334,9 +335,6 @@ inline void ExtractRotationM4(const mat4f_t& t, float* theta, vec3f_t* axis)
 	// Normal case
 	else
 	{
-
-		//float inv2SinT = 1.0f / sqrtf((1.0f + cosT) * 2.0f);
-
 		axis->x = (t.m[2][1] - t.m[1][2]);
 		axis->y = (t.m[0][2] - t.m[2][0]);
 		axis->z = (t.m[1][0] - t.m[0][1]);

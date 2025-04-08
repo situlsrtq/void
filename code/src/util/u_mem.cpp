@@ -6,7 +6,7 @@ void geometry_create_info_t::DecomposeModelM4()
 	Position = { Model.m[0][3], Model.m[1][3], Model.m[2][3] };
 
 	// We don't support non-uniform scaling, so we only need to check one axis to get the object's scale
-	uMATH::vec3f_t axis = {Model.m[0][0], Model.m[0][1], Model.m[0][2]};
+	uMATH::vec3f_t axis = {Model.m[0][0], Model.m[1][0], Model.m[2][0]};
 	Scale = sqrtf((axis.x * axis.x) + (axis.y * axis.y) + (axis.z * axis.z));
 	
 	// Orthogonalize 3x3 trace to obtain pure rotation matrix
@@ -20,9 +20,16 @@ void geometry_create_info_t::DecomposeModelM4()
 
 void geometry_create_info_t::ComposeModelM4()
 {
+	// Concatenate transforms to prevent scaling from being overwritten by complex rotations
+	uMATH::mat4f_t temp = {};
+	uMATH::SetTransform(&temp);
+	uMATH::Scale(&temp, Scale);
+
 	uMATH::SetTransform(&Model);
-	uMATH::Scale(&Model, Scale);
 	uMATH::MatrixRotate(&Model, RotationAngle, RotationAxis);
+	Model *= temp;
+
+	// Translation is unaffected, does not need to be concatenated
 	uMATH::Translate(&Model, Position);
 }
 
