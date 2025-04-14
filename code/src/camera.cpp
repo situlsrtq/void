@@ -1,6 +1,8 @@
 #include "camera.h"
 
 
+// Uses Euler rotation, capped to prevent gimbal lock. In testing, this proved to be
+// far more in line with what users naturally expected than free-form matrix rotation
 void mbox_camera_t::LookAtMouse(double XOffset, double YOffset)
 {
 	XOffset *= Sensitivity;
@@ -27,6 +29,7 @@ void mbox_camera_t::LookAtMouse(double XOffset, double YOffset)
 }
 
 
+// Wrapper for Camera-specific input handling
 void mbox_camera_t::Move(GLFWwindow *Window)
 {
 	if(glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS)

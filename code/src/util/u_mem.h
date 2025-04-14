@@ -14,6 +14,7 @@
 #define VIS_STATUS_FREED 2
 
 
+// For internal use by geometry_state_t, never user-accessible
 struct free_list_t
 {
 	uint8_t NextFreePosition = 0;
@@ -24,6 +25,7 @@ struct free_list_t
 };
 
 
+// User accessible
 struct geometry_create_info_t
 {
 	bool New;
@@ -41,6 +43,7 @@ struct geometry_create_info_t
 };
 
 
+//User accessible
 struct geometry_state_t
 {
 	uint8_t Visible[PROGRAM_MAX_OBJECTS];

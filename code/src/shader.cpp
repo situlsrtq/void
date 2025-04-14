@@ -3,6 +3,8 @@
 
 uint32_t shader_t::Build(const char* InFilePath, int ShaderType)
 {
+	// Verify arguments
+
 	size_t len = strlen(InFilePath) + 1;
 	if (len > TMAX_PATH_LEN)
 	{
@@ -28,7 +30,7 @@ uint32_t shader_t::Build(const char* InFilePath, int ShaderType)
 	uint64_t srclen = 0;
 	int success = 0;
 
-// Read shader file
+	// Read shader file
 
 	if ((SFile = fopen(InFilePath, "rb")) == 0x0)
 	{
@@ -65,7 +67,7 @@ uint32_t shader_t::Build(const char* InFilePath, int ShaderType)
 	FileSrc[srclen] = '\0';
 	fclose(SFile);
 
-// Compile shader
+	// Compile shader
 
 	unsigned int Shader;
 	Shader = glCreateShader(ShaderType);
@@ -120,7 +122,7 @@ int shader_t::Create(const char *VertPath, const char *FragPath)
 		return -1;
 	}
 
-// Free memory in GPU after successful program creation
+// Storing info in GPU memory unnecessary after successful program creation - free it
 
 	glDetachShader(ID, VertexShader);
 	glDetachShader(ID, FragmentShader);

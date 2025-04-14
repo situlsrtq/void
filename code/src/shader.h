@@ -27,7 +27,12 @@ struct shader_t
 	int Rebuild();
 	void Use();
 
-	/* SetUniform() needs a more complex implementation in order to avoid looking up uniform locations every frame
+	/*
+	SetUniform() needs a more complex implementation in order to avoid looking up known uniform locations every frame.
+	Would require a sorted list of uniforms based on line-by-line parsing of the shader file. Would require data
+	structure, but also the ability to detect if a uniform, as declared in the source, is valid _before_ compilation - 
+	very cool problem, but way beyond the scope of this project
+
 	int SetUniform(const char* Uniform, int Type, void *Data);
 	*/
 };

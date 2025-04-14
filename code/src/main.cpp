@@ -12,8 +12,8 @@
 #include "util/u_mem.h"
 
 
-#define SCREEN_X_DIM 1000.0f
-#define SCREEN_Y_DIM 800.0f
+#define SCREEN_X_DIM_DEFAULT 1000.0f
+#define SCREEN_Y_DIM_DEFAULT 800.0f
 
 
 void FrameResizeCallback(GLFWwindow* Window, int width, int height);
@@ -52,7 +52,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	
-	GLFWwindow * Window = glfwCreateWindow(SCREEN_X_DIM,SCREEN_Y_DIM,"mBox",0,0);
+	GLFWwindow * Window = glfwCreateWindow(SCREEN_X_DIM_DEFAULT,SCREEN_Y_DIM_DEFAULT,"mBox",0,0);
 	if(!Window)
 	{	
 		printf("GLFW: Failed to create window\n");
@@ -71,7 +71,7 @@ int main(void)
 		return -1;
 	}
 
-	window_handler_t* WinHND = InitWindowHandler(SCREEN_X_DIM, SCREEN_Y_DIM);
+	window_handler_t* WinHND = InitWindowHandler(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT);
 	if (!WinHND)
 	{
 		printf("System: Could not allocate core window handler\n");
@@ -105,7 +105,7 @@ int main(void)
 		return -1;
 	}
 
-// Load mesh data and positions
+// Initialize mesh data and positions
 
 	float CubeMesh[] = {
 	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -165,11 +165,13 @@ int main(void)
 
 // Initialize Core VBO, VAO, Render passes
 
+/*
 #ifdef DEBUG
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(MessageCallback, 0);
 #endif
+*/
 
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
@@ -245,7 +247,7 @@ int main(void)
 
 	CreateInfo.Color = { 0.5f, 1.0f, 0.31f };
 
-	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, SCREEN_X_DIM / SCREEN_Y_DIM, 0.1f, 100.0f);
+	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT, 0.1f, 100.0f);
 
 	uMATH::mat4f_t Model = {};
 	uMATH::vec3f_t LightPosition = { 1.2f, 1.0f, 2.0f };
@@ -264,13 +266,13 @@ int main(void)
 	while (!glfwWindowShouldClose(Window))
 	{
 
-	// Input
+	// Handle user input
 
 		glfwPollEvents();
 		WinHND->ImIO = ImGui::GetIO();
 		ProcessInput(Window);
 
-	// UI Framegen
+	// UI framegen
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -278,9 +280,9 @@ int main(void)
 
 		GenerateInterfaceElements(WinHND, &HelpWindow, &DemoWindow);
 
-	//Render
+	//Render passes
 
-	//-----------------------------------Mouse Picking Pass----------------------------------------
+		// Mouse Picking Pass
 
 		glBindVertexArray(VAO);
 
@@ -309,7 +311,7 @@ int main(void)
 
 		WinHND->PickPass.Unbind_W();
 
-	//------------------------------------Object Geometry Pass---------------------------------------
+		// Object Geometry Pass
 
 		WinHND->MainShader.Use();
 
@@ -342,7 +344,7 @@ int main(void)
 			glDrawArrays(RenderMode, 0, 36);
 		}
 
-	//----------------------------------Light Geometry Pass----------------------------------------
+		// Light Geometry Pass
 
 		glUniform1f(ambistrgth_uni, 1.0f);
 		glUniform3f(objcolor_uni, 1.0f, 1.0f, 1.0f);
@@ -369,7 +371,7 @@ int main(void)
 		WinHND->PrevFrameTime = CurrFrameTime;
 	}
 
-// Free resources and exit
+// Free resources and exit - not technically necessary when this is the end of the program, but future-proofs for mutlithreading or other integrations
 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
@@ -391,7 +393,6 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 	WinHND->Height = height;
 
 	// Also resize camera frustum and attached framebuffers
-
 	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, width / height, 0.1f, 100.0f);
 	WinHND->PickPass.Release();
 	WinHND->PickPass.Init(width, height);
@@ -470,11 +471,11 @@ void ProcessInput(GLFWwindow *Window)
 	}
 
 	// Have to separately check if the UI should be pulling mouse button inputs, as they aren't tracked by WantCaptureKeyboard
-
 	if (WinHND->ImIO.WantCaptureMouse)
 	{
 		return;
 	}
+
 	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 	{
 		LMouseWasDown = 1;

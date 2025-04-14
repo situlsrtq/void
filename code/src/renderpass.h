@@ -6,12 +6,11 @@
 #include "picking.h"
 
 
-//TODO: Hard coded pass for picking for now, as testing occurs. Abstract later
+// Abstraction providing a dynamic control mechanism for arbitrary render passes. 
+// Well beyond the scope of this project, but will be the next thing I add as I continue
+// working on this.
 struct render_pass_t
 {
-
-
-
 };
 
 

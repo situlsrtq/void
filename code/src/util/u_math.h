@@ -13,7 +13,6 @@
 #define R_AXIS_Z -1005
 
 #define RADIAN 0.0174532924f
-#define DIVIDE_BY_ZERO -1
 
 
 namespace uMATH
@@ -171,7 +170,9 @@ inline vec3f_t Cross(const vec3f_t& v, const vec3f_t& s)
 }
 
 
-// TODO: Add a flagging method so calling code can see when normalization would have failed (len ~= 0)
+// Current implementaion returns a Z-basis vector if normalization fails (when len ~= 0)
+// a more robust future version would also implement some kind of flagging mechanism so 
+// the calling code can see when normalization would have failed
 inline vec3f_t Normalize(const vec3f_t &v /*, int* res*/)
 {
 	vec3f_t r;
@@ -181,7 +182,6 @@ inline vec3f_t Normalize(const vec3f_t &v /*, int* res*/)
 		r.x = 0.0f;
 		r.y = 0.0f;
 		r.z = 1.0f;
-		// *res = DIVIDE_BY_ZERO;
 		return r;
 	}
 
@@ -223,6 +223,7 @@ inline void SetCameraView(mat4f_t* t, const vec3f_t& position, const vec3f_t& ta
 	t->m[2][1] = direction.y;
 	t->m[2][2] = direction.z;
 
+	// Concatenate translation, rather than call directly, to correctly preserve axial orientation
 	mat4f_t translate = {};
 	SetTransform(&translate);
 	translate.m[0][3] -= position.x;
@@ -244,7 +245,9 @@ inline void SetFrustumHFOV(mat4f_t *t, float fov, float aratio, float near, floa
 	t->m[2][2] = -(far + near) / (far - near);
 	t->m[2][3] = -(2.0f * far * near) / (far - near);
 	t->m[3][2] = -1.0f;
-	t->m[3][3] = 0.0f;		// In case this matrix was previously a Transform matrix
+
+	// In case this matrix was previously a Transform matrix
+	t->m[3][3] = 0.0f;		
 }
 
 
@@ -302,7 +305,7 @@ inline void MatrixRotate(mat4f_t* t, float d, const vec3f_t& r)
 
 inline void ExtractRotationM4(const mat4f_t& t, float* theta, vec3f_t* axis)
 {
-	// /!\ This function uses a pure rotation matrix as input (scale must be stripped out)
+	// /!\ This function uses a pure rotation matrix as input (scale must be stripped out beforehand)
 	float trace = t.m[0][0] + t.m[1][1] + t.m[2][2];
 	float cosT = (trace - 1.0f) / 2.0f;
 
@@ -373,6 +376,9 @@ inline vec4f_t MultiplyV4_M4(const vec4f_t &v, const mat4f_t &m)
 }
 
 
+// Current implementaion returns an identity matrix if inversion fails (when determinant ~= 0)
+// a more robust future version would also implement some kind of flagging mechanism so 
+// the calling code can see when a matrix is not invertible 
 inline mat4f_t InverseM4(const mat4f_t& m)
 {
 	float s0 = m.m[0][0] * m.m[1][1] - m.m[1][0] * m.m[0][1];
@@ -389,9 +395,16 @@ inline mat4f_t InverseM4(const mat4f_t& m)
 	float c1 = m.m[2][0] * m.m[3][2] - m.m[3][0] * m.m[2][2];
 	float c0 = m.m[2][0] * m.m[3][1] - m.m[3][0] * m.m[2][1];
 
-	float invdet = 1.0f / (s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0);
-
 	mat4f_t res;
+
+	float det = s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0;
+	if (det < 0.0001f && det > -0.9999f)
+	{
+		SetTransform(&res);
+		return res;
+	}
+
+	float invdet = 1.0f / det;
 
 	res.m[0][0] = (m.m[1][1] * c5 - m.m[1][2] * c4 + m.m[1][3] * c3) * invdet;
 	res.m[0][1] = (-m.m[0][1] * c5 + m.m[0][2] * c4 - m.m[0][3] * c3) * invdet;

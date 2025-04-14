@@ -15,6 +15,8 @@
 #define EMODE_LIGHTS 2
 
 
+// Monolithic object an unfortunate consequence of using GLFW - future improvements could write a better base layer
+// for cross-platform windowing and simplify this object
 struct window_handler_t
 {
 	int Width;

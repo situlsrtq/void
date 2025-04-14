@@ -21,6 +21,8 @@ inline uMATH::vec3f_t CastWorldRay(float MouseX, float MouseY, const window_hand
 {
 	uMATH::vec4f_t ray4f;
 
+	// Recover NDC from screenspace - this is a decomposition of the non-invertible projection matrix
+	// No need to undo perspective divide because the ray is a unit vector at the origin, translated to world space
 	float xvp = (2.0f * MouseX / (float)Window.Width) - 1.0f;
 	float yvp = (2.0f * MouseY / (float)Window.Height) - 1.0f;
 	float d = 1.0f / tan(45.0f * RADIAN);
@@ -29,11 +31,12 @@ inline uMATH::vec3f_t CastWorldRay(float MouseX, float MouseY, const window_hand
 	float yview = (yvp / d) * ar;
 	float z = -1.0f;
 
-	ray4f.x = xview;			// Ray Termination in NDC
+	ray4f.x = xview;			
 	ray4f.y = yview;
 	ray4f.z = z;
 	ray4f.w = 1.0f;
 
+	// Multiply point by inverse view matrix to go from NDC to world space
 	uMATH::mat4f_t WorldSpace = uMATH::InverseM4(Window.View);
 	ray4f = uMATH::MultiplyV4_M4(ray4f, WorldSpace);
 	ray4f = Scalar(ray4f, (1.0f / ray4f.w));
@@ -53,10 +56,16 @@ inline bool CheckRayOBBCollision(uMATH::vec3f_t Origin, uMATH::vec3f_t Direction
 	float tmax = 100000.0f;
 
 	uMATH::vec3f_t OBBPosition = { Model.m[0][3], Model.m[1][3], Model.m[2][3] };
+	// Translation required to place ray at OBB origin
 	uMATH::vec3f_t delta = OBBPosition - Origin;
 
-	uMATH::vec3f_t axis = { Model.m[0][0], Model.m[1][0], Model.m[2][0] };			// X Axis
+	// Per axis check - could be extracted into its own function at a later date
+	// X axis
+	uMATH::vec3f_t axis = { Model.m[0][0], Model.m[1][0], Model.m[2][0] };
+
+	// How well does translated ray align with the axis the OBB sits on
 	float e = uMATH::Dot(axis, delta);
+	// How close is ray's orientation to bounding axis' alignment
 	float f = 1 / uMATH::Dot(Direction, axis);
 
 	if (fabs(f) > 0.001f)
@@ -92,7 +101,8 @@ inline bool CheckRayOBBCollision(uMATH::vec3f_t Origin, uMATH::vec3f_t Direction
 		return false;
 	}
 
-	axis = { Model.m[0][1], Model.m[1][1], Model.m[2][1] };			// Y Axis
+	// Y axis
+	axis = { Model.m[0][1], Model.m[1][1], Model.m[2][1] };
 	e = uMATH::Dot(axis, delta);
 	f = 1 / uMATH::Dot(Direction, axis);
 
@@ -129,7 +139,8 @@ inline bool CheckRayOBBCollision(uMATH::vec3f_t Origin, uMATH::vec3f_t Direction
 		return false;
 	}
 
-	axis = { Model.m[0][2], Model.m[1][2], Model.m[2][2] };			// Z Axis
+	// Z axis
+	axis = { Model.m[0][2], Model.m[1][2], Model.m[2][2] };
 	e = uMATH::Dot(axis, delta);
 	f = 1 / uMATH::Dot(Direction, axis);
 
