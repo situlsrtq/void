@@ -12,7 +12,7 @@ get_filename_component(LIB_DIR "../lib" REALPATH)
 include_directories(../inc ../src/util)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../inc/imgui/*.cpp")
+	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../vendor/imgui/*.cpp")
 
 	add_executable(${PROJECT_NAME} ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:Debug>:DEBUG>)
@@ -23,7 +23,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	# Including .h files here due to a quirk of Visual Studio's CMAKE implementation - necessary for seeing files in editor
-	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/*.h" "../src/util/*.cpp" "../src/util/*.h" "../inc/imgui/*.cpp")
+	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/*.h" "../src/util/*.cpp" "../src/util/*.h" "../vendor/imgui/*.cpp")
 
 	add_executable(${PROJECT_NAME} ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:Debug>:DEBUG>)

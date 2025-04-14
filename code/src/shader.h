@@ -2,7 +2,7 @@
 #define MBOX_SHADERS_H
 
 
-#include "../inc/glad/glad.h"
+#include "../vendor/glad/glad.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

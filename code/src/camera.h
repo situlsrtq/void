@@ -2,7 +2,7 @@
 #define MBOX_CAMERA_H
 
 
-#include <GLFW/glfw3.h>
+#include "../vendor/GLFW/glfw3.h"
 #include "util/u_math.h"
 
 

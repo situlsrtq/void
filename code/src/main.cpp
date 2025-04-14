@@ -1,8 +1,8 @@
-#include "../inc/imgui/imgui.h"
-#include "../inc/imgui/imgui_impl_glfw.h"
-#include "../inc/imgui/imgui_impl_opengl3.h"
-#include "../inc/glad/glad.h"
-#include <GLFW/glfw3.h>
+#include "../vendor/imgui/imgui.h"
+#include "../vendor/imgui/imgui_impl_glfw.h"
+#include "../vendor/imgui/imgui_impl_opengl3.h"
+#include "../vendor/glad/glad.h"
+#include "../vendor/GLFW/glfw3.h"
 
 #include "shader.h"
 #include "picking.h"
