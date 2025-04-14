@@ -13,7 +13,7 @@ by a custom linear/bump allocator that supports free operations.
 OpenGL: Cross-platform API for rendering 2D/3D graphics on GPU hardware\
 GLAD: Provides managed OpenGL function pointers for cross-platform, cross-version compatibility\
 GLFW: Provides basic cross-platform windowing and input control\
-DearImGUI: Provides an immediate-mode UI framework for menus and controls\ 
+DearImGUI: Provides an immediate-mode UI framework for menus and controls 
 
 With the exception of a few functions from C built-ins (string, math, stdint, stdio), everything else was hand-implemented. 
 The standard library was not used. For the most part, the linear algebra in uMATH, uPHYS and the shaders was derived 
