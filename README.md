@@ -6,7 +6,7 @@ Within the scene, cubes may be positioned, rotated, scaled, colored, and added/d
 model uses a single, real time, Phong positional source. 
 
 Dynamic allocation from the OS occurs exactly once, at initialization - all runtime dynamic objects are handled 
-by a custom linear/bump allocator.
+by a custom linear/bump allocator that supports free operations.
 
 ## Vendor libraries:
 
