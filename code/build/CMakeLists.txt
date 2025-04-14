@@ -7,7 +7,7 @@ set(CMAKE_BUILD_TYPE Debug)
 # set(CMAKE_BUILD_TYPE RelWithDebInfo)
 # set(CMAKE_BUILD_TYPE Release)
 
-get_filename_component(LIB_DIR "../lib" REALPATH)
+get_filename_component(LIB_DIR "../vendor/lib" REALPATH)
 
 include_directories(../inc ../src/util)
 
