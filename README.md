@@ -22,9 +22,12 @@ through research (among the various sources listed below), not by hand.
 ## Building from Source
 
 Both Windows and Linux are supported by default. The project can be built from source using CMAKE and the provided
-CMakeLists.txt file. OpenGL comes as part of the standard Windows package, but a version of libGL that supports
-your hardware (either downloaded as a standalone package or from the vendor utils your build uses) must be accessible
-on your PATH for Linux machines.
+CMakeLists.txt file. 
+
+Nearly all vendor files required to build the software are already included in the repo. The single exception is 
+OpenGL, which comes as part of the standard Windows package. Linux installations require a version of libGL 
+that supports your hardware (either downloaded as a standalone package or from the vendor utils your build uses) -
+this library must be accessible from your PATH.
 
 This software is written for OpenGL Core Profile 4.6, but will most likely work on any Core profile 3.0+. Changes can be
 applied in main.cpp and the shader files, if desired.
