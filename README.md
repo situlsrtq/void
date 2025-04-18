@@ -5,10 +5,10 @@ This project implements various 3D rendering algorithms to provide a basic sandb
 Within the scene, cubes may be positioned, rotated, scaled, colored, and added/deleted as desired. The lighting
 model uses a single, real time, Phong positional source. 
 
-All source code, including vendor libraries are stored in capstone/code. All project management materials are stored in capstone/pm
-
 Dynamic allocation from the OS occurs exactly once, at initialization - all runtime dynamic objects are handled 
 by a custom linear/bump allocator that supports free operations.
+
+**All source code, including vendor libraries are stored in capstone/code. All project management materials are stored in capstone/pm**
 
 ## Vendor libraries:
 
