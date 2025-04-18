@@ -187,7 +187,7 @@ int main(void)
 	glEnableVertexAttribArray(1);
 	glBindVertexArray(0);
 
-	int success = WinHND->MainShader.Create("../shaders/main.vert", "../shaders/main.frag");
+	int success = WinHND->MainShader.Create("./shaders/main.vert", "./shaders/main.frag");
 	if (success != 0)
 	{
 		printf("System: Failed to initialize main pass shaders\n");
@@ -210,7 +210,7 @@ int main(void)
 		return -1;
 	}
 
-	success = WinHND->PickShader.Create("../shaders/pick.vert", "../shaders/pick.frag");
+	success = WinHND->PickShader.Create("./shaders/pick.vert", "./shaders/pick.frag");
 	if (success != 0)
 	{
 		printf("System: Failed to initialize pick pass shaders\n");
@@ -244,8 +244,6 @@ int main(void)
 		CreateInfo.Model = GeometryModel;
 		WinHND->GeometryObjects.Alloc(CreateInfo);
 	}
-
-	CreateInfo.Color = { 0.5f, 1.0f, 0.31f };
 
 	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT, 0.1f, 100.0f);
 
@@ -616,12 +614,12 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 		ImGui::Begin("Scene Controls");
 
 		ImGui::Text("");
-		if (ImGui::Button("New Object"))
+		if (ImGui::Button("New Object (n)"))
 		{
 			WinHND->Active.New = true;
 		}
 		ImGui::SameLine();
-		if (ImGui::Button("Reload Shaders"))
+		if (ImGui::Button("Reload Shaders (p)"))
 		{
 			WinHND->ReloadShaders = true;
 		}
@@ -640,12 +638,12 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 #endif
 */
 		ImGui::SameLine();
-		if (ImGui::Button("Exit"))
+		if (ImGui::Button("Exit (esc)"))
 		{
 			WinHND->ShouldExit = true;
 		}
 		ImGui::SameLine();
-		ImGui::Text("Frame time: %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
+		ImGui::Text("Inter-Frame time: %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
 
 		ImGui::End();
 	}
