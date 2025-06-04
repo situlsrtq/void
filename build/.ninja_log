@@ -1,0 +1,26 @@
+# ninja log v6
+12	390	1741929484751636295	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/window.cpp.o	e3e38c63552c998f
+12	442	1741929484751090782	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/main.cpp.o	e51a7d35e90a581c
+10	121	1749008069503382777	build.ninja	6844e6a1bf277d79
+11	295	1741929484750794506	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/glad.c.o	3ea33a9a93da65c8
+11	444	1741929484749027796	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/camera.cpp.o	1092c9f29aa494e6
+12	396	1741929484751383551	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/shader.cpp.o	9ce0ac85d380bb00
+4	278	1741929656696031642	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/util/u_mem.cpp.o	b192796e2d82a09a
+2	624	1740466181747413257	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/test.cpp.o	702f8c056221dde2
+278	371	1741929656970031648	GyroScope	e02460e6c7530a4e
+3	512	1749008069503382777	build.ninja	6844e6a1bf277d79
+3	137	1749008069523820611	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/picking.cpp.o	3bc155f7f2eb6620
+5	414	1749008069525907556	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/vendor/imgui/imgui_impl_opengl3.cpp.o	2864c9bbf4be208d
+2	497	1749008069523233122	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/glad.c.o	cd63597639377c23
+4	510	1749008069524321885	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/util/u_mem.cpp.o	dd3d3bf3e8b5184b
+3	577	1749008069524041416	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/shader.cpp.o	83955bcd4c9c7dfe
+4	625	1749008069524564775	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/window.cpp.o	1df9137c369dc95c
+2	657	1749008069521382777	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/camera.cpp.o	bc104a2a56fde56a
+3	695	1749008069523550327	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/src/main.cpp.o	9e454b41f68a491b
+4	1846	1749008069525073894	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/vendor/imgui/imgui_demo.cpp.o	4b3c03e855ee365c
+8	2081	1749008069529382778	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/vendor/imgui/imgui_tables.cpp.o	5ff492fd64768786
+5	2727	1749008069525325298	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/vendor/imgui/imgui_draw.cpp.o	83964c9fe69a5517
+10	3247	1749008069530814144	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/vendor/imgui/imgui_widgets.cpp.o	b11fd5bff26f3a89
+4	4428	1749008069524830089	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/vendor/imgui/imgui.cpp.o	53659d6249bdaa8b
+3	267	1749008381539389757	CMakeFiles/GyroScope.dir/home/oberon/repo/cc/gl/code/vendor/imgui/imgui_impl_glfw.cpp.o	97686863e5364a86
+267	456	1749008381803389763	GyroScope	ada2bb1adb4e66a6
