@@ -1,3 +1,0 @@
-/home/oberon/repo/cc/void/build/CMakeFiles/void.dir
-/home/oberon/repo/cc/void/build/CMakeFiles/edit_cache.dir
-/home/oberon/repo/cc/void/build/CMakeFiles/rebuild_cache.dir

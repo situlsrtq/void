@@ -1,7 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"/home/oberon/repo/cc/void/build/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
