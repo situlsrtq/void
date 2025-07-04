@@ -1,7 +1,7 @@
 {
 	"InstallScripts" : 
 	[
-		"/home/oberon/repo/cc/gl/code/build/cmake_install.cmake"
+		"/home/oberon/repo/cc/void/build/cmake_install.cmake"
 	],
 	"Parallel" : false
 }

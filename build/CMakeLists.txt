@@ -1,7 +1,8 @@
 
 cmake_minimum_required(VERSION 3.31.5)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(GyroScope)
+project(void)
 
 set(CMAKE_BUILD_TYPE Debug)
 # set(CMAKE_BUILD_TYPE RelWithDebInfo)
@@ -16,6 +17,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
 	add_executable(${PROJECT_NAME} ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:Debug>:DEBUG>)
+	set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "../")
 
 	target_link_libraries(${PROJECT_NAME} "${LIB_DIR}/libglfw3.a")
 	target_link_libraries(${PROJECT_NAME} -lGL)

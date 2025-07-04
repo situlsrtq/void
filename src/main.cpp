@@ -26,8 +26,8 @@ void GLAPIENTRY
 MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
 	fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-		(type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
-		type, severity, message);
+	 (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
+	 type, severity, message);
 }
 #endif
 
@@ -50,16 +50,16 @@ unsigned int ambistrgth_uni;
 int main(void)
 {
 
-// Initialize Core Systems
+	// Initialize Core Systems
 
-    if (!glfwInit())
-        return -1;
+	if (!glfwInit())
+		return -1;
 
 	const char* GLSLVersion = "#version 460";
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
 	GLFWwindow * Window = glfwCreateWindow(SCREEN_X_DIM_DEFAULT,SCREEN_Y_DIM_DEFAULT,"mBox",0,0);
 	if(!Window)
 	{	
@@ -86,11 +86,11 @@ int main(void)
 		return -1;
 	}
 	glfwSetWindowUserPointer(Window, (void *)WinHND);
-	
+
 	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(Window, MousePosCallback);
 
-// Initialize ImGui Context
+	// Initialize ImGui Context
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -113,50 +113,50 @@ int main(void)
 		return -1;
 	}
 
-// Initialize mesh data and positions
+	// Initialize mesh data and positions
 
 	float CubeMesh[] = {
-	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
-	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-	 0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-	 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-	 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
 
-	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-	-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-	-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-	-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-	-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-	 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-	 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-	 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-	 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-	 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-	 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-	 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-	 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-	 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-	-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-	-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-	 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-	 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-	 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-	-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-	-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f };
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f };
 
 	uMATH::vec3f_t cubePositions[] = {
 		uMATH::vec3f_t{ 0.0f,  0.0f,  0.0f},
@@ -171,15 +171,13 @@ int main(void)
 		uMATH::vec3f_t{-1.3f,  1.0f, -1.5f}
 	};
 
-// Initialize Core VBO, VAO, Render passes
+	// Initialize Core VBO, VAO, Render passes
 
-/*
 #ifdef DEBUG
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(MessageCallback, 0);
 #endif
-*/
 
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
@@ -195,7 +193,14 @@ int main(void)
 	glEnableVertexAttribArray(1);
 	glBindVertexArray(0);
 
-	int success = WinHND->MainShader.Create("./shaders/main.vert", "./shaders/main.frag");
+	shader_info_t MainPassParams = {};
+	int success = MainPassParams.Init("../shaders/main.vert",0,0,0,"../shaders/main.frag",0);
+	if (success != 0)
+	{
+		printf("System: Failed to initialize main pass shader parameters\n");
+		return -1;
+	}
+	success = WinHND->MainShader.Create(MainPassParams);
 	if (success != 0)
 	{
 		printf("System: Failed to initialize main pass shaders\n");
@@ -218,7 +223,14 @@ int main(void)
 		return -1;
 	}
 
-	success = WinHND->PickShader.Create("./shaders/pick.vert", "./shaders/pick.frag");
+	shader_info_t PickPassParams = {};
+	success = PickPassParams.Init("../shaders/pick.vert",0,0,0,"../shaders/pick.frag",0);
+	if (success != 0)
+	{
+		printf("System: Failed to initialize pick shader parameters\n");
+		return -1;
+	}
+	success = WinHND->PickShader.Create(PickPassParams);
 	if (success != 0)
 	{
 		printf("System: Failed to initialize pick pass shaders\n");
@@ -231,7 +243,7 @@ int main(void)
 	unsigned int pickingindex_uni = glGetUniformLocation(WinHND->PickShader.ID, "index");
 	unsigned int pickingtype_uni = glGetUniformLocation(WinHND->PickShader.ID, "type");
 
-// Initialize first-frame data
+	// Initialize first-frame data
 
 	uMATH::mat4f_t GeometryModel = {};
 	geometry_create_info_t CreateInfo;
@@ -265,20 +277,20 @@ int main(void)
 	int RenderMode = GL_TRIANGLES;
 	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
-// Frame loop
+	// Frame loop
 
 	bool HelpWindow = false;
 	bool DemoWindow = false;
 	while (!glfwWindowShouldClose(Window))
 	{
 
-	// Handle user input
+		// Handle user input
 
 		glfwPollEvents();
 		WinHND->ImIO = ImGui::GetIO();
 		ProcessInput(Window);
 
-	// UI framegen
+		// UI framegen
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -286,7 +298,7 @@ int main(void)
 
 		GenerateInterfaceElements(WinHND, &HelpWindow, &DemoWindow);
 
-	//Render passes
+		//Render passes
 
 		// Mouse Picking Pass
 
@@ -329,7 +341,7 @@ int main(void)
 
 		glUniformMatrix4fv(view_uni, 1, GL_FALSE, &WinHND->View.m[0][0]);
 		glUniform3f(viewpos_uni, WinHND->Camera.Position.x, WinHND->Camera.Position.y, WinHND->Camera.Position.z);
-		
+
 		for (unsigned int i = 0; i < WinHND->GeometryObjects.Position; i++)
 		{
 			if (WinHND->GeometryObjects.Visible[i] == VIS_STATUS_FREED)
@@ -363,7 +375,7 @@ int main(void)
 		glBindVertexArray(0);
 		glUseProgram(0);
 
-	// Blit, parse inter-frame data
+		// Blit, parse inter-frame data
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -377,17 +389,17 @@ int main(void)
 		WinHND->PrevFrameTime = CurrFrameTime;
 	}
 
-// Free resources and exit - not technically necessary when this is the end of the program, but future-proofs for mutlithreading or other integrations
+	// Free resources and exit - not technically necessary when this is the end of the program, but future-proofs for mutlithreading or other integrations
 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 
-    glfwTerminate();
+	glfwTerminate();
 	free(WinHND);
 	WinHND = 0x0;
 
-    return 0;
+	return 0;
 }
 
 
@@ -410,7 +422,7 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 void ProcessInput(GLFWwindow *Window)
 {
 	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
-	
+
 	// Check if the UI should be pulling focus
 	if (WinHND->ImIO.WantCaptureKeyboard)
 	{
@@ -548,7 +560,7 @@ void MousePosCallback(GLFWwindow *Window, double mx, double my)
 
 	float xoffset = mx - WinHND->PrevMouseX;
 	float yoffset = WinHND->PrevMouseY - my;
-	
+
 	WinHND->PrevMouseX = mx;
 	WinHND->PrevMouseY = my;
 
@@ -609,7 +621,7 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 
 		ImGui::End();
 	}
-/*
+	/*
 #ifdef DEBUG
 	else if (*DemoWindow)
 	{
@@ -618,7 +630,7 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 #endif
 */
 	else 
-	{
+{
 		ImGui::Begin("Scene Controls");
 
 		ImGui::Text("");
@@ -636,7 +648,7 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 		{
 			*HelpWindow = true;
 		}
-/*
+		/*
 #ifdef DEBUG
 		ImGui::SameLine();
 		if (ImGui::Button("Show Demo Window"))
