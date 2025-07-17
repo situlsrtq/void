@@ -1,5 +1,5 @@
 
-# [void]: Real-Time 3D Scene Editor
+# [void]: Real-Time 3D Render Tool
 
 This project implements various 3D rendering algorithms to provide a basic sandbox for users to interact with. The lighting model uses a single, real time, Phong positional source (for now). 
 
