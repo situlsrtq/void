@@ -1,14 +1,10 @@
 
-# GyroScope: Real-Time 3D Scene Editor
+# [void]: Real-Time 3D Scene Editor
 
-This project implements various 3D rendering algorithms to provide a basic sandbox for users to interact with. 
-Within the scene, cubes may be positioned, rotated, scaled, colored, and added/deleted as desired. The lighting
-model uses a single, real time, Phong positional source. 
+This project implements various 3D rendering algorithms to provide a basic sandbox for users to interact with. The lighting model uses a single, real time, Phong positional source (for now). 
 
 Dynamic allocation from the OS occurs exactly once, at initialization - all runtime dynamic objects are handled 
-by a custom linear/bump allocator that supports free operations.
-
-**All source code, including vendor libraries are stored in capstone/code. All project management materials are stored in capstone/pm**
+by custom linear/bump allocators that supports free operations.
 
 ## Vendor libraries:
 
@@ -17,9 +13,8 @@ GLAD: Provides managed OpenGL function pointers for cross-platform, cross-versio
 GLFW: Provides basic cross-platform windowing and input control\
 DearImGUI: Provides an immediate-mode UI framework for menus and controls 
 
-With the exception of a few functions from C built-ins (string, math, stdint, stdio), everything else was hand-implemented. 
-The standard library was not used. For the most part, the linear algebra in uMATH, uPHYS and the shaders was derived 
-through research (among the various sources listed below), not by hand.
+With the exception of a few functions from C built-ins (string, math, stdint, stdio), everything else is hand-implemented. 
+The standard library is not used. For the most part, the linear algebra in uMATH, uPHYS and the shaders are derived through research (among the various sources listed below), not by hand.
 
 ## Building from Source
 
