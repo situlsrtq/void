@@ -94,6 +94,7 @@ int main(void)
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	WinHND->ImIO = ImGui::GetIO(); (void)WinHND->ImIO;
 	ImGui::StyleColorsDark();
 
@@ -173,11 +174,13 @@ int main(void)
 
 	// Initialize Core VBO, VAO, Render passes
 
+	/*
 #ifdef DEBUG
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(MessageCallback, 0);
 #endif
+*/
 
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
@@ -194,7 +197,7 @@ int main(void)
 	glBindVertexArray(0);
 
 	shader_info_t MainPassParams = {};
-	int success = MainPassParams.Init("../shaders/main.vert",0,0,0,"../shaders/main.frag",0);
+	int success = MainPassParams.Init("./shaders/main.vert",0,0,0,"./shaders/main.frag",0);
 	if (success != 0)
 	{
 		printf("System: Failed to initialize main pass shader parameters\n");
@@ -224,7 +227,7 @@ int main(void)
 	}
 
 	shader_info_t PickPassParams = {};
-	success = PickPassParams.Init("../shaders/pick.vert",0,0,0,"../shaders/pick.frag",0);
+	success = PickPassParams.Init("./shaders/pick.vert",0,0,0,"./shaders/pick.frag",0);
 	if (success != 0)
 	{
 		printf("System: Failed to initialize pick shader parameters\n");
@@ -601,7 +604,8 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 
 		ImGui::End();
 	}
-	else if(*HelpWindow)
+
+	if(*HelpWindow)
 	{
 		ImGui::Begin("Help");
 
@@ -629,26 +633,24 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 	}
 #endif
 */
-	else 
-{
-		ImGui::Begin("Scene Controls");
+	ImGui::Begin("Scene Controls");
 
-		ImGui::Text("");
-		if (ImGui::Button("New Object (n)"))
-		{
-			WinHND->Active.New = true;
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Reload Shaders (p)"))
-		{
-			WinHND->ReloadShaders = true;
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Help"))
-		{
-			*HelpWindow = true;
-		}
-		/*
+	ImGui::Text("");
+	if (ImGui::Button("New Object (n)"))
+	{
+		WinHND->Active.New = true;
+	}
+	ImGui::Text("");
+	if (ImGui::Button("Reload Shaders (p)"))
+	{
+		WinHND->ReloadShaders = true;
+	}
+	ImGui::Text("");
+	if (ImGui::Button("Help"))
+	{
+		*HelpWindow = true;
+	}
+	/*
 #ifdef DEBUG
 		ImGui::SameLine();
 		if (ImGui::Button("Show Demo Window"))
@@ -657,14 +659,13 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 		}
 #endif
 */
-		ImGui::SameLine();
-		if (ImGui::Button("Exit (esc)"))
-		{
-			WinHND->ShouldExit = true;
-		}
-		ImGui::SameLine();
-		ImGui::Text("Inter-Frame time: %.3f ms/frame (%.1f FPS)", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
-
-		ImGui::End();
+	ImGui::Text("");
+	if (ImGui::Button("Exit (esc)"))
+	{
+		WinHND->ShouldExit = true;
 	}
+	ImGui::Text("");
+	ImGui::Text("Frame time: %.3f ms", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
+
+	ImGui::End();
 }

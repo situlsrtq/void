@@ -12,4 +12,5 @@ build/cmake_install.cmake
 build/cmake_uninstall.cmake
 build/compile_commands.json
 .cache/
+.vs/
 compile_commands.json

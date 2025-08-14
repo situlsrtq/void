@@ -144,7 +144,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		Shaders[0] = Build(FilePath, GL_VERTEX_SHADER);
 		if (!Shaders[0])
 		{
-			printf("Could not create shader program\n");
+			printf("SHADER: Could not create shader program\n");
 			return -1;
 		}
 	}
@@ -153,7 +153,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 	{
 		if( !(Params.PipelineOpts & VOID_TESCE_OPT) )
 		{
-			printf("No Tesselation Evaluation shader supplied\n");
+			printf("SHADER: No Tesselation Evaluation shader supplied\n");
 			printf("Could not create shader program\n");
 			return -1;
 		}
@@ -162,7 +162,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		Shaders[1] = Build(FilePath, GL_TESS_CONTROL_SHADER);
 		if (!Shaders[1])
 		{
-			printf("Could not create shader program\n");
+			printf("SHADER: Could not create shader program\n");
 			return -1;
 		}
 	}
@@ -171,7 +171,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 	{
 		if( !(Params.PipelineOpts & VOID_TESCC_OPT) )
 		{
-			printf("No Tesselation Control shader supplied\n");
+			printf("SHADER: No Tesselation Control shader supplied\n");
 			printf("Could not create shader program\n");
 			return -1;
 		}
@@ -180,7 +180,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		Shaders[2] = Build(FilePath, GL_TESS_EVALUATION_SHADER);
 		if (!Shaders[2])
 		{
-			printf("Could not create shader program\n");
+			printf("SHADER: Could not create shader program\n");
 			return -1;
 		}
 	}
@@ -209,6 +209,13 @@ int shader_program_t::Create(const shader_info_t &inParams)
 	// COMP
 	if (Params.PipelineOpts & VOID_COMP_OPT)
 	{
+		if(Params.PipelineOpts != VOID_COMP_OPT)
+		{
+			printf("SHADER: Compute shaders must be standalone\n");
+			printf("Could not create shader program\n");
+			return -1;
+		}
+
 		FilePath = &Params.FilePaths[5][0];
 		Shaders[5] = Build(FilePath, GL_COMPUTE_SHADER);
 		if (!Shaders[5])
