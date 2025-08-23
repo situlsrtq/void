@@ -6,7 +6,7 @@ int fb_mpick_t::Init(uint32_t Width, uint32_t Height)
 	if (FBO != 0)
 	{
 		printf("System: attempt to reinitialize existing framebuffer. Call Release() first\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	glGenFramebuffers(1, &FBO);
@@ -32,14 +32,14 @@ int fb_mpick_t::Init(uint32_t Width, uint32_t Height)
 	if (Status != GL_FRAMEBUFFER_COMPLETE)
 	{
 		printf("System: Framebuffer (picking) gen error: 0x%x\n", Status);
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	// Unbind
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 

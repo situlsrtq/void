@@ -1,25 +1,9 @@
-#include "../vendor/imgui/imgui.h"
-#include "../vendor/imgui/imgui_impl_glfw.h"
-#include "../vendor/imgui/imgui_impl_opengl3.h"
-#include "../vendor/glad/glad.h"
-#include "../vendor/GLFW/glfw3.h"
-
-#include "shader.h"
-#include "picking.h"
-#include "camera.h"
-#include "window.h"
-#include "util/u_math.h"
-#include "util/u_mem.h"
+#include "main.h"
+#include "pal/PAL.h"
 
 
-#define SCREEN_X_DIM_DEFAULT 1000.0f
-#define SCREEN_Y_DIM_DEFAULT 800.0f
+// TODO: Get rid of runtime path discovery (MAX_PATH/PATH_MAX/etc) in release builds
 
-
-void FrameResizeCallback(GLFWwindow* Window, int width, int height);
-void MousePosCallback(GLFWwindow* Window, double mx, double my);
-void ProcessInput(GLFWwindow* Window);
-void GenerateInterfaceElements(window_handler_t* WinHND, bool* HelpWindow, bool* DemoWindow);
 
 #ifdef DEBUG
 void GLAPIENTRY
@@ -34,26 +18,32 @@ MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei 
 
 uint8_t NKeyWasDown;
 uint8_t RKeyWasDown;
-uint8_t PKeyWasDown;
-uint8_t LMouseWasDown;
-uint8_t RMouseWasDown;
+uint8_t PKeyWasDown;  unsigned int model_uni;
+uint8_t LMouseWasDown;unsigned int view_uni;
+uint8_t RMouseWasDown;unsigned int viewpos_uni;
 
-unsigned int model_uni;
-unsigned int view_uni;
-unsigned int viewpos_uni;
 unsigned int projection_uni;
 unsigned int lightpos_uni;
 unsigned int objcolor_uni;
 unsigned int lightcolor_uni;
 unsigned int ambistrgth_uni;
 
+char PathBuffer[VOID_PATH_MAX+1];
+
 int main(void)
 {
+	int res = PAL::GetPath(PathBuffer, VOID_PATH_MAX)				;
+	if(res != EXIT_SUCCESS)
+	{
+		printf("PAL: Failed to initialize file path\n");
+	}
 
 	// Initialize Core Systems
 
 	if (!glfwInit())
-		return -1;
+	{
+		 return EXIT_FAILURE;
+	}
 
 	const char* GLSLVersion = "#version 460";
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -65,7 +55,7 @@ int main(void)
 	{	
 		printf("GLFW: Failed to create window\n");
 		glfwTerminate();
-		return -1;
+		 return EXIT_FAILURE;
 	}
 
 	glfwMakeContextCurrent(Window);
@@ -76,14 +66,14 @@ int main(void)
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		printf("GLAD: Failed getting function pointers\n");
-		return -1;
+		 return EXIT_FAILURE;
 	}
 
 	window_handler_t* WinHND = InitWindowHandler(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT);
 	if (!WinHND)
 	{
 		printf("System: Could not allocate core window handler\n");
-		return -1;
+		 return EXIT_FAILURE;
 	}
 	glfwSetWindowUserPointer(Window, (void *)WinHND);
 
@@ -100,18 +90,18 @@ int main(void)
 
 	ImGuiStyle& UIStyle = ImGui::GetStyle();
 
-	bool uisuccess = false;
-	uisuccess = ImGui_ImplGlfw_InitForOpenGL(Window, true);
-	if (!uisuccess)
+	bool b_res = false;
+	b_res = ImGui_ImplGlfw_InitForOpenGL(Window, true);
+	if (!b_res)
 	{
 		printf("System: Could not initialize imgui context for GLFW\n");
-		return -1;
+		 return EXIT_FAILURE;
 	}
-	uisuccess = ImGui_ImplOpenGL3_Init(GLSLVersion);
-	if (!uisuccess)
+	b_res = ImGui_ImplOpenGL3_Init(GLSLVersion);
+	if (!b_res)
 	{
 		printf("System: Could not initialize imgui context for OpenGL\n");
-		return -1;
+		 return EXIT_FAILURE;
 	}
 
 	// Initialize mesh data and positions
@@ -174,13 +164,11 @@ int main(void)
 
 	// Initialize Core VBO, VAO, Render passes
 
-	/*
 #ifdef DEBUG
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(MessageCallback, 0);
 #endif
-*/
 
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
@@ -197,17 +185,17 @@ int main(void)
 	glBindVertexArray(0);
 
 	shader_info_t MainPassParams = {};
-	int success = MainPassParams.Init("./shaders/main.vert",0,0,0,"./shaders/main.frag",0);
-	if (success != 0)
+	res = MainPassParams.Init("./shaders/main.vert",0,0,0,"./shaders/main.frag",0);
+	if (res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize main pass shader parameters\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
-	success = WinHND->MainShader.Create(MainPassParams);
-	if (success != 0)
+	res = WinHND->MainShader.Create(MainPassParams);
+	if (res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize main pass shaders\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	model_uni = glGetUniformLocation(WinHND->MainShader.ID, "model");
@@ -219,25 +207,25 @@ int main(void)
 	lightcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
 	ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
 
-	success = WinHND->PickPass.Init(WinHND->Width, WinHND->Height);
-	if (success != 0)
+	res = WinHND->PickPass.Init(WinHND->Width, WinHND->Height);
+	if (res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize pick pass framebuffer\n");
-		return -1;
+		 return EXIT_FAILURE;
 	}
 
 	shader_info_t PickPassParams = {};
-	success = PickPassParams.Init("./shaders/pick.vert",0,0,0,"./shaders/pick.frag",0);
-	if (success != 0)
+	res = PickPassParams.Init("./shaders/pick.vert",0,0,0,"./shaders/pick.frag",0);
+	if (res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize pick shader parameters\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
-	success = WinHND->PickShader.Create(PickPassParams);
-	if (success != 0)
+	res = WinHND->PickShader.Create(PickPassParams);
+	if (res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize pick pass shaders\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	unsigned int pickingmodel_uni = glGetUniformLocation(WinHND->PickShader.ID, "model");
@@ -402,7 +390,7 @@ int main(void)
 	free(WinHND);
 	WinHND = 0x0;
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 
@@ -414,6 +402,7 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 	WinHND->Height = height;
 
 	// Also resize camera frustum and attached framebuffers
+	// TODO: Calculate new FOV instead of using fixed 45 degrees
 	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, width / height, 0.1f, 100.0f);
 	WinHND->PickPass.Release();
 	WinHND->PickPass.Init(width, height);
@@ -665,7 +654,7 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 		WinHND->ShouldExit = true;
 	}
 	ImGui::Text("");
-	ImGui::Text("Frame time: %.3f ms", WinHND->DeltaTime, 1.0f / WinHND->DeltaTime);
+	ImGui::Text("Frame time: %.4f ms", WinHND->DeltaTime);
 
 	ImGui::End();
 }

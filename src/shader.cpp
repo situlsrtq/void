@@ -3,46 +3,46 @@
 
 int shader_info_t::Init(const char *V,const char *TC,const char *TE,const char *G,const char *F,const char *C)
 {
-	int res = 0;
+	int res;
 
 	if (V)
 	{
 		res = AddFile(V, 0);
-		if (res != 0) return -1; 
+		if (res != EXIT_SUCCESS) return EXIT_FAILURE; 
 		PipelineOpts |= VOID_VERT_OPT;
 	}
 	if (TC)
 	{
 		res = AddFile(TC, 1);
-		if (res != 0) return -1; 
+		if (res != EXIT_SUCCESS) return EXIT_FAILURE; 
 		PipelineOpts |= VOID_TESCC_OPT;
 	}
 	if (TE)
 	{
 		res = AddFile(TE, 2);
-		if (res != 0) return -1; 
+		if (res != EXIT_SUCCESS) return EXIT_FAILURE; 
 		PipelineOpts |= VOID_TESCE_OPT;
 	}
 	if (G)
 	{
 		res = AddFile(G, 3);
-		if (res != 0) return -1; 
+		if (res != EXIT_SUCCESS) return EXIT_FAILURE; 
 		PipelineOpts |= VOID_GEOM_OPT;
 	}
 	if (F)
 	{
 		res = AddFile(F, 4);
-		if (res != 0) return -1; 
+		if (res != EXIT_SUCCESS) return EXIT_FAILURE; 
 		PipelineOpts |= VOID_FRAG_OPT;
 	}
 	if (C)
 	{
 		res = AddFile(C, 5);
-		if (res != 0) return -1; 
+		if (res != EXIT_SUCCESS) return EXIT_FAILURE; 
 		PipelineOpts |= VOID_COMP_OPT;
 	}
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 
@@ -52,11 +52,11 @@ int shader_info_t::AddFile(const char *InFile, int FileType)
 	if (len > TMAX_PATH_LEN)
 	{
 		printf("Shader %s: file path longer than max\n", InFile);
-		return -1;
+		return EXIT_FAILURE;
 	}
 	memcpy(&FilePaths[FileType][0], InFile, len); 
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 
@@ -65,14 +65,14 @@ uint32_t shader_program_t::Build(const char* InFilePath, int ShaderType)
 	char* FileSrc = 0x0;
 	FILE* SFile = 0x0;
 	uint64_t srclen = 0;
-	int success = 0;
+	int ShaderCompRes = 0;
 
 	// Read shader file
 
 	if ((SFile = fopen(InFilePath, "rb")) == 0x0)
 	{
 		printf("Could not open shader file %s\n", InFilePath);
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	fseek(SFile, 0, SEEK_END);
@@ -83,7 +83,7 @@ uint32_t shader_program_t::Build(const char* InFilePath, int ShaderType)
 	{
 		printf("Error getting shader source size %s\n", InFilePath);
 		fclose(SFile);
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	FileSrc = (char*)malloc(srclen + 1);
@@ -91,7 +91,7 @@ uint32_t shader_program_t::Build(const char* InFilePath, int ShaderType)
 	{
 		printf("malloc error: shader source\n");
 		fclose(SFile);
-		return -1;
+		return EXIT_FAILURE;
 	}
 	if ((fread(FileSrc, 1, srclen, SFile)) != srclen)
 	{
@@ -99,7 +99,7 @@ uint32_t shader_program_t::Build(const char* InFilePath, int ShaderType)
 		free(FileSrc);
 		FileSrc = 0x0;
 		fclose(SFile);
-		return -1;
+		return EXIT_FAILURE;
 	}
 	FileSrc[srclen] = '\0';
 	fclose(SFile);
@@ -111,15 +111,15 @@ uint32_t shader_program_t::Build(const char* InFilePath, int ShaderType)
 	glShaderSource(Shader, 1, &FileSrc, NULL);
 	glCompileShader(Shader);
 
-	glGetShaderiv(Shader, GL_COMPILE_STATUS, &success);
-	if (!success)
+	glGetShaderiv(Shader, GL_COMPILE_STATUS, &ShaderCompRes);
+	if (!ShaderCompRes)
 	{
 		glGetShaderInfoLog(Shader, 512, NULL, InfoLog);
 		printf("GL: Failed to compile shader %s\n", InFilePath);
 		printf("%s\n", InfoLog);
 		free(FileSrc);
 		FileSrc = 0x0;
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	free(FileSrc);
@@ -145,7 +145,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		if (!Shaders[0])
 		{
 			printf("SHADER: Could not create shader program\n");
-			return -1;
+			return EXIT_FAILURE;
 		}
 	}
 	// TESC CN
@@ -155,7 +155,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		{
 			printf("SHADER: No Tesselation Evaluation shader supplied\n");
 			printf("Could not create shader program\n");
-			return -1;
+			return EXIT_FAILURE;
 		}
 
 		FilePath = &Params.FilePaths[1][0];
@@ -163,7 +163,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		if (!Shaders[1])
 		{
 			printf("SHADER: Could not create shader program\n");
-			return -1;
+			return EXIT_FAILURE;
 		}
 	}
 	// TESC EV
@@ -173,7 +173,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		{
 			printf("SHADER: No Tesselation Control shader supplied\n");
 			printf("Could not create shader program\n");
-			return -1;
+			return EXIT_FAILURE;
 		}
 
 		FilePath = &Params.FilePaths[2][0];
@@ -181,7 +181,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		if (!Shaders[2])
 		{
 			printf("SHADER: Could not create shader program\n");
-			return -1;
+			return EXIT_FAILURE;
 		}
 	}
 	// GEOM
@@ -192,7 +192,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		if (!Shaders[3])
 		{
 			printf("Could not create shader program\n");
-			return -1;
+			return EXIT_FAILURE;
 		}
 	}
 	// FRAG
@@ -203,7 +203,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		if (!Shaders[4])
 		{
 			printf("Could not create shader program\n");
-			return -1;
+			return EXIT_FAILURE;
 		}
 	}
 	// COMP
@@ -213,7 +213,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		{
 			printf("SHADER: Compute shaders must be standalone\n");
 			printf("Could not create shader program\n");
-			return -1;
+			return EXIT_FAILURE;
 		}
 
 		FilePath = &Params.FilePaths[5][0];
@@ -221,7 +221,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		if (!Shaders[5])
 		{
 			printf("Could not create shader program\n");
-			return -1;
+			return EXIT_FAILURE;
 		}
 	}
 
@@ -244,7 +244,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		glGetProgramInfoLog(ID, SHADER_INFOLOG_SIZE, NULL, InfoLog);
 		printf("GL: Failed to link shader program\n");
 		printf("%s\n", InfoLog);
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 // Storing info in GPU memory unnecessary after successful program creation - free it
@@ -258,7 +258,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 		}
 	}
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 
@@ -267,12 +267,12 @@ int shader_program_t::Rebuild()
 	if (!Params.PipelineOpts)
 	{
 		printf("Shader Rebuild Error: Cannot call rebuild on an uninitialized shader\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	glDeleteProgram(ID);
 	Create(Params);
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 

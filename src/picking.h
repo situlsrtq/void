@@ -3,8 +3,9 @@
 
 
 #include "../vendor/glad/glad.h"
-#include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 
 
 struct texel_info_t
