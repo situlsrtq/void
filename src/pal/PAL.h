@@ -14,6 +14,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 // NOTE: limits is only here because of the runtime path shit
 #include <limits.h>
@@ -32,6 +33,8 @@ namespace PAL
 #ifdef DEBUG
 int GetPath(char* buf, size_t size);
 #endif
+
+void* AlignedAlloc(size_t size, size_t alignment);
 
 
 }

@@ -1,5 +1,10 @@
 #include "PAL.h"
+#include <cstdlib>
 #ifdef VOID_PLATFORM_LINUX
+
+
+#define VOID_DIR_HEAD "/void/"
+		
 
 
 #include <unistd.h>
@@ -27,31 +32,42 @@ int PAL::GetPath(char *buf, size_t size)
 	// readlink() gives us the full path, including the executable, but we only want the base directory
 	// for the program, so we use a sliding window to find it and trim the unnecessary data
 	
-	int i = 0, k = 1, res = 1;
+	int i = len, k = len-1, res = 1;
 	char temp = '/';
 	char* slide;
 	while(res)
 	{
-		slide = &buf[i];
-		while(buf[k] != '/')
+		if(i <= 1)
 		{
-			k++;
+			printf("GetPath: path not found. Check configuration\n");
+			return EXIT_FAILURE;
 		}
 
-		k++;
+		i = k+1;
+		k--;
 
-		temp = buf[k];
-		buf[k] = '\0';
+		while(buf[k] != '/')
+		{
+			k--;
+		}
 
-		res = strcmp(slide, "/void/");
-		buf[k] = temp;
-		i = k-1;
+		temp = buf[i];
+		buf[i] = '\0';
+
+		slide = &buf[k];
+		res = strcmp(slide, VOID_DIR_HEAD);
+		buf[i] = temp;
 	}
 
-	buf[k] = '\0';
+	buf[i] = '\0';
 
 	return EXIT_SUCCESS;
 }
 
+
+void* PAL::AlignedAlloc(size_t size, size_t alignment)
+{
+	return aligned_alloc(alignment, size);
+}
 
 #endif

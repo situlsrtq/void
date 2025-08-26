@@ -25,4 +25,9 @@ int PAL::GetPath(char *buf, size_t size)
 }
 
 
+void* PAL::AlignedAlloc(size_t size, size_t alignment)
+{
+	return _aligned_malloc(size, alignment);
+}
+
 #endif

@@ -1,5 +1,4 @@
 #include "main.h"
-#include "pal/PAL.h"
 
 
 // TODO: Get rid of runtime path discovery (MAX_PATH/PATH_MAX/etc) in release builds
