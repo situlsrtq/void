@@ -25,11 +25,17 @@
 #define SCREEN_Y_DIM_DEFAULT 800.0f
 
 
-// TODO: Move to Core module when such a thing exists
+//------- TODO: Move to Core module when such a thing exists ----------
 #ifdef DEBUG
 extern char g_PathBuffer_r[VOID_PATH_MAX+1];
 extern char *g_OSPath_r;
 #endif
+
+#define V_KIB (1024ULL)
+#define V_MIB (1024ULL * V_KIB)
+#define V_GIB (1024ULL * V_MIB)
+#define V_TIB (1024ULL * V_GIB)
+//--------------------------------------------------------------------
 
 
 namespace PAL

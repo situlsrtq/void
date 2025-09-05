@@ -1,4 +1,6 @@
 #include "main.h"
+#include "PAL.h"
+#include <cstring>
 
 
 // TODO: Get rid of runtime path discovery (MAX_PATH/PATH_MAX/etc) in release builds
@@ -14,6 +16,8 @@ MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei 
 }
 #endif
 
+
+char* ResourceStringMem;
 
 uint8_t NKeyWasDown;
 uint8_t RKeyWasDown;
@@ -34,6 +38,14 @@ int main(void)
 	{
 		printf("PAL: Failed to initialize file path\n");
 	}
+
+	// TODO: per-thread string memory system, to be sized based on thread's need. Rendering thread will be heaviest user
+
+	ResourceStringMem = (char *)malloc(4 * V_MIB);
+	size_t len = strlen(g_OSPath_r);
+	memcpy(ResourceStringMem, g_OSPath_r, len);
+	memcpy(ResourceStringMem + len, "res/DragonAttenuation.glb", 25);
+	char* DragonFile = ResourceStringMem;
 
 	// Initialize Core Systems
 
@@ -101,63 +113,33 @@ int main(void)
 		 return EXIT_FAILURE;
 	}
 
+	// TODO: turn gltf processing into a module, define a standardized gltf format for game resources and support only that. 
+	// ideally, we call cgltf_free() immediately after doing this processing
+
 	// Initialize mesh data and positions
+	void* buf;
+	size_t size;
 
-	float CubeMesh[] = {
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	cgltf_options opt;
+	memset(&opt, 0, sizeof(opt));
+	cgltf_data* data = 0x0;
 
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+	cgltf_result cgl_res = cgltf_parse_file(&opt, DragonFile, &data);
 
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	if(cgl_res == cgltf_result_success) cgl_res = cgltf_load_buffers(&opt, data, DragonFile);
+	if(cgl_res == cgltf_result_success) cgl_res = cgltf_validate(data);
 
-		0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-		0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-		0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-		0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-		0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-		0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-		0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f };
-
-	uMATH::vec3f_t cubePositions[] = {
-		uMATH::vec3f_t{ 0.0f,  0.0f,  0.0f},
-		uMATH::vec3f_t{ 2.0f,  5.0f, -15.0f},
-		uMATH::vec3f_t{-1.5f, -2.2f, -2.5f},
-		uMATH::vec3f_t{-3.8f, -2.0f, -12.3f},
-		uMATH::vec3f_t{ 2.4f, -0.4f, -3.5f},
-		uMATH::vec3f_t{-1.7f,  3.0f, -7.5f},
-		uMATH::vec3f_t{ 1.3f, -2.0f, -2.5f},
-		uMATH::vec3f_t{ 1.5f,  2.0f, -2.5f},
-		uMATH::vec3f_t{ 1.5f,  0.2f, -1.5f},
-		uMATH::vec3f_t{-1.3f,  1.0f, -1.5f}
-	};
+	cgltf_primitive& prim = data->meshes[1].primitives[0];
+	size_t indexcount = prim.indices->count;
+	cgltf_attribute attr;
+	size_t meshsize = 0;
+	uint8_t* CombinedData = (uint8_t *)malloc(10 * V_MIB);
+	for(int i = 0; i < prim.attributes_count; i++)
+	{
+		attr = prim.attributes[i];
+		memcpy(CombinedData + meshsize, ((uint8_t *)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset), attr.data->buffer_view->size);
+		meshsize += attr.data->buffer_view->size;
+	}
 
 	// Initialize Core VBO, VAO, Render passes
 
@@ -166,20 +148,32 @@ int main(void)
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(MessageCallback, 0);
 #endif
+	
+	// TODO: Switch to one buffer per level and using glBufferSubData/glDrawElementsBaseVertex - eventually glDrawElementsIndirectCommand
+	// /!\ remember to make changes where the draw calls actually happen too
 
-	unsigned int VBO;
-	glGenBuffers(1, &VBO);
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
+	unsigned int VBO;
+	glGenBuffers(1, &VBO);
+	unsigned int EBO;
+	glGenBuffers(1, &EBO);
+
 
 	glBindVertexArray(VAO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, prim.indices->buffer_view->size, (void *)((uint8_t *)prim.indices->buffer_view->buffer->data + prim.indices->buffer_view->offset), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(CubeMesh), CubeMesh, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
+	glBufferData(GL_ARRAY_BUFFER, meshsize, (void *)CombinedData, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)(prim.attributes[0].data->buffer_view->size));
 	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)(prim.attributes[0].data->buffer_view->size + prim.attributes[1].data->buffer_view->size));
+	glEnableVertexAttribArray(2);
 	glBindVertexArray(0);
+
+	cgltf_free(data);
 
 	shader_info_t MainPassParams = {};
 	res = MainPassParams.Init("shaders/main.vert",0,0,0,"shaders/main.frag",0);
@@ -232,10 +226,22 @@ int main(void)
 	unsigned int pickingtype_uni = glGetUniformLocation(WinHND->PickShader.ID, "type");
 
 	// Initialize first-frame data
+	uMATH::vec3f_t cubePositions[] = {
+		uMATH::vec3f_t{ 0.0f,  0.0f,  0.0f},
+		uMATH::vec3f_t{ 2.0f,  5.0f, -15.0f},
+		uMATH::vec3f_t{-1.5f, -2.2f, -2.5f},
+		uMATH::vec3f_t{-3.8f, -2.0f, -12.3f},
+		uMATH::vec3f_t{ 2.4f, -0.4f, -3.5f},
+		uMATH::vec3f_t{-1.7f,  3.0f, -7.5f},
+		uMATH::vec3f_t{ 1.3f, -2.0f, -2.5f},
+		uMATH::vec3f_t{ 1.5f,  2.0f, -2.5f},
+		uMATH::vec3f_t{ 1.5f,  0.2f, -1.5f},
+		uMATH::vec3f_t{-1.3f,  1.0f, -1.5f}
+	};
 
 	uMATH::mat4f_t GeometryModel = {};
 	geometry_create_info_t CreateInfo;
-	CreateInfo.Scale = 1.0f;
+	CreateInfo.Scale = 0.1f;
 	CreateInfo.Intensity = 0.5f;
 	CreateInfo.Color = { 1.0f, 0.5f, 0.31f };
 
@@ -312,7 +318,7 @@ int main(void)
 			glUniform1f(pickingtype_uni, float(1));
 
 			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
-			glDrawArrays(RenderMode, 0, 36);
+			glDrawElements(RenderMode, indexcount, GL_UNSIGNED_INT, (void*)0);
 		}
 
 		WinHND->PickPass.Unbind_W();
@@ -339,7 +345,7 @@ int main(void)
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
 			glUniform3fv(objcolor_uni, 1, &WinHND->GeometryObjects.Color[i].x);
-			glDrawArrays(RenderMode, 0, 36);
+			glDrawElements(RenderMode, indexcount, GL_UNSIGNED_INT, (void*)0);
 		}
 
 		if (WinHND->ActiveSelection)
@@ -347,7 +353,7 @@ int main(void)
 			WinHND->Active.ComposeModelM4();
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->Active.Model.m[0][0]);
 			glUniform3fv(objcolor_uni, 1, &WinHND->Active.Color.x);
-			glDrawArrays(RenderMode, 0, 36);
+			glDrawElements(RenderMode, indexcount, GL_UNSIGNED_INT, (void*)0);
 		}
 
 		// Light Geometry Pass
@@ -358,7 +364,7 @@ int main(void)
 		uMATH::Scale(&Model, lightScale);
 		uMATH::Translate(&Model, LightPosition);
 		glUniformMatrix4fv(model_uni, 1, GL_FALSE, &Model.m[0][0]);
-		glDrawArrays(RenderMode, 0, 36);
+		glDrawElements(RenderMode, indexcount, GL_UNSIGNED_INT, (void*)0);
 
 		glBindVertexArray(0);
 		glUseProgram(0);
