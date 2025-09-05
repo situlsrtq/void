@@ -279,6 +279,15 @@ inline void EulerRotate(mat4f_t *t, float theta, int axis)
 
 inline void MatrixRotate(mat4f_t* t, float d, const vec3f_t& r)
 {
+	// Extract scale so it can be added back after rotation 
+	vec3f_t axis = {t->m[0][0], t->m[1][0], t->m[2][0]};
+	float scale = sqrtf((axis.x * axis.x) + (axis.y * axis.y) + (axis.z * axis.z));
+	mat4f_t st = {0};
+	st.m[0][0] = scale;
+	st.m[1][1] = scale;
+	st.m[2][2] = scale;
+	st.m[3][3] = 1.0f;
+
 	float theta = d * RADIAN;
 	vec3f_t temp = Normalize(r);
 
@@ -300,6 +309,9 @@ inline void MatrixRotate(mat4f_t* t, float d, const vec3f_t& r)
 	t->m[2][0] = (vs * temp.x * temp.z) - (s * temp.y);
 	t->m[2][1] = (vs * temp.y * temp.z) + (s * temp.x);
 	t->m[2][2] = (vs * z2) + c;
+	
+	// Put scale back
+	*t *= st;
 }
 
 
