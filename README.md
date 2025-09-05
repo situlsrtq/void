@@ -3,7 +3,7 @@
 
 This project implements various 3D rendering algorithms to provide a basic sandbox for users to interact with. The lighting model uses a single, real time, Phong positional source (for now). 
 
-Dynamic allocation from the OS occurs exactly once, at initialization - all runtime dynamic objects are handled 
+Dynamic allocation from the OS occurs exactly once, at initialization - all finalized (non-debug) runtime dynamic objects are handled 
 by custom linear/bump allocators that supports free operations.
 
 ## Vendor libraries:
