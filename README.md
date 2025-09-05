@@ -24,7 +24,7 @@ CMakeLists.txt file.
 
 Nearly all vendor files required to build the software are already included in the repo. The single exception is 
 OpenGL, which comes as part of the standard Windows package. Linux installations require a version of libGL 
-that supports your hardware (either downloaded as a standalone package or from the vendor utils your build uses) -
+that supports your hardware (either downloaded as a standalone package or, most likely, from the vendor utils your build uses) -
 this library must be accessible from your PATH.
 
 This software is written for OpenGL Core Profile 4.6.
