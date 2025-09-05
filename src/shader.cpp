@@ -1,4 +1,5 @@
 #include "shader.h"
+#include "PAL.h"
 
 
 int shader_info_t::Init(const char *V,const char *TC,const char *TE,const char *G,const char *F,const char *C)
@@ -48,13 +49,15 @@ int shader_info_t::Init(const char *V,const char *TC,const char *TE,const char *
 
 int shader_info_t::AddFile(const char *InFile, int FileType)
 {
-	size_t len = strlen(InFile) + 1;
-	if (len > TMAX_PATH_LEN)
+	size_t pathlen = strlen(g_OSPath_r);
+	size_t inlen = strlen(InFile) + 1;
+	if (pathlen + inlen > VOID_PATH_MAX)
 	{
 		printf("Shader %s: file path longer than max\n", InFile);
 		return EXIT_FAILURE;
 	}
-	memcpy(&FilePaths[FileType][0], InFile, len); 
+	memcpy(&FilePaths[FileType][0], g_OSPath_r, pathlen); 
+	memcpy(&FilePaths[FileType][pathlen], InFile, inlen); 
 
 	return EXIT_SUCCESS;
 }

@@ -3,13 +3,11 @@
 
 
 #include "../vendor/glad/glad.h"
+#include "pal/PAL.h"
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 
-#define TMAX_PATH_LEN 256
 #define SHADER_INFOLOG_SIZE 512
 #define VOID_VERT_OPT 0b1 
 #define VOID_TESCC_OPT 0b10 
@@ -23,7 +21,7 @@ struct shader_info_t
 {
 	char PipelineOpts : 6;
 	char : 0;
-	char FilePaths[6][TMAX_PATH_LEN];
+	char FilePaths[6][VOID_PATH_MAX];
 
 	int Init(const char *V,const char *TC,const char *TE,const char *G,const char *F,const char *C);
 

@@ -27,11 +27,9 @@ unsigned int objcolor_uni;
 unsigned int lightcolor_uni;
 unsigned int ambistrgth_uni;
 
-char PathBuffer[VOID_PATH_MAX+1];
-
 int main(void)
 {
-	int res = PAL::GetPath(PathBuffer, VOID_PATH_MAX)				;
+	int res = PAL::GetPath(g_PathBuffer_r, VOID_PATH_MAX)				;
 	if(res != EXIT_SUCCESS)
 	{
 		printf("PAL: Failed to initialize file path\n");
@@ -184,7 +182,7 @@ int main(void)
 	glBindVertexArray(0);
 
 	shader_info_t MainPassParams = {};
-	res = MainPassParams.Init("./shaders/main.vert",0,0,0,"./shaders/main.frag",0);
+	res = MainPassParams.Init("shaders/main.vert",0,0,0,"shaders/main.frag",0);
 	if (res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize main pass shader parameters\n");
@@ -214,7 +212,7 @@ int main(void)
 	}
 
 	shader_info_t PickPassParams = {};
-	res = PickPassParams.Init("./shaders/pick.vert",0,0,0,"./shaders/pick.frag",0);
+	res = PickPassParams.Init("shaders/pick.vert",0,0,0,"shaders/pick.frag",0);
 	if (res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize pick shader parameters\n");

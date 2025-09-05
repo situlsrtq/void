@@ -8,6 +8,12 @@
 #include "../vendor/glad/glad.h"
 #include "../vendor/GLFW/glfw3.h"
 
+#ifndef CGLTF_IMPLEMENTATION
+#define CGLTF_IMPLEMENTATION
+#endif
+#include "cgltf.h"
+
+
 #include "../pal/PAL.h"
 
 #include "shader.h"

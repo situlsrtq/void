@@ -1,13 +1,15 @@
 #include "PAL.h"
-#include <cstdlib>
 #ifdef VOID_PLATFORM_LINUX
 
 
+#include <unistd.h>
+
+
+// TODO: Move to Core module
 #define VOID_DIR_HEAD "/void/"
 		
-
-
-#include <unistd.h>
+char g_PathBuffer_r[VOID_PATH_MAX+1];
+char* g_OSPath_r = g_PathBuffer_r;
 
 
 int PAL::GetPath(char *buf, size_t size)
