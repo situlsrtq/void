@@ -27,8 +27,7 @@ OpenGL, which comes as part of the standard Windows package. Linux installations
 that supports your hardware (either downloaded as a standalone package or from the vendor utils your build uses) -
 this library must be accessible from your PATH.
 
-This software is written for OpenGL Core Profile 4.6, but will most likely work on any Core profile 3.0+. Changes can be
-applied in main.cpp and the shader files, if desired.
+This software is written for OpenGL Core Profile 4.6.
 
 ## Sources
 #### From which linear algebra operations and 3D algorithms were primarily researched prior to implementation
