@@ -11,6 +11,7 @@ by custom linear/bump allocators that supports free operations.
 OpenGL: Cross-platform API for rendering 2D/3D graphics on GPU hardware\
 GLAD: Provides managed OpenGL function pointers for cross-platform, cross-version compatibility\
 GLFW: Provides basic cross-platform windowing and input control\
+CGLTF: Provides parsing support for GLTF 2.0 files\
 DearImGUI: Provides an immediate-mode UI framework for menus and controls 
 
 With the exception of a few functions from C built-ins (string, math, stdint, stdio), everything else is hand-implemented. 
