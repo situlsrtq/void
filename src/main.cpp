@@ -467,7 +467,8 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 
 	// Also resize camera frustum and attached framebuffers
 	// TODO: Calculate new FOV instead of using fixed 45 degrees
-	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, width / height, 0.1f, 100.0f);
+	uMATH::SetTransform(&WinHND->Projection);
+	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, (float)width / (float)height, 0.1f, 100.0f);
 	WinHND->HDRPass.Release();
 	WinHND->HDRPass.Init(width, height);
 	WinHND->PickPass.Release();
