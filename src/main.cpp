@@ -1,9 +1,7 @@
 #include "main.h"
-#include "PAL.h"
-#include <cstring>
 
 
-// TODO: Get rid of runtime path discovery (MAX_PATH/PATH_MAX/etc) in release builds
+// TODO: Get rid of runtime path discovery in release builds
 
 
 #ifdef DEBUG
@@ -17,19 +15,40 @@ MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei 
 #endif
 
 
-char* ResourceStringMem;
-
 uint8_t NKeyWasDown;
 uint8_t RKeyWasDown;
-uint8_t PKeyWasDown;  unsigned int model_uni;
-uint8_t LMouseWasDown;unsigned int view_uni;
-uint8_t RMouseWasDown;unsigned int viewpos_uni;
+uint8_t PKeyWasDown;  
+uint8_t LMouseWasDown;
+uint8_t RMouseWasDown;
 
+unsigned int model_uni;
+unsigned int view_uni;
+unsigned int viewpos_uni;
 unsigned int projection_uni;
 unsigned int lightpos_uni;
 unsigned int objcolor_uni;
 unsigned int lightcolor_uni;
 unsigned int ambistrgth_uni;
+unsigned int exposure_uni;
+
+
+cgltf_attribute* FindAttrType(const cgltf_primitive& prim, cgltf_attribute_type type)
+{
+	cgltf_attribute* attr = &prim.attributes[0];
+
+	for(int i = 0; i < prim.attributes_count; i++)
+	{
+		if(prim.attributes[i].type != type) continue;
+
+		attr = &prim.attributes[i];
+		return attr;
+	}
+
+	attr = 0x0;
+	printf("GLTF: Attribute type not found %s\n", "peepee, map to attr_type later");
+	return attr;
+}
+
 
 int main(void)
 {
@@ -41,11 +60,11 @@ int main(void)
 
 	// TODO: per-thread string memory system, to be sized based on thread's need. Rendering thread will be heaviest user
 
-	ResourceStringMem = (char *)malloc(4 * V_MIB);
+	char* ResourceStringMem = (char *)malloc(4 * V_MIB);
 	size_t len = strlen(g_OSPath_r);
 	memcpy(ResourceStringMem, g_OSPath_r, len);
-	memcpy(ResourceStringMem + len, "res/DragonAttenuation.glb", 25);
-	char* DragonFile = ResourceStringMem;
+	memcpy(ResourceStringMem + len, "res/DamagedHelmet.glb", 22);
+	char* SceneFile = ResourceStringMem;
 
 	// Initialize Core Systems
 
@@ -124,22 +143,34 @@ int main(void)
 	memset(&opt, 0, sizeof(opt));
 	cgltf_data* data = 0x0;
 
-	cgltf_result cgl_res = cgltf_parse_file(&opt, DragonFile, &data);
+	cgltf_result cgl_res = cgltf_parse_file(&opt, SceneFile, &data);
 
-	if(cgl_res == cgltf_result_success) cgl_res = cgltf_load_buffers(&opt, data, DragonFile);
+	if(cgl_res == cgltf_result_success) cgl_res = cgltf_load_buffers(&opt, data, SceneFile);
 	if(cgl_res == cgltf_result_success) cgl_res = cgltf_validate(data);
 
-	cgltf_primitive& prim = data->meshes[1].primitives[0];
+	uint8_t* DataBaseAddr = (uint8_t *)data->buffers->data;
+	cgltf_primitive& prim = data->meshes[0].primitives[0];
+
+	GLint indextype; 
+	if(prim.indices->component_type == cgltf_component_type_r_16u) indextype = GL_UNSIGNED_SHORT;
+	else indextype = GL_UNSIGNED_INT;
+
 	size_t indexcount = prim.indices->count;
-	cgltf_attribute attr;
+	cgltf_attribute* attr;
 	size_t meshsize = 0;
 	uint8_t* CombinedData = (uint8_t *)malloc(10 * V_MIB);
-	for(int i = 0; i < prim.attributes_count; i++)
-	{
-		attr = prim.attributes[i];
-		memcpy(CombinedData + meshsize, ((uint8_t *)attr.data->buffer_view->buffer->data + attr.data->buffer_view->offset), attr.data->buffer_view->size);
-		meshsize += attr.data->buffer_view->size;
-	}
+	
+	attr = FindAttrType(prim, cgltf_attribute_type_position);
+	memcpy(CombinedData + meshsize, (DataBaseAddr + attr->data->buffer_view->offset), attr->data->buffer_view->size);
+	meshsize += attr->data->buffer_view->size;
+
+	attr = FindAttrType(prim, cgltf_attribute_type_normal);
+	memcpy(CombinedData + meshsize, (DataBaseAddr + attr->data->buffer_view->offset), attr->data->buffer_view->size);
+	meshsize += attr->data->buffer_view->size;
+
+	attr = FindAttrType(prim, cgltf_attribute_type_texcoord);
+	memcpy(CombinedData + meshsize, (DataBaseAddr + attr->data->buffer_view->offset), attr->data->buffer_view->size);
+	meshsize += attr->data->buffer_view->size;
 
 	// Initialize Core VBO, VAO, Render passes
 
@@ -162,7 +193,7 @@ int main(void)
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, prim.indices->buffer_view->size, (void *)((uint8_t *)prim.indices->buffer_view->buffer->data + prim.indices->buffer_view->offset), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, prim.indices->buffer_view->size, (void *)(DataBaseAddr + prim.indices->buffer_view->offset), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, meshsize, (void *)CombinedData, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
@@ -174,6 +205,15 @@ int main(void)
 	glBindVertexArray(0);
 
 	cgltf_free(data);
+
+	//---------------------------Main pass----------------------------
+
+	res = WinHND->HDRPass.Init(WinHND->Width, WinHND->Height);
+	if (res != EXIT_SUCCESS)
+	{
+		printf("System: Failed to initialize main (HDR) pass framebuffer\n");
+		 return EXIT_FAILURE;
+	}
 
 	shader_info_t MainPassParams = {};
 	res = MainPassParams.Init("shaders/main.vert",0,0,0,"shaders/main.frag",0);
@@ -197,6 +237,26 @@ int main(void)
 	objcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "objcolor");
 	lightcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
 	ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
+
+	//---------------------------Post pass----------------------------
+
+	shader_info_t PostPassParams = {};
+	res = PostPassParams.Init("shaders/post.vert",0,0,0,"shaders/post.frag",0);
+	if (res != EXIT_SUCCESS)
+	{
+		printf("System: Failed to initialize post pass shader parameters\n");
+		return EXIT_FAILURE;
+	}
+	res = WinHND->PostShader.Create(PostPassParams);
+	if (res != EXIT_SUCCESS)
+	{
+		printf("System: Failed to initialize post pass shaders\n");
+		return EXIT_FAILURE;
+	}
+
+	exposure_uni  = glGetUniformLocation(WinHND->PostShader.ID, "exposure");
+
+	//---------------------------Pick pass----------------------------
 
 	res = WinHND->PickPass.Init(WinHND->Width, WinHND->Height);
 	if (res != EXIT_SUCCESS)
@@ -241,7 +301,7 @@ int main(void)
 
 	uMATH::mat4f_t GeometryModel = {};
 	geometry_create_info_t CreateInfo;
-	CreateInfo.Scale = 0.1f;
+	CreateInfo.Scale = 1.0f;
 	CreateInfo.Intensity = 0.5f;
 	CreateInfo.Color = { 1.0f, 0.5f, 0.31f };
 
@@ -277,7 +337,6 @@ int main(void)
 	bool DemoWindow = false;
 	while (!glfwWindowShouldClose(Window))
 	{
-
 		// Handle user input
 
 		glfwPollEvents();
@@ -318,12 +377,16 @@ int main(void)
 			glUniform1f(pickingtype_uni, float(1));
 
 			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
-			glDrawElements(RenderMode, indexcount, GL_UNSIGNED_INT, (void*)0);
+			glDrawElements(RenderMode, indexcount, indextype, (void*)0);
 		}
 
 		WinHND->PickPass.Unbind_W();
 
 		// Object Geometry Pass
+		
+		WinHND->HDRPass.Bind();
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		WinHND->MainShader.Use();
 
@@ -345,7 +408,7 @@ int main(void)
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
 			glUniform3fv(objcolor_uni, 1, &WinHND->GeometryObjects.Color[i].x);
-			glDrawElements(RenderMode, indexcount, GL_UNSIGNED_INT, (void*)0);
+			glDrawElements(RenderMode, indexcount, indextype, (void*)0);
 		}
 
 		if (WinHND->ActiveSelection)
@@ -353,7 +416,7 @@ int main(void)
 			WinHND->Active.ComposeModelM4();
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->Active.Model.m[0][0]);
 			glUniform3fv(objcolor_uni, 1, &WinHND->Active.Color.x);
-			glDrawElements(RenderMode, indexcount, GL_UNSIGNED_INT, (void*)0);
+			glDrawElements(RenderMode, indexcount, indextype, (void*)0);
 		}
 
 		// Light Geometry Pass
@@ -364,19 +427,28 @@ int main(void)
 		uMATH::Scale(&Model, lightScale);
 		uMATH::Translate(&Model, LightPosition);
 		glUniformMatrix4fv(model_uni, 1, GL_FALSE, &Model.m[0][0]);
-		glDrawElements(RenderMode, indexcount, GL_UNSIGNED_INT, (void*)0);
+		glDrawElements(RenderMode, indexcount, indextype, (void*)0);
 
-		glBindVertexArray(0);
-		glUseProgram(0);
+		// Blit from HDR to linear normal quad for post-processing, parse inter-frame data
 
-		// Blit, parse inter-frame data
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, WinHND->HDRPass.ColorBuffer);
+
+		WinHND->PostShader.Use();
+		glUniform1f(exposure_uni, float(1));
+		// Positions are currently stored in the vertex shader, not VAO
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(Window);
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glBindVertexArray(0);
+		glUseProgram(0);
 
 		CurrFrameTime = glfwGetTime();
 		WinHND->DeltaTime = CurrFrameTime - WinHND->PrevFrameTime;
@@ -407,6 +479,8 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 	// Also resize camera frustum and attached framebuffers
 	// TODO: Calculate new FOV instead of using fixed 45 degrees
 	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, width / height, 0.1f, 100.0f);
+	WinHND->HDRPass.Release();
+	WinHND->HDRPass.Init(width, height);
 	WinHND->PickPass.Release();
 	WinHND->PickPass.Init(width, height);
 

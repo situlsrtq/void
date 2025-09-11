@@ -16,9 +16,6 @@
 
 #include "../pal/PAL.h"
 
-#include "shader.h"
-#include "picking.h"
-#include "camera.h"
 #include "window.h"
 #include "util/u_math.h"
 #include "util/u_mem.h"
