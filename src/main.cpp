@@ -1,4 +1,5 @@
 #include "main.h"
+#include "u_math.h"
 
 
 // TODO: Get rid of runtime path discovery in release builds
@@ -287,38 +288,23 @@ int main(void)
 	unsigned int pickingtype_uni = glGetUniformLocation(WinHND->PickShader.ID, "type");
 
 	// Initialize first-frame data
-	uMATH::vec3f_t cubePositions[] = {
-		uMATH::vec3f_t{ 0.0f,  0.0f,  0.0f},
-		uMATH::vec3f_t{ 2.0f,  5.0f, -15.0f},
-		uMATH::vec3f_t{-1.5f, -2.2f, -2.5f},
-		uMATH::vec3f_t{-3.8f, -2.0f, -12.3f},
-		uMATH::vec3f_t{ 2.4f, -0.4f, -3.5f},
-		uMATH::vec3f_t{-1.7f,  3.0f, -7.5f},
-		uMATH::vec3f_t{ 1.3f, -2.0f, -2.5f},
-		uMATH::vec3f_t{ 1.5f,  2.0f, -2.5f},
-		uMATH::vec3f_t{ 1.5f,  0.2f, -1.5f},
-		uMATH::vec3f_t{-1.3f,  1.0f, -1.5f}
-	};
+	uMATH::vec3f_t position = {};
 
 	uMATH::mat4f_t GeometryModel = {};
 	geometry_create_info_t CreateInfo;
 	CreateInfo.Scale = 1.0f;
 	CreateInfo.Intensity = 0.5f;
 	CreateInfo.Color = { 1.0f, 0.5f, 0.31f };
+	float angle = 90.0f;
+	uMATH::vec3f_t rVec = {1.0f, 0.0f, 0.0001f};
 
-	for (int i = 0; i < 10; i++)
-	{
-		float angle = 20.0f * i;
-		uMATH::vec3f_t rVec = { 1.0f, 0.3f, 0.5f };
-		SetTransform(&GeometryModel);
+	SetTransform(&GeometryModel);
+	uMATH::Scale(&GeometryModel, CreateInfo.Scale);
+	uMATH::MatrixRotate(&GeometryModel, angle, rVec);
+	uMATH::Translate(&GeometryModel, position);
 
-		uMATH::Scale(&GeometryModel, CreateInfo.Scale);
-		uMATH::MatrixRotate(&GeometryModel, angle, rVec);
-		uMATH::Translate(&GeometryModel, cubePositions[i]);
-
-		CreateInfo.Model = GeometryModel;
-		WinHND->GeometryObjects.Alloc(CreateInfo);
-	}
+	CreateInfo.Model = GeometryModel;
+	WinHND->GeometryObjects.Alloc(CreateInfo);
 
 	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT, 0.1f, 100.0f);
 
