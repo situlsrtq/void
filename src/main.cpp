@@ -30,6 +30,7 @@ unsigned int objcolor_uni;
 unsigned int lightcolor_uni;
 unsigned int ambistrgth_uni;
 unsigned int exposure_uni;
+float exposure_val;
 
 
 cgltf_attribute* FindAttrType(const cgltf_primitive& prim, cgltf_attribute_type type)
@@ -206,8 +207,8 @@ int main(void)
 
 	cgltf_free(data);
 
-	//---------------------------Main pass----------------------------
-
+	//Main pass
+	
 	res = WinHND->HDRPass.Init(WinHND->Width, WinHND->Height);
 	if (res != EXIT_SUCCESS)
 	{
@@ -238,8 +239,8 @@ int main(void)
 	lightcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
 	ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
 
-	//---------------------------Post pass----------------------------
-
+	//Post pass
+	
 	shader_info_t PostPassParams = {};
 	res = PostPassParams.Init("shaders/post.vert",0,0,0,"shaders/post.frag",0);
 	if (res != EXIT_SUCCESS)
@@ -256,8 +257,8 @@ int main(void)
 
 	exposure_uni  = glGetUniformLocation(WinHND->PostShader.ID, "exposure");
 
-	//---------------------------Pick pass----------------------------
-
+	//Pick pass
+	
 	res = WinHND->PickPass.Init(WinHND->Width, WinHND->Height);
 	if (res != EXIT_SUCCESS)
 	{
@@ -326,6 +327,7 @@ int main(void)
 	float lightScale = 0.2f;
 
 	float CurrFrameTime = 0;
+	exposure_val = 0.5;
 
 	glEnable(GL_DEPTH_TEST);
 	int RenderMode = GL_TRIANGLES;
@@ -334,6 +336,7 @@ int main(void)
 	// Frame loop
 
 	bool HelpWindow = false;
+	bool PostWindow = false;
 	bool DemoWindow = false;
 	while (!glfwWindowShouldClose(Window))
 	{
@@ -349,7 +352,7 @@ int main(void)
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		GenerateInterfaceElements(WinHND, &HelpWindow, &DemoWindow);
+		GenerateInterfaceElements(WinHND, &HelpWindow, &PostWindow, &DemoWindow);
 
 		//Render passes
 
@@ -438,7 +441,7 @@ int main(void)
 		glBindTexture(GL_TEXTURE_2D, WinHND->HDRPass.ColorBuffer);
 
 		WinHND->PostShader.Use();
-		glUniform1f(exposure_uni, float(1));
+		glUniform1f(exposure_uni, float(exposure_val));
 		// Positions are currently stored in the vertex shader, not VAO
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
@@ -640,7 +643,7 @@ void MousePosCallback(GLFWwindow *Window, double mx, double my)
 }
 
 
-void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool *DemoWindow)
+void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool *PostWindow, bool *DemoWindow)
 {
 	if(WinHND->ActiveSelection)
 	{
@@ -670,7 +673,20 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 
 		ImGui::End();
 	}
+	if(*PostWindow)
+	{
+		ImGui::Begin("Post-Processing");
 
+		ImGui::Text("");
+		ImGui::SliderFloat("Exposure", &exposure_val, 0.0f, 5.0f);
+		ImGui::Text("");
+		if (ImGui::Button("Close"))
+		{
+			*PostWindow = false;
+		}
+
+		ImGui::End();
+	}
 	if(*HelpWindow)
 	{
 		ImGui::Begin("Help");
@@ -691,7 +707,7 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 
 		ImGui::End();
 	}
-	/*
+/*
 #ifdef DEBUG
 	else if (*DemoWindow)
 	{
@@ -705,6 +721,11 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 	if (ImGui::Button("New Object (n)"))
 	{
 		WinHND->Active.New = true;
+	}
+	ImGui::Text("");
+	if (ImGui::Button("Post-Processing"))
+	{
+		*PostWindow = true;
 	}
 	ImGui::Text("");
 	if (ImGui::Button("Reload Shaders (p)"))

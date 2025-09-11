@@ -35,7 +35,7 @@ void ProcessInput(GLFWwindow* Window);
 
 // TODO: Split out into UI module
 
-void GenerateInterfaceElements(window_handler_t* WinHND, bool* HelpWindow, bool* DemoWindow);
+void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool *PostWindow, bool *DemoWindow);
 
 
 #endif
