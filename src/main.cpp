@@ -62,11 +62,27 @@ int main(void)
 
 	// TODO: per-thread string memory system, to be sized based on thread's need. Rendering thread will be heaviest user
 
-	char* ResourceStringMem = (char *)malloc(4 * V_MIB);
-	size_t len = strlen(g_OSPath_r);
-	memcpy(ResourceStringMem, g_OSPath_r, len);
-	memcpy(ResourceStringMem + len, "res/DamagedHelmet.glb", 22);
-	char* SceneFile = ResourceStringMem;
+	void* ResourceStringMem = (char *)malloc(4 * V_MIB);
+	char* CurrStringMem = (char *)ResourceStringMem;
+	const char* ResFile = "res/DamagedHelmet.glb";
+	const char* UIFile = "config/imgui.ini";
+	// Drop the null terminator on OSPath intentionally, since it will be concatenated with paths.
+	// hacky stupid shit, will not last
+	size_t pathlen = strlen(g_OSPath_r);
+	size_t filelen = strlen(ResFile) + 1;
+	size_t configlen = strlen(UIFile) + 1;
+
+	memcpy(CurrStringMem, g_OSPath_r, pathlen);
+	memcpy(CurrStringMem + pathlen, ResFile, filelen);
+	char* SceneFile = CurrStringMem;
+	
+	CurrStringMem += pathlen + filelen;
+
+	memcpy(CurrStringMem, g_OSPath_r, pathlen);
+	memcpy(CurrStringMem + pathlen, UIFile, configlen);
+	char* GUIFile = CurrStringMem;
+
+	CurrStringMem += pathlen + configlen;
 
 	// Initialize Core Systems
 
@@ -116,8 +132,8 @@ int main(void)
 	ImGui::CreateContext();
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	WinHND->ImIO = ImGui::GetIO(); (void)WinHND->ImIO;
+	WinHND->ImIO.IniFilename = GUIFile;
 	ImGui::StyleColorsDark();
-
 	ImGuiStyle& UIStyle = ImGui::GetStyle();
 
 	bool b_res = false;
@@ -466,7 +482,6 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 	WinHND->Height = height;
 
 	// Also resize camera frustum and attached framebuffers
-	// TODO: Calculate new FOV instead of using fixed 45 degrees
 	uMATH::SetTransform(&WinHND->Projection);
 	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, (float)width / (float)height, 0.1f, 100.0f);
 	WinHND->HDRPass.Release();
