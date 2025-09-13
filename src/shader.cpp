@@ -1,5 +1,4 @@
 #include "shader.h"
-#include "PAL.h"
 
 
 int shader_info_t::Init(const char *V,const char *TC,const char *TE,const char *G,const char *F,const char *C)
@@ -67,25 +66,14 @@ uint32_t shader_program_t::Build(const char* InFilePath, int ShaderType)
 {
 	char* FileSrc = 0x0;
 	FILE* SFile = 0x0;
-	uint64_t srclen = 0;
-	int ShaderCompRes = 0;
+	size_t srclen = 0;
+	int res;
 
 	// Read shader file
 
-	if ((SFile = fopen(InFilePath, "rb")) == 0x0)
+	res = UTIL::fopen_GetFileSize(InFilePath, SFile, &srclen);
+	if(res == EXIT_FAILURE)
 	{
-		printf("Could not open shader file %s\n", InFilePath);
-		return EXIT_FAILURE;
-	}
-
-	fseek(SFile, 0, SEEK_END);
-	srclen = ftell(SFile);
-	fseek(SFile, 0, SEEK_SET);
-
-	if (srclen <= 0)
-	{
-		printf("Error getting shader source size %s\n", InFilePath);
-		fclose(SFile);
 		return EXIT_FAILURE;
 	}
 
@@ -114,8 +102,8 @@ uint32_t shader_program_t::Build(const char* InFilePath, int ShaderType)
 	glShaderSource(Shader, 1, &FileSrc, NULL);
 	glCompileShader(Shader);
 
-	glGetShaderiv(Shader, GL_COMPILE_STATUS, &ShaderCompRes);
-	if (!ShaderCompRes)
+	glGetShaderiv(Shader, GL_COMPILE_STATUS, &res);
+	if (!res)
 	{
 		glGetShaderInfoLog(Shader, 512, NULL, InfoLog);
 		printf("GL: Failed to compile shader %s\n", InFilePath);

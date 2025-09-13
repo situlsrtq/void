@@ -3,7 +3,7 @@
 
 
 #include "u_math.h"
-#include "../window.h"
+#include "window.h"
 
 
 namespace uPHYS

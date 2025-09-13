@@ -2,7 +2,7 @@
 #define MBOX_WINDOW_H
 
 
-#include "../vendor/imgui/imgui.h"
+#include <imgui/imgui.h>
 #include "u_math.h"
 #include "u_mem.h"
 #include "shader.h"

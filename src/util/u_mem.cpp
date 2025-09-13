@@ -22,10 +22,10 @@ void geometry_create_info_t::ComposeModelM4()
 {
 	// Concatenate transforms to prevent scaling from being overwritten by complex rotations
 	uMATH::mat4f_t temp = {};
-	uMATH::SetTransform(&temp);
+	uMATH::SetIdentity(&temp);
 	uMATH::Scale(&temp, Scale);
 
-	uMATH::SetTransform(&Model);
+	uMATH::SetIdentity(&Model);
 	uMATH::MatrixRotate(&Model, RotationAngle, RotationAxis);
 	Model *= temp;
 
@@ -80,7 +80,7 @@ void geometry_state_t::Alloc()
 	Scale[index] = 1.0f;
 	Intensity[index] = 0.5f;
 	Color[index] = { 1.0f, 0.5f, 0.31f };
-	SetTransform(&Model[index]);
+	SetIdentity(&Model[index]);
 }
 
 

@@ -1,5 +1,6 @@
 #include "main.h"
-#include "u_math.h"
+#include "u_util.h"
+#include <cstdlib>
 
 
 // TODO: Get rid of runtime path discovery in release builds
@@ -83,7 +84,7 @@ int main(void)
 	char* GUIFile = CurrStringMem;
 
 	CurrStringMem += pathlen + configlen;
-
+	
 	// Initialize Core Systems
 
 	if (!glfwInit())
@@ -154,6 +155,14 @@ int main(void)
 	// ideally, we call cgltf_free() immediately after doing this processing
 
 	// Initialize mesh data and positions
+
+	size_t NumSceneBytes;
+	res = UTIL::GetFileSize(SceneFile, &NumSceneBytes);
+	if(res == EXIT_FAILURE)
+	{
+		printf("Resources: could not access scene file %s\n", SceneFile);
+	}
+
 	void* buf;
 	size_t size;
 
@@ -176,7 +185,7 @@ int main(void)
 	size_t indexcount = prim.indices->count;
 	cgltf_attribute* attr;
 	size_t meshsize = 0;
-	uint8_t* CombinedData = (uint8_t *)malloc(10 * V_MIB);
+	uint8_t* CombinedData = (uint8_t *)malloc(NumSceneBytes);
 	
 	attr = FindAttrType(prim, cgltf_attribute_type_position);
 	memcpy(CombinedData + meshsize, (DataBaseAddr + attr->data->buffer_view->offset), attr->data->buffer_view->size);
@@ -314,7 +323,7 @@ int main(void)
 	float angle = 90.0f;
 	uMATH::vec3f_t rVec = {1.0f, 0.0f, 0.0001f};
 
-	SetTransform(&GeometryModel);
+	SetIdentity(&GeometryModel);
 	uMATH::Scale(&GeometryModel, CreateInfo.Scale);
 	uMATH::MatrixRotate(&GeometryModel, angle, rVec);
 	uMATH::Translate(&GeometryModel, position);
@@ -322,7 +331,7 @@ int main(void)
 	CreateInfo.Model = GeometryModel;
 	WinHND->GeometryObjects.Alloc(CreateInfo);
 
-	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT, 0.1f, 100.0f);
+	uMATH::SetFrustumHFOV(&WinHND->Projection, VOID_HFOV_DEFAULT, SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT, 0.1f, 100.0f);
 
 	uMATH::mat4f_t Model = {};
 	uMATH::vec3f_t LightPosition = { 1.2f, 1.0f, 2.0f };
@@ -428,7 +437,7 @@ int main(void)
 
 		glUniform1f(ambistrgth_uni, 1.0f);
 		glUniform3f(objcolor_uni, 1.0f, 1.0f, 1.0f);
-		SetTransform(&Model);
+		SetIdentity(&Model);
 		uMATH::Scale(&Model, lightScale);
 		uMATH::Translate(&Model, LightPosition);
 		glUniformMatrix4fv(model_uni, 1, GL_FALSE, &Model.m[0][0]);
@@ -444,8 +453,7 @@ int main(void)
 
 		WinHND->PostShader.Use();
 		glUniform1f(exposure_uni, float(exposure_val));
-		// Positions are currently stored in the vertex shader, not VAO
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); 		// Attributes hard coded in vertex shader
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -481,9 +489,8 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 	WinHND->Width = width;
 	WinHND->Height = height;
 
-	// Also resize camera frustum and attached framebuffers
-	uMATH::SetTransform(&WinHND->Projection);
-	uMATH::SetFrustumHFOV(&WinHND->Projection, 45.0f, (float)width / (float)height, 0.1f, 100.0f);
+	// Also resize camera frustum and all existing framebuffers
+	uMATH::SetFrustumHFOV(&WinHND->Projection, VOID_HFOV_DEFAULT, (float)width / (float)height, 0.1f, 100.0f);
 	WinHND->HDRPass.Release();
 	WinHND->HDRPass.Init(width, height);
 	WinHND->PickPass.Release();

@@ -9,7 +9,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 get_filename_component(LIB_DIR "../vendor/lib" REALPATH)
 
-include_directories(../src ../src/util ../src/pal)
+include_directories(../src ../src/util ../src/pal ../vendor)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/util/*.cpp" "../src/pal/*.cpp" "../vendor/imgui/*.cpp")

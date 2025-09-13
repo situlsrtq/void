@@ -1,6 +1,8 @@
 #ifndef MBOX_UMATH_H
 #define MBOX_UMATH_H
 
+// TODO: Change library to always return an instance, never operate on a reference
+
 #include <string.h>
 #include <math.h>
 
@@ -193,7 +195,7 @@ inline vec3f_t Normalize(const vec3f_t &v /*, int* res*/)
 }
 
 
-inline void SetTransform(mat4f_t *t)
+inline void SetIdentity(mat4f_t *t)
 {
 	memset(t->m, 0, sizeof(float) * 16);
 	t->m[0][0] = 1;
@@ -205,7 +207,7 @@ inline void SetTransform(mat4f_t *t)
 
 inline void SetCameraView(mat4f_t* t, const vec3f_t& position, const vec3f_t& target, const vec3f_t& upAxis)
 {
-	SetTransform(t);
+	SetIdentity(t);
 
 	vec3f_t direction = Normalize(position - target);
 	vec3f_t right = Normalize(Cross(upAxis, direction));
@@ -225,7 +227,7 @@ inline void SetCameraView(mat4f_t* t, const vec3f_t& position, const vec3f_t& ta
 
 	// Concatenate translation, rather than call directly, to correctly preserve axial orientation
 	mat4f_t translate = {};
-	SetTransform(&translate);
+	SetIdentity(&translate);
 	translate.m[0][3] -= position.x;
 	translate.m[1][3] -= position.y;
 	translate.m[2][3] -= position.z;
@@ -236,6 +238,8 @@ inline void SetCameraView(mat4f_t* t, const vec3f_t& position, const vec3f_t& ta
 
 inline void SetFrustumHFOV(mat4f_t *t, float fov, float aratio, float near, float far)
 {
+	SetIdentity(t);
+
 	float ftan = tanf(fov / 2.0f * RADIAN);
 	float right = near * ftan;
 	float top = right / aratio;
@@ -245,9 +249,6 @@ inline void SetFrustumHFOV(mat4f_t *t, float fov, float aratio, float near, floa
 	t->m[2][2] = -(far + near) / (far - near);
 	t->m[2][3] = -(2.0f * far * near) / (far - near);
 	t->m[3][2] = -1.0f;
-
-	// In case this matrix was previously a Transform matrix
-	t->m[3][3] = 0.0f;		
 }
 
 
@@ -412,7 +413,7 @@ inline mat4f_t InverseM4(const mat4f_t& m)
 	float det = s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0;
 	if (det < 0.0001f && det > -0.9999f)
 	{
-		SetTransform(&res);
+		SetIdentity(&res);
 		return res;
 	}
 

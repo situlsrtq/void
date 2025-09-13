@@ -2,8 +2,9 @@
 #define VOID_SHADERS_H
 
 
-#include "../vendor/glad/glad.h"
-#include "pal/PAL.h"
+#include <glad/glad.h>
+#include "PAL.h"
+#include "u_util.h"
 #include <stdint.h>
 #include <stdlib.h>
 

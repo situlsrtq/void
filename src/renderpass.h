@@ -2,7 +2,7 @@
 #define VOID_RENDERPASS_H
 
 
-#include "../vendor/glad/glad.h"
+#include <glad/glad.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
