@@ -123,6 +123,7 @@ uint32_t shader_program_t::Build(const char* InFilePath, int ShaderType)
 int shader_program_t::Create(const shader_info_t &inParams)
 {
 	memcpy(&Params, &inParams, sizeof(shader_info_t));
+	char OptVal = Params.PipelineOpts;
 
 	uint32_t Shaders[6] = {};
 
@@ -200,7 +201,7 @@ int shader_program_t::Create(const shader_info_t &inParams)
 	// COMP
 	if (Params.PipelineOpts & VOID_COMP_OPT)
 	{
-		if(Params.PipelineOpts != VOID_COMP_OPT)
+		if(OptVal != VOID_COMP_OPT)
 		{
 			printf("SHADER: Compute shaders must be standalone\n");
 			printf("Could not create shader program\n");

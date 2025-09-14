@@ -10,12 +10,12 @@
 
 
 #define SHADER_INFOLOG_SIZE 512
-#define VOID_VERT_OPT 0b1 
-#define VOID_TESCC_OPT 0b10 
-#define VOID_TESCE_OPT 0b100 
-#define VOID_GEOM_OPT 0b1000 
-#define VOID_FRAG_OPT 0b10000
-#define VOID_COMP_OPT 0b100000 
+#define VOID_VERT_OPT 0x1 
+#define VOID_TESCC_OPT 0x2 
+#define VOID_TESCE_OPT 0x4 
+#define VOID_GEOM_OPT 0x8 
+#define VOID_FRAG_OPT 0x10
+#define VOID_COMP_OPT 0x20 
 
 
 struct shader_info_t

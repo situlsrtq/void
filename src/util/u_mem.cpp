@@ -1,39 +1,6 @@
 #include "u_mem.h"
 
 
-void geometry_create_info_t::DecomposeModelM4()
-{
-	Position = { Model.m[0][3], Model.m[1][3], Model.m[2][3] };
-
-	// We don't support non-uniform scaling, so we only need to check one axis to get the object's scale
-	uMATH::vec3f_t axis = {Model.m[0][0], Model.m[1][0], Model.m[2][0]};
-	Scale = sqrtf((axis.x * axis.x) + (axis.y * axis.y) + (axis.z * axis.z));
-	
-	// Orthogonalize 3x3 trace to obtain pure rotation matrix
-	Model.m[0][0] /= Scale;
-	Model.m[1][1] /= Scale;
-	Model.m[2][2] /= Scale;
-
-	uMATH::ExtractRotationM4(Model, &RotationAngle, &RotationAxis);
-}
-
-
-void geometry_create_info_t::ComposeModelM4()
-{
-	// Concatenate transforms to prevent scaling from being overwritten by complex rotations
-	uMATH::mat4f_t temp = {};
-	uMATH::SetIdentity(&temp);
-	uMATH::Scale(&temp, Scale);
-
-	uMATH::SetIdentity(&Model);
-	uMATH::MatrixRotate(&Model, RotationAngle, RotationAxis);
-	Model *= temp;
-
-	// Translation is unaffected, does not need to be concatenated
-	uMATH::Translate(&Model, Position);
-}
-
-
 uint8_t free_list_t::Pop()
 {
 	NextFreePosition--;
@@ -53,34 +20,6 @@ void free_list_t::Push(uint8_t FreedIndex)
 
 	OpenPositions[NextFreePosition] = FreedIndex;
 	NextFreePosition++;
-}
-
-
-void geometry_state_t::Alloc()
-{
-	uint8_t index;
-
-	if(FreeList.NextFreePosition > 0)
-	{
-		index = FreeList.Pop();
-	}
-	else
-	{
-		index = Position;
-		Position++;
-	}
-
-	if(index == PROGRAM_MAX_OBJECTS)
-	{
-		printf("System: Object Limit Reached\n");
-		return;
-	}
-
-	Visible[index] = 1;
-	Scale[index] = 1.0f;
-	Intensity[index] = 0.5f;
-	Color[index] = { 1.0f, 0.5f, 0.31f };
-	SetIdentity(&Model[index]);
 }
 
 
@@ -106,8 +45,15 @@ void geometry_state_t::Alloc(const geometry_create_info_t &CreateInfo)
 	}
 
 	Visible[index] = VIS_STATUS_VISIBLE;
-	Scale[index] = CreateInfo.Scale;
-	Intensity[index] = CreateInfo.Intensity;
+	IndexType[index] = CreateInfo.IndexType;
+	IndexCount[index] = CreateInfo.IndexCount;
+	VPosCount[index] = CreateInfo.VPosCount;
+	VNormCount[index] = CreateInfo.VNormCount;
+	VTexCount[index] = CreateInfo.VTexCount;
+	IndexBaseAddr[index] = CreateInfo.IndexBaseAddr;
+	VPosBaseAddr[index] = CreateInfo.VPosBaseAddr;
+	VNormBaseAddr[index] = CreateInfo.VNormBaseAddr;
+	VTexBaseAddr[index] = CreateInfo.VTexBaseAddr;
 	Color[index] = CreateInfo.Color;
 	Model[index] = CreateInfo.Model;
 }

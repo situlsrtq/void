@@ -43,7 +43,7 @@ namespace PAL
 
 
 #ifdef DEBUG
-int GetPath(char* buf, size_t size);
+int GetPath(char* buf, int64_t size);
 #endif
 
 void* AlignedAlloc(size_t size, size_t alignment);

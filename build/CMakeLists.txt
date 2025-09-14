@@ -12,6 +12,7 @@ get_filename_component(LIB_DIR "../vendor/lib" REALPATH)
 include_directories(../src ../src/util ../src/pal ../vendor)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	add_compile_options(-Wall -Wextra -Werror)
 	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/util/*.cpp" "../src/pal/*.cpp" "../vendor/imgui/*.cpp")
 
 	add_executable(${PROJECT_NAME} ${SOURCES})
@@ -19,9 +20,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
 	target_link_libraries(${PROJECT_NAME} "${LIB_DIR}/libglfw3.a")
 	target_link_libraries(${PROJECT_NAME} -lGL)
-	add_compile_options(-Wall -Wextra -O0)
 
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	add_compile_options("/W4 /wd4996")
 	# Including .h files here due to a quirk of Visual Studio's CMAKE implementation - necessary for seeing files in editor
 	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/*.h" "../src/util/*.cpp" "../src/util/*.h" "../src/pal/*.cpp" "../src/pal/*.cpp" "../vendor/imgui/*.cpp")
 
@@ -30,6 +31,5 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
 	target_link_libraries(${PROJECT_NAME} "${LIB_DIR}/glfw3.lib")
 	target_link_libraries(${PROJECT_NAME} opengl32.lib)
-	add_compile_options("/W4 /wd4996")
 
 endif()

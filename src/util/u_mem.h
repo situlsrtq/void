@@ -30,32 +30,38 @@ struct geometry_create_info_t
 {
 	bool New;
 	bool Deleted;
-	float Intensity;
-	float Scale;
-	float RotationAngle;
-	uMATH::vec3f_t RotationAxis;
-	uMATH::vec3f_t Position;
+	uint8_t IndexType;
+	uint32_t IndexCount;
+	uint32_t VPosCount;
+	uint32_t VNormCount;
+	uint32_t VTexCount;
+	uint64_t IndexBaseAddr;
+	uint64_t VPosBaseAddr;
+	uint64_t VNormBaseAddr;
+	uint64_t VTexBaseAddr;
 	uMATH::vec3f_t Color;
 	uMATH::mat4f_t Model;
-
-	void DecomposeModelM4();
-	void ComposeModelM4();
 };
 
 
 //User accessible
 struct geometry_state_t
 {
-	uint8_t Visible[PROGRAM_MAX_OBJECTS];
-	float Scale[PROGRAM_MAX_OBJECTS];
-	float Intensity[PROGRAM_MAX_OBJECTS];
+	uint8_t Position;
 
+	uint8_t Visible[PROGRAM_MAX_OBJECTS];
+	uint8_t IndexType[PROGRAM_MAX_OBJECTS];
+	uint32_t IndexCount[PROGRAM_MAX_OBJECTS];
+	uint32_t VPosCount[PROGRAM_MAX_OBJECTS];
+	uint32_t VNormCount[PROGRAM_MAX_OBJECTS];
+	uint32_t VTexCount[PROGRAM_MAX_OBJECTS];
+	uint64_t IndexBaseAddr[PROGRAM_MAX_OBJECTS];
+	uint64_t VPosBaseAddr[PROGRAM_MAX_OBJECTS];
+	uint64_t VNormBaseAddr[PROGRAM_MAX_OBJECTS];
+	uint64_t VTexBaseAddr[PROGRAM_MAX_OBJECTS];
 	uMATH::vec3f_t Color[PROGRAM_MAX_OBJECTS];
 	uMATH::mat4f_t Model[PROGRAM_MAX_OBJECTS];
 
-	uint8_t Position;
-
-	void Alloc();
 	void Alloc(const geometry_create_info_t &CreateInfo);
 	void Free(uint8_t FreedIndex);
 	

@@ -1,6 +1,4 @@
 #include "main.h"
-#include "u_util.h"
-#include <cstdlib>
 
 
 // TODO: Get rid of runtime path discovery in release builds
@@ -10,6 +8,11 @@
 void GLAPIENTRY
 MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
+	(void)source;
+	(void)userParam;
+	(void)length;
+	(void)id;
+
 	fprintf(stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
 	 (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""),
 	 type, severity, message);
@@ -35,21 +38,34 @@ unsigned int exposure_uni;
 float exposure_val;
 
 
-cgltf_attribute* FindAttrType(const cgltf_primitive& prim, cgltf_attribute_type type)
+cgltf_attribute* FindAttrType(const cgltf_primitive* prim, cgltf_attribute_type type)
 {
-	cgltf_attribute* attr = &prim.attributes[0];
+	cgltf_attribute* attr = &prim->attributes[0];
 
-	for(int i = 0; i < prim.attributes_count; i++)
+	for(uint i = 0; i < prim->attributes_count; i++)
 	{
-		if(prim.attributes[i].type != type) continue;
+		if(prim->attributes[i].type != type) continue;
 
-		attr = &prim.attributes[i];
+		attr = &prim->attributes[i];
 		return attr;
 	}
 
 	attr = 0x0;
 	printf("GLTF: Attribute type not found %s\n", "peepee, map to attr_type later");
 	return attr;
+}
+
+void GetNodeMatrix(uMATH::mat4f_t* m, cgltf_node* node)
+{
+	uMATH::vec3f_t rvec = {node->rotation[1],node->rotation[2],node->rotation[3]};
+	uMATH::vec3f_t trv = {node->translation[1],node->translation[2],node->translation[3]};
+	// Only support uniform scale
+	float scale = ((node->scale[0] + node->scale[1] + node->scale[2]) / 3);
+
+	uMATH::SetIdentity(m);
+	uMATH::Scale(m, scale);	
+	uMATH::MatrixRotate(m, node->rotation[0], rvec);
+	uMATH::Translate(m, trv);
 }
 
 
@@ -97,7 +113,7 @@ int main(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow * Window = glfwCreateWindow(SCREEN_X_DIM_DEFAULT,SCREEN_Y_DIM_DEFAULT,"mBox",0,0);
+	GLFWwindow* Window = glfwCreateWindow(SCREEN_X_DIM_DEFAULT,SCREEN_Y_DIM_DEFAULT,"void",0,0);
 	if(!Window)
 	{	
 		printf("GLFW: Failed to create window\n");
@@ -115,6 +131,12 @@ int main(void)
 		printf("GLAD: Failed getting function pointers\n");
 		 return EXIT_FAILURE;
 	}
+
+#ifdef DEBUG
+	glEnable(GL_DEBUG_OUTPUT);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	glDebugMessageCallback(MessageCallback, 0);
+#endif
 
 	window_handler_t* WinHND = InitWindowHandler(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT);
 	if (!WinHND)
@@ -135,7 +157,7 @@ int main(void)
 	WinHND->ImIO = ImGui::GetIO(); (void)WinHND->ImIO;
 	WinHND->ImIO.IniFilename = GUIFile;
 	ImGui::StyleColorsDark();
-	ImGuiStyle& UIStyle = ImGui::GetStyle();
+	//ImGuiStyle& UIStyle = ImGui::GetStyle();
 
 	bool b_res = false;
 	b_res = ImGui_ImplGlfw_InitForOpenGL(Window, true);
@@ -152,8 +174,9 @@ int main(void)
 	}
 
 	// TODO: turn gltf processing into a module, define a standardized gltf format for game resources and support only that. 
-	// ideally, we call cgltf_free() immediately after doing this processing
 
+//------------------------------------------------------------------------------------------------------------
+	
 	// Initialize mesh data and positions
 
 	size_t NumSceneBytes;
@@ -161,78 +184,162 @@ int main(void)
 	if(res == EXIT_FAILURE)
 	{
 		printf("Resources: could not access scene file %s\n", SceneFile);
+		return EXIT_FAILURE;
 	}
 
-	void* buf;
-	size_t size;
+	unsigned int VAO;
+	glGenVertexArrays(1, &VAO);
+	unsigned int EBO;
+	glGenBuffers(1, &EBO);
+	unsigned int VBO;
+	glGenBuffers(1, &VBO);
+
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, NumSceneBytes, 0x0, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, NumSceneBytes, 0x0, GL_STATIC_DRAW);
 
 	cgltf_options opt;
 	memset(&opt, 0, sizeof(opt));
 	cgltf_data* data = 0x0;
 
 	cgltf_result cgl_res = cgltf_parse_file(&opt, SceneFile, &data);
+	if(cgl_res != cgltf_result_success) 
+	{
+		printf("GLTF Load: could not parse file %s", SceneFile);
+		return EXIT_FAILURE;
+	}
 
-	if(cgl_res == cgltf_result_success) cgl_res = cgltf_load_buffers(&opt, data, SceneFile);
-	if(cgl_res == cgltf_result_success) cgl_res = cgltf_validate(data);
+	cgl_res = cgltf_validate(data);
+	if(cgl_res != cgltf_result_success) 
+	{
+		printf("GLTF Load: could not validate file %s", SceneFile);
+		return EXIT_FAILURE;
+	}
 
-	uint8_t* DataBaseAddr = (uint8_t *)data->buffers->data;
-	cgltf_primitive& prim = data->meshes[0].primitives[0];
+	uint8_t* DataBaseAddr = (uint8_t *)&data->buffers->data;
+	uint64_t OffsetEBO = 0;
+	uint64_t OffsetVBO = 0;
+	geometry_create_info_t CreateInfo;
 
-	GLint indextype; 
-	if(prim.indices->component_type == cgltf_component_type_r_16u) indextype = GL_UNSIGNED_SHORT;
-	else indextype = GL_UNSIGNED_INT;
+	for(uint i = 0; i < data->nodes_count; i++)
+	{
+		cgltf_node* node = &data->nodes[i];
 
-	size_t indexcount = prim.indices->count;
-	cgltf_attribute* attr;
-	size_t meshsize = 0;
-	uint8_t* CombinedData = (uint8_t *)malloc(NumSceneBytes);
+		uint64_t scenebufferoffset;
+		uint64_t count;
+                uint8_t stride;
+		uMATH::mat4f_t nodematrix;
+		GetNodeMatrix(&nodematrix, node);
+
+		cgltf_mesh* mesh = node->mesh;
+		for(uint i = 0; i < mesh->primitives_count; i++)
+		{
+			memset(&CreateInfo, 0, sizeof(CreateInfo));
+			CreateInfo.Color = { 0.99f, 0.1f, 0.30f };	// Debug color. horrible shade of purple
+			CreateInfo.Model = nodematrix;
+
+			cgltf_primitive* prim = &mesh->primitives[i];
+			cgltf_attribute* attr;
+
+			if(prim->indices)
+			{
+				count = prim->indices->count;
+				stride = prim->indices->stride;
+				scenebufferoffset = prim->indices->buffer_view->offset;
+				GLint indextype = 0; 
+				if(prim->indices->component_type == cgltf_component_type_r_8u) 
+				{
+					indextype = GL_UNSIGNED_BYTE;
+				}
+				if(prim->indices->component_type == cgltf_component_type_r_16u) 
+				{
+					indextype =GL_UNSIGNED_SHORT;
+				}
+				if(prim->indices->component_type == cgltf_component_type_r_32u) 
+				{
+					indextype = GL_UNSIGNED_INT;
+				}
+				if(indextype == 0)
+				{
+					printf("GLTF Load: No GL-compatible index type %s", SceneFile);
+					return EXIT_FAILURE;
+				}
+
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, OffsetEBO, count * stride, DataBaseAddr + scenebufferoffset);
+
+				CreateInfo.IndexType = indextype;
+				CreateInfo.IndexCount = count;
+				CreateInfo.IndexBaseAddr = OffsetEBO;
+
+				OffsetEBO += count * stride;
+			}
+
+			glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+			// Only supporting specific attributes - not a generic model viewer
+
+			attr = FindAttrType(prim, cgltf_attribute_type_position);
+			count = attr->data->count;
+			stride = attr->data->stride;
+			scenebufferoffset = attr->data->buffer_view->offset;
+
+			glBufferSubData(GL_ARRAY_BUFFER, OffsetVBO, count * stride, DataBaseAddr + scenebufferoffset);
+
+			CreateInfo.VPosCount = count;
+			CreateInfo.VPosBaseAddr = OffsetVBO;
+			OffsetVBO += count * stride;
+
+			attr = FindAttrType(prim, cgltf_attribute_type_normal);
+			count = attr->data->count;
+			stride = attr->data->stride;
+			scenebufferoffset = attr->data->buffer_view->offset;
+			
+			glBufferSubData(GL_ARRAY_BUFFER, OffsetVBO, count * stride, DataBaseAddr + scenebufferoffset);
+
+			CreateInfo.VNormCount = count;
+			CreateInfo.VNormBaseAddr = OffsetVBO;
+			OffsetVBO += count * stride;
+
+			attr = FindAttrType(prim, cgltf_attribute_type_texcoord);
+			count = attr->data->count;
+			stride = attr->data->stride;
+			scenebufferoffset = attr->data->buffer_view->offset;
+
+			glBufferSubData(GL_ARRAY_BUFFER, OffsetVBO, count * stride, DataBaseAddr + scenebufferoffset);
+
+			CreateInfo.VTexCount = count;
+			CreateInfo.VTexBaseAddr = OffsetVBO;
+			OffsetVBO += count * stride;
+
+			WinHND->GeometryObjects.Alloc(CreateInfo);
+		}
+	}
 	
-	attr = FindAttrType(prim, cgltf_attribute_type_position);
-	memcpy(CombinedData + meshsize, (DataBaseAddr + attr->data->buffer_view->offset), attr->data->buffer_view->size);
-	meshsize += attr->data->buffer_view->size;
+	cgltf_free(data);
 
-	attr = FindAttrType(prim, cgltf_attribute_type_normal);
-	memcpy(CombinedData + meshsize, (DataBaseAddr + attr->data->buffer_view->offset), attr->data->buffer_view->size);
-	meshsize += attr->data->buffer_view->size;
+//------------------------------------------------------------------------------------------------------------
 
-	attr = FindAttrType(prim, cgltf_attribute_type_texcoord);
-	memcpy(CombinedData + meshsize, (DataBaseAddr + attr->data->buffer_view->offset), attr->data->buffer_view->size);
-	meshsize += attr->data->buffer_view->size;
-
-	// Initialize Core VBO, VAO, Render passes
-
-#ifdef DEBUG
-	glEnable(GL_DEBUG_OUTPUT);
-	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-	glDebugMessageCallback(MessageCallback, 0);
-#endif
-	
 	// TODO: Switch to one buffer per level and using glBufferSubData/glDrawElementsBaseVertex - eventually glDrawElementsIndirectCommand
 	// /!\ remember to make changes where the draw calls actually happen too
 
-	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);
-	unsigned int VBO;
-	glGenBuffers(1, &VBO);
-	unsigned int EBO;
-	glGenBuffers(1, &EBO);
+/*
 
+// TODO: Try to enforce interleaved glb attributes, the alternative makes the cgltf import loop very fucking annoying
 
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, prim.indices->buffer_view->size, (void *)(DataBaseAddr + prim.indices->buffer_view->offset), GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, meshsize, (void *)CombinedData, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)(prim.attributes[0].data->buffer_view->size));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), (void*)(prim.attributes[0].data->buffer_view->size + prim.attributes[1].data->buffer_view->size));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
 	glEnableVertexAttribArray(2);
 	glBindVertexArray(0);
 
-	cgltf_free(data);
-
+	// Initialize Render passes
+	
 	//Main pass
 	
 	res = WinHND->HDRPass.Init(WinHND->Width, WinHND->Height);
@@ -313,23 +420,6 @@ int main(void)
 	unsigned int pickingtype_uni = glGetUniformLocation(WinHND->PickShader.ID, "type");
 
 	// Initialize first-frame data
-	uMATH::vec3f_t position = {};
-
-	uMATH::mat4f_t GeometryModel = {};
-	geometry_create_info_t CreateInfo;
-	CreateInfo.Scale = 1.0f;
-	CreateInfo.Intensity = 0.5f;
-	CreateInfo.Color = { 1.0f, 0.5f, 0.31f };
-	float angle = 90.0f;
-	uMATH::vec3f_t rVec = {1.0f, 0.0f, 0.0001f};
-
-	SetIdentity(&GeometryModel);
-	uMATH::Scale(&GeometryModel, CreateInfo.Scale);
-	uMATH::MatrixRotate(&GeometryModel, angle, rVec);
-	uMATH::Translate(&GeometryModel, position);
-
-	CreateInfo.Model = GeometryModel;
-	WinHND->GeometryObjects.Alloc(CreateInfo);
 
 	uMATH::SetFrustumHFOV(&WinHND->Projection, VOID_HFOV_DEFAULT, SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT, 0.1f, 100.0f);
 
@@ -469,7 +559,7 @@ int main(void)
 	}
 
 	// Free resources and exit - not technically necessary when this is the end of the program, but future-proofs for mutlithreading or other integrations
-
+*/
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
@@ -558,6 +648,7 @@ void ProcessInput(GLFWwindow *Window)
 	{
 		if (NKeyWasDown || WinHND->Active.New == true)
 		{
+			/*
 			uMATH::vec3f_t p = { 0.0f,0.0f,4.5f };
 			WinHND->Active.Model = WinHND->View;
 			uMATH::Translate(&WinHND->Active.Model, p);
@@ -565,6 +656,7 @@ void ProcessInput(GLFWwindow *Window)
 			WinHND->Active.DecomposeModelM4();
 			WinHND->Active.New = false;
 			WinHND->ActiveSelection = true;
+			*/
 		}
 		NKeyWasDown = 0;
 	}
@@ -583,6 +675,7 @@ void ProcessInput(GLFWwindow *Window)
 	{
 		if(LMouseWasDown)
 		{
+			/*
 			texel_info_t res = WinHND->PickPass.GetInfo((uint32_t)WinHND->PrevMouseX, (uint32_t)(WinHND->Height - WinHND->PrevMouseY));
 			if (WinHND->ActiveSelection && WinHND->Active.Deleted != true)
 			{
@@ -598,6 +691,7 @@ void ProcessInput(GLFWwindow *Window)
 				WinHND->GeometryObjects.Free((int)res.ID - 1);
 				WinHND->ActiveSelection = true;
 			}
+			*/
 		}
 		LMouseWasDown = 0;
 		WinHND->Active.Deleted = false;
@@ -658,27 +752,29 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 	{
 		ImGui::Begin("Object Parameters");
 
-		ImGui::Text("");
+		/*
+		ImGui::Spacing();
 		ImGui::SliderFloat("Scale", &WinHND->Active.Scale, 0.1f, 2.5f);
-		ImGui::Text("");
+		ImGui::Spacing();
 		ImGui::Text("Rotation");
 		ImGui::SliderFloat("Angle", &WinHND->Active.RotationAngle, 0.0f, 180.0f);
 		ImGui::SliderFloat("rX", &WinHND->Active.RotationAxis.x, 0.0f, 1.0f);
 		ImGui::SliderFloat("rY", &WinHND->Active.RotationAxis.y, 0.0f, 1.0f);
 		ImGui::SliderFloat("rZ", &WinHND->Active.RotationAxis.z, 0.0f, 1.0f);
-		ImGui::Text("");
+		ImGui::Spacing();
 		ImGui::Text("Position");
 		ImGui::SliderFloat("X", &WinHND->Active.Position.x, -15.0f, 15.0f);
 		ImGui::SliderFloat("Y", &WinHND->Active.Position.y, -15.0f, 15.0f);
 		ImGui::SliderFloat("Z", &WinHND->Active.Position.z, -15.0f, 15.0f);
-		ImGui::Text("");
+		ImGui::Spacing();
 		ImGui::ColorEdit3("Color", (float*)&WinHND->Active.Color);
-		ImGui::Text("");
+		ImGui::Spacing();
 		if (ImGui::Button("Delete Object"))
 		{
 			WinHND->Active.Deleted = true;
 			WinHND->ActiveSelection = false;
 		}
+		*/
 
 		ImGui::End();
 	}
@@ -686,9 +782,9 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 	{
 		ImGui::Begin("Post-Processing");
 
-		ImGui::Text("");
+		ImGui::Spacing();
 		ImGui::SliderFloat("Exposure", &exposure_val, 0.0f, 5.0f);
-		ImGui::Text("");
+		ImGui::Spacing();
 		if (ImGui::Button("Close"))
 		{
 			*PostWindow = false;
@@ -701,14 +797,14 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 		ImGui::Begin("Help");
 
 		ImGui::Text("Use WASD keys to move left, right, forward, and backward");
-		ImGui::Text("");
+		ImGui::Spacing();
 		ImGui::Text("Use LShift to move down. Use Spacebar to move up");
-		ImGui::Text("");
+		ImGui::Spacing();
 		ImGui::Text("Hold Right Mouse button to control camera with mouse movement");
-		ImGui::Text("");
+		ImGui::Spacing();
 		ImGui::Text("UI elements capture mouse commands when hovered.");
 		ImGui::Text("Move the mouse outside the menu to interact with the scene");
-		ImGui::Text("");
+		ImGui::Spacing();
 		if (ImGui::Button("Close"))
 		{
 			*HelpWindow = false;
@@ -716,51 +812,47 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 
 		ImGui::End();
 	}
-/*
 #ifdef DEBUG
 	else if (*DemoWindow)
 	{
 		ImGui::ShowDemoWindow(DemoWindow);
 	}
 #endif
-*/
 	ImGui::Begin("Scene Controls");
 
-	ImGui::Text("");
+	ImGui::Spacing();
 	if (ImGui::Button("New Object (n)"))
 	{
 		WinHND->Active.New = true;
 	}
-	ImGui::Text("");
+	ImGui::Spacing();
 	if (ImGui::Button("Post-Processing"))
 	{
 		*PostWindow = true;
 	}
-	ImGui::Text("");
+	ImGui::Spacing();
 	if (ImGui::Button("Reload Shaders (p)"))
 	{
 		WinHND->ReloadShaders = true;
 	}
-	ImGui::Text("");
+	ImGui::Spacing();
 	if (ImGui::Button("Help"))
 	{
 		*HelpWindow = true;
 	}
-	/*
 #ifdef DEBUG
-		ImGui::SameLine();
-		if (ImGui::Button("Show Demo Window"))
-		{
-			*DemoWindow = true;
-		}
+	ImGui::SameLine();
+	if (ImGui::Button("Show Demo Window"))
+	{
+		*DemoWindow = true;
+	}
 #endif
-*/
-	ImGui::Text("");
+	ImGui::Spacing();
 	if (ImGui::Button("Exit (esc)"))
 	{
 		WinHND->ShouldExit = true;
 	}
-	ImGui::Text("");
+	ImGui::Spacing();
 	ImGui::Text("Frame time: %.4f ms", WinHND->DeltaTime);
 
 	ImGui::End();

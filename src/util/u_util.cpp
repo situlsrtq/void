@@ -4,6 +4,7 @@
 namespace UTIL
 {
 
+
 int fopen_GetFileSize(const char* InFilePath, FILE*& File, size_t* SrcLen)
 {
 	File = 0x0;

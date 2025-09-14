@@ -12,14 +12,14 @@ char g_PathBuffer_r[VOID_PATH_MAX+1];
 char* g_OSPath_r = g_PathBuffer_r;
 
 
-int PAL::GetPath(char *buf, size_t size)
+int PAL::GetPath(char *buf, int64_t size)
 {
 	printf("-----WARNING, OBTAINIG EXE PATH AT RUNTIME-----\n");
 	printf("If you are actively working on source code this is fine.\n");
 	printf("If you are an end user, you have an unofficial and unsafe software version. Get an official release \n");
 	printf("------------------------------------------------\n");
 
-	size_t len = readlink("/proc/self/exe", buf, size);
+	int64_t len = readlink("/proc/self/exe", buf, size);
 	if(len >= size)
 	{
 		printf("GetPath: truncation would occur. Retry with a larger buffer\n");
