@@ -47,14 +47,13 @@ void geometry_state_t::Alloc(const geometry_create_info_t &CreateInfo)
 	Visible[index] = VIS_STATUS_VISIBLE;
 	IndexType[index] = CreateInfo.IndexType;
 	IndexCount[index] = CreateInfo.IndexCount;
-	VPosCount[index] = CreateInfo.VPosCount;
-	VNormCount[index] = CreateInfo.VNormCount;
-	VTexCount[index] = CreateInfo.VTexCount;
+	VAttrStride[index] = CreateInfo.VAttrStride;
+	VAttrCount[index] = CreateInfo.VAttrCount;
 	IndexBaseAddr[index] = CreateInfo.IndexBaseAddr;
-	VPosBaseAddr[index] = CreateInfo.VPosBaseAddr;
-	VNormBaseAddr[index] = CreateInfo.VNormBaseAddr;
-	VTexBaseAddr[index] = CreateInfo.VTexBaseAddr;
+	VAttrBaseAddr[index] = CreateInfo.VAttrBaseAddr;
 	Color[index] = CreateInfo.Color;
+	MinBB[index] = CreateInfo.MinBB;
+	MaxBB[index] = CreateInfo.MaxBB;
 	Model[index] = CreateInfo.Model;
 }
 

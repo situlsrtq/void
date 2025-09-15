@@ -71,7 +71,7 @@ void GetNodeMatrix(uMATH::mat4f_t* m, cgltf_node* node)
 
 int main(void)
 {
-	int res = PAL::GetPath(g_PathBuffer_r, VOID_PATH_MAX)				;
+	int res = PAL::GetPath(g_PathBuffer_r, VOID_PATH_MAX);
 	if(res != EXIT_SUCCESS)
 	{
 		printf("PAL: Failed to initialize file path\n");
@@ -81,7 +81,7 @@ int main(void)
 
 	void* ResourceStringMem = (char *)malloc(4 * V_MIB);
 	char* CurrStringMem = (char *)ResourceStringMem;
-	const char* ResFile = "res/DamagedHelmet.glb";
+	const char* ResFile = "res/dergen.glb";
 	const char* UIFile = "config/imgui.ini";
 	// Drop the null terminator on OSPath intentionally, since it will be concatenated with paths.
 	// hacky stupid shit, will not last
@@ -196,9 +196,9 @@ int main(void)
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, NumSceneBytes, 0x0, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, NumSceneBytes, 0x0, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, NumSceneBytes, 0x0, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, NumSceneBytes, 0x0, GL_DYNAMIC_DRAW);
 
 	cgltf_options opt;
 	memset(&opt, 0, sizeof(opt));
@@ -211,6 +211,13 @@ int main(void)
 		return EXIT_FAILURE;
 	}
 
+	cgl_res = cgltf_load_buffers(&opt, data, SceneFile);
+	if(cgl_res != cgltf_result_success) 
+	{
+		printf("GLTF Load: could not validate file %s", SceneFile);
+		return EXIT_FAILURE;
+	}
+
 	cgl_res = cgltf_validate(data);
 	if(cgl_res != cgltf_result_success) 
 	{
@@ -218,7 +225,7 @@ int main(void)
 		return EXIT_FAILURE;
 	}
 
-	uint8_t* DataBaseAddr = (uint8_t *)&data->buffers->data;
+	uint8_t* DataBaseAddr = (uint8_t *)data->buffers->data;
 	uint64_t OffsetEBO = 0;
 	uint64_t OffsetVBO = 0;
 	geometry_create_info_t CreateInfo;
@@ -242,6 +249,12 @@ int main(void)
 
 			cgltf_primitive* prim = &mesh->primitives[i];
 			cgltf_attribute* attr;
+
+     			if(prim->attributes_count != VOID_VATTR_COUNT)
+     			{
+				printf("GLTF Load: unsupported vertex format %s\n", SceneFile);
+			     	return EXIT_FAILURE;
+    			}
 
 			if(prim->indices)
 			{
@@ -268,7 +281,7 @@ int main(void)
 				}
 
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, OffsetEBO, count * stride, DataBaseAddr + scenebufferoffset);
+				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, OffsetEBO, count * stride, (void*)(DataBaseAddr + scenebufferoffset));
 
 				CreateInfo.IndexType = indextype;
 				CreateInfo.IndexCount = count;
@@ -277,41 +290,30 @@ int main(void)
 				OffsetEBO += count * stride;
 			}
 
+			attr = &prim->attributes[0]; 
+			scenebufferoffset = attr->data->buffer_view->offset;
+
+			stride = attr->data->stride;
+			if(stride != VOID_VATTR_STRIDE || (strcmp(attr->name, "POSITION") != 0))
+			{
+				printf("GLTF Load: unsupported vertex format %s\n", SceneFile);
+				return EXIT_FAILURE;
+			}
+
+			count = 0;
+			for(int i = 0; i < VOID_VATTR_COUNT; i++)
+			{
+				attr = &prim->attributes[i]; 
+				count += attr->data->count;
+			}
+
 			glBindBuffer(GL_ARRAY_BUFFER, VBO);
+			glBufferSubData(GL_ARRAY_BUFFER, OffsetVBO, count * stride, (void*)(DataBaseAddr + scenebufferoffset));
 
-			// Only supporting specific attributes - not a generic model viewer
+			CreateInfo.VAttrCount = count;
+			CreateInfo.VAttrStride = stride;
+			CreateInfo.VAttrBaseAddr = OffsetVBO;
 
-			attr = FindAttrType(prim, cgltf_attribute_type_position);
-			count = attr->data->count;
-			stride = attr->data->stride;
-			scenebufferoffset = attr->data->buffer_view->offset;
-
-			glBufferSubData(GL_ARRAY_BUFFER, OffsetVBO, count * stride, DataBaseAddr + scenebufferoffset);
-
-			CreateInfo.VPosCount = count;
-			CreateInfo.VPosBaseAddr = OffsetVBO;
-			OffsetVBO += count * stride;
-
-			attr = FindAttrType(prim, cgltf_attribute_type_normal);
-			count = attr->data->count;
-			stride = attr->data->stride;
-			scenebufferoffset = attr->data->buffer_view->offset;
-			
-			glBufferSubData(GL_ARRAY_BUFFER, OffsetVBO, count * stride, DataBaseAddr + scenebufferoffset);
-
-			CreateInfo.VNormCount = count;
-			CreateInfo.VNormBaseAddr = OffsetVBO;
-			OffsetVBO += count * stride;
-
-			attr = FindAttrType(prim, cgltf_attribute_type_texcoord);
-			count = attr->data->count;
-			stride = attr->data->stride;
-			scenebufferoffset = attr->data->buffer_view->offset;
-
-			glBufferSubData(GL_ARRAY_BUFFER, OffsetVBO, count * stride, DataBaseAddr + scenebufferoffset);
-
-			CreateInfo.VTexCount = count;
-			CreateInfo.VTexBaseAddr = OffsetVBO;
 			OffsetVBO += count * stride;
 
 			WinHND->GeometryObjects.Alloc(CreateInfo);
@@ -325,16 +327,12 @@ int main(void)
 	// TODO: Switch to one buffer per level and using glBufferSubData/glDrawElementsBaseVertex - eventually glDrawElementsIndirectCommand
 	// /!\ remember to make changes where the draw calls actually happen too
 
-/*
-
-// TODO: Try to enforce interleaved glb attributes, the alternative makes the cgltf import loop very fucking annoying
-
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VOID_VATTR_STRIDE, (void*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VOID_VATTR_STRIDE, (void*)12);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)0);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, VOID_VATTR_STRIDE, (void*)24);
 	glEnableVertexAttribArray(2);
 	glBindVertexArray(0);
 
@@ -481,7 +479,18 @@ int main(void)
 			glUniform1f(pickingtype_uni, float(1));
 
 			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
-			glDrawElements(RenderMode, indexcount, indextype, (void*)0);
+			
+			if(WinHND->GeometryObjects.IndexCount[i])
+			{
+				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexCount[i], 
+							 WinHND->GeometryObjects.IndexType[i], 
+			    				 (void*)WinHND->GeometryObjects.IndexBaseAddr[i], 
+				    			 WinHND->GeometryObjects.VAttrBaseAddr[i]);
+			}
+			else
+			{
+				glDrawArrays(RenderMode, WinHND->GeometryObjects.VAttrBaseAddr[i], WinHND->GeometryObjects.VAttrCount[i]);
+			}
 		}
 
 		WinHND->PickPass.Unbind_W();
@@ -512,15 +521,27 @@ int main(void)
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
 			glUniform3fv(objcolor_uni, 1, &WinHND->GeometryObjects.Color[i].x);
-			glDrawElements(RenderMode, indexcount, indextype, (void*)0);
+			if(WinHND->GeometryObjects.IndexCount[i])
+			{
+				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexCount[i], 
+							 WinHND->GeometryObjects.IndexType[i], 
+			    				 (void*)WinHND->GeometryObjects.IndexBaseAddr[i], 
+				    			 WinHND->GeometryObjects.VAttrBaseAddr[i]);
+			}
+			else
+			{
+				glDrawArrays(RenderMode, WinHND->GeometryObjects.VAttrBaseAddr[i], WinHND->GeometryObjects.VAttrCount[i]);
+			}
 		}
 
 		if (WinHND->ActiveSelection)
 		{
+			/*
 			WinHND->Active.ComposeModelM4();
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->Active.Model.m[0][0]);
 			glUniform3fv(objcolor_uni, 1, &WinHND->Active.Color.x);
 			glDrawElements(RenderMode, indexcount, indextype, (void*)0);
+			*/
 		}
 
 		// Light Geometry Pass
@@ -531,7 +552,17 @@ int main(void)
 		uMATH::Scale(&Model, lightScale);
 		uMATH::Translate(&Model, LightPosition);
 		glUniformMatrix4fv(model_uni, 1, GL_FALSE, &Model.m[0][0]);
-		glDrawElements(RenderMode, indexcount, indextype, (void*)0);
+			if(WinHND->GeometryObjects.IndexCount[0])
+			{
+				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexCount[0], 
+							 WinHND->GeometryObjects.IndexType[0], 
+			    				 (void*)WinHND->GeometryObjects.IndexBaseAddr[0], 
+				    			 WinHND->GeometryObjects.VAttrBaseAddr[0]);
+			}
+			else
+			{
+				glDrawArrays(RenderMode, WinHND->GeometryObjects.VAttrBaseAddr[0], WinHND->GeometryObjects.VAttrCount[0]);
+			}
 
 		// Blit from HDR to linear normal quad for post-processing, parse inter-frame data
 
@@ -559,7 +590,7 @@ int main(void)
 	}
 
 	// Free resources and exit - not technically necessary when this is the end of the program, but future-proofs for mutlithreading or other integrations
-*/
+
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();

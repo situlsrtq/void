@@ -23,6 +23,10 @@
 
 #define VOID_HFOV_DEFAULT 45.0f
 
+//TODO: put in glb module
+#define VOID_VATTR_STRIDE 32
+#define VOID_VATTR_COUNT 3
+
 
 int RenderSystemsInit(window_handler_t*& WinHND);
 

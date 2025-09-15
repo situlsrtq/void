@@ -30,16 +30,15 @@ struct geometry_create_info_t
 {
 	bool New;
 	bool Deleted;
-	uint8_t IndexType;
+	uint8_t VAttrStride;
+	uint32_t IndexType;
 	uint32_t IndexCount;
-	uint32_t VPosCount;
-	uint32_t VNormCount;
-	uint32_t VTexCount;
+	uint32_t VAttrCount;
 	uint64_t IndexBaseAddr;
-	uint64_t VPosBaseAddr;
-	uint64_t VNormBaseAddr;
-	uint64_t VTexBaseAddr;
+	uint64_t VAttrBaseAddr;
 	uMATH::vec3f_t Color;
+	uMATH::vec3f_t MinBB;
+	uMATH::vec3f_t MaxBB;
 	uMATH::mat4f_t Model;
 };
 
@@ -48,18 +47,17 @@ struct geometry_create_info_t
 struct geometry_state_t
 {
 	uint8_t Position;
-
 	uint8_t Visible[PROGRAM_MAX_OBJECTS];
-	uint8_t IndexType[PROGRAM_MAX_OBJECTS];
+
+	uint8_t VAttrStride[PROGRAM_MAX_OBJECTS];
+	uint32_t IndexType[PROGRAM_MAX_OBJECTS];
 	uint32_t IndexCount[PROGRAM_MAX_OBJECTS];
-	uint32_t VPosCount[PROGRAM_MAX_OBJECTS];
-	uint32_t VNormCount[PROGRAM_MAX_OBJECTS];
-	uint32_t VTexCount[PROGRAM_MAX_OBJECTS];
+	uint32_t VAttrCount[PROGRAM_MAX_OBJECTS];
 	uint64_t IndexBaseAddr[PROGRAM_MAX_OBJECTS];
-	uint64_t VPosBaseAddr[PROGRAM_MAX_OBJECTS];
-	uint64_t VNormBaseAddr[PROGRAM_MAX_OBJECTS];
-	uint64_t VTexBaseAddr[PROGRAM_MAX_OBJECTS];
+	uint64_t VAttrBaseAddr[PROGRAM_MAX_OBJECTS];
 	uMATH::vec3f_t Color[PROGRAM_MAX_OBJECTS];
+	uMATH::vec3f_t MinBB[PROGRAM_MAX_OBJECTS];
+	uMATH::vec3f_t MaxBB[PROGRAM_MAX_OBJECTS];
 	uMATH::mat4f_t Model[PROGRAM_MAX_OBJECTS];
 
 	void Alloc(const geometry_create_info_t &CreateInfo);
