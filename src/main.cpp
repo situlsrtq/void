@@ -318,11 +318,7 @@ int main(void)
 		}
 	}
 	
-	cgltf_free(data);
-
-//------------------------------------------------------------------------------------------------------------
-
-	// TODO: Switch to one buffer per level and using glBufferSubData/glDrawElementsBaseVertex - eventually glDrawElementsIndirectCommand
+	// TODO: switch to glMultiDrawElementsBaseVertex - eventually glDrawElementsIndirectCommand
 	// /!\ remember to make changes where the draw calls actually happen too
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -333,6 +329,10 @@ int main(void)
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, VOID_VATTR_STRIDE, (void*)24);
 	glEnableVertexAttribArray(2);
 	glBindVertexArray(0);
+
+	cgltf_free(data);
+
+//------------------------------------------------------------------------------------------------------------
 
 	// Initialize Render passes
 	
