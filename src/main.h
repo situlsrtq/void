@@ -13,6 +13,7 @@
 #endif
 #include <cgltf.h>
 
+#include <stdint.h>
 
 #include "PAL.h"
 
@@ -28,7 +29,7 @@
 #define VOID_VATTR_COUNT 3
 
 
-int RenderSystemsInit(window_handler_t*& WinHND);
+// int RenderSystemsInit(window_handler_t*& WinHND);
 
 // TODO: Split out into Core/PAL module
 

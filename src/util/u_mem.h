@@ -31,7 +31,7 @@ struct geometry_create_info_t
 	bool New;
 	bool Deleted;
 	uint32_t IndexType;
-	uint32_t IndexCount;
+	uint64_t IndexCount;
 	uint64_t VAttrCount;
 	uint64_t ByteOffsetEBO;
 	uint64_t OffsetVBO;

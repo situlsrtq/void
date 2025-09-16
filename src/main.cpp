@@ -42,7 +42,7 @@ cgltf_attribute* FindAttrType(const cgltf_primitive* prim, cgltf_attribute_type 
 {
 	cgltf_attribute* attr = &prim->attributes[0];
 
-	for(uint i = 0; i < prim->attributes_count; i++)
+	for(uint32_t i = 0; i < prim->attributes_count; i++)
 	{
 		if(prim->attributes[i].type != type) continue;
 
@@ -58,7 +58,7 @@ cgltf_attribute* FindAttrType(const cgltf_primitive* prim, cgltf_attribute_type 
 void GetNodeMatrix(uMATH::mat4f_t* m, cgltf_node* node)
 {
 	uMATH::vec3f_t rvec = {node->rotation[1],node->rotation[2],node->rotation[3]};
-	uMATH::vec3f_t trv = {node->translation[1],node->translation[2],node->translation[3]};
+	uMATH::vec3f_t trv = {node->translation[0],node->translation[1],node->translation[2]};
 	// Only support uniform scale
 	float scale = ((node->scale[0] + node->scale[1] + node->scale[2]) / 3);
 
@@ -232,7 +232,7 @@ int main(void)
 	uint64_t OffsetVBO = 0;
 	geometry_create_info_t CreateInfo;
 
-	for(uint i = 0; i < data->nodes_count; i++)
+	for(uint32_t i = 0; i < data->nodes_count; i++)
 	{
 		cgltf_node* node = &data->nodes[i];
 
@@ -244,13 +244,13 @@ int main(void)
 		GetNodeMatrix(&nodematrix, node);
 
 		cgltf_mesh* mesh = node->mesh;
-		for(uint i = 0; i < mesh->primitives_count; i++)
+		for(uint32_t t = 0; t < mesh->primitives_count; t++)
 		{
 			memset(&CreateInfo, 0, sizeof(CreateInfo));
 			CreateInfo.Color = { 1.0f, 1.0f, 1.0f };
 			CreateInfo.Model = nodematrix;
 
-			cgltf_primitive* prim = &mesh->primitives[i];
+			cgltf_primitive* prim = &mesh->primitives[t];
 			cgltf_attribute* attr;
 
      			if(prim->attributes_count != VOID_VATTR_COUNT)
