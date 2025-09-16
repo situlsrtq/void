@@ -247,7 +247,7 @@ int main(void)
 		for(uint i = 0; i < mesh->primitives_count; i++)
 		{
 			memset(&CreateInfo, 0, sizeof(CreateInfo));
-			CreateInfo.Color = { 1.0f, 1.0f, 1.0f };	// Debug color. horrible shade of purple
+			CreateInfo.Color = { 1.0f, 1.0f, 1.0f };
 			CreateInfo.Model = nodematrix;
 
 			cgltf_primitive* prim = &mesh->primitives[i];
