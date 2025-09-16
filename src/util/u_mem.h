@@ -30,12 +30,11 @@ struct geometry_create_info_t
 {
 	bool New;
 	bool Deleted;
-	uint8_t VAttrStride;
 	uint32_t IndexType;
 	uint32_t IndexCount;
-	uint32_t VAttrCount;
-	uint64_t IndexBaseAddr;
-	uint64_t VAttrBaseAddr;
+	uint64_t VAttrCount;
+	uint64_t ByteOffsetEBO;
+	uint64_t OffsetVBO;
 	uMATH::vec3f_t Color;
 	uMATH::vec3f_t MinBB;
 	uMATH::vec3f_t MaxBB;
@@ -49,12 +48,11 @@ struct geometry_state_t
 	uint8_t Position;
 	uint8_t Visible[PROGRAM_MAX_OBJECTS];
 
-	uint8_t VAttrStride[PROGRAM_MAX_OBJECTS];
 	uint32_t IndexType[PROGRAM_MAX_OBJECTS];
 	uint32_t IndexCount[PROGRAM_MAX_OBJECTS];
-	uint32_t VAttrCount[PROGRAM_MAX_OBJECTS];
-	uint64_t IndexBaseAddr[PROGRAM_MAX_OBJECTS];
-	uint64_t VAttrBaseAddr[PROGRAM_MAX_OBJECTS];
+	uint64_t VAttrCount[PROGRAM_MAX_OBJECTS];
+	uint64_t ByteOffsetEBO[PROGRAM_MAX_OBJECTS];
+	uint64_t OffsetVBO[PROGRAM_MAX_OBJECTS];
 	uMATH::vec3f_t Color[PROGRAM_MAX_OBJECTS];
 	uMATH::vec3f_t MinBB[PROGRAM_MAX_OBJECTS];
 	uMATH::vec3f_t MaxBB[PROGRAM_MAX_OBJECTS];

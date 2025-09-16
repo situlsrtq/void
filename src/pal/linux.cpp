@@ -16,7 +16,7 @@ int PAL::GetPath(char *buf, int64_t size)
 {
 	printf("-----WARNING, OBTAINIG EXE PATH AT RUNTIME-----\n");
 	printf("If you are actively working on source code this is fine.\n");
-	printf("If you are an end user, you have an unofficial and unsafe software version. Get an official release \n");
+	printf("If you are an end user, you have a debug software version. Get an official release \n");
 	printf("------------------------------------------------\n");
 
 	int64_t len = readlink("/proc/self/exe", buf, size);

@@ -81,7 +81,7 @@ int main(void)
 
 	void* ResourceStringMem = (char *)malloc(4 * V_MIB);
 	char* CurrStringMem = (char *)ResourceStringMem;
-	const char* ResFile = "res/dergen.glb";
+	const char* ResFile = "res/sponza.glb";
 	const char* UIFile = "config/imgui.ini";
 	// Drop the null terminator on OSPath intentionally, since it will be concatenated with paths.
 	// hacky stupid shit, will not last
@@ -173,10 +173,12 @@ int main(void)
 		 return EXIT_FAILURE;
 	}
 
-	// TODO: turn gltf processing into a module, define a standardized gltf format for game resources and support only that. 
-
 //------------------------------------------------------------------------------------------------------------
 	
+	// TODO: turn gltf processing into a module, define a standardized gltf format for game resources and support only that. 
+	// TODO: texture loading
+	// TODO: bounding box construction from min/max params
+
 	// Initialize mesh data and positions
 
 	size_t NumSceneBytes;
@@ -234,7 +236,8 @@ int main(void)
 	{
 		cgltf_node* node = &data->nodes[i];
 
-		uint64_t scenebufferoffset;
+		uint64_t absbufferoffset;
+		uint64_t relbufferoffset;
 		uint64_t count;
                 uint8_t stride;
 		uMATH::mat4f_t nodematrix;
@@ -244,7 +247,7 @@ int main(void)
 		for(uint i = 0; i < mesh->primitives_count; i++)
 		{
 			memset(&CreateInfo, 0, sizeof(CreateInfo));
-			CreateInfo.Color = { 0.99f, 0.1f, 0.30f };	// Debug color. horrible shade of purple
+			CreateInfo.Color = { 1.0f, 1.0f, 1.0f };	// Debug color. horrible shade of purple
 			CreateInfo.Model = nodematrix;
 
 			cgltf_primitive* prim = &mesh->primitives[i];
@@ -252,7 +255,7 @@ int main(void)
 
      			if(prim->attributes_count != VOID_VATTR_COUNT)
      			{
-				printf("GLTF Load: unsupported vertex format %s\n", SceneFile);
+				printf("GLTF Load: unsupported vertex format: %s\n", SceneFile);
 			     	return EXIT_FAILURE;
     			}
 
@@ -260,7 +263,8 @@ int main(void)
 			{
 				count = prim->indices->count;
 				stride = prim->indices->stride;
-				scenebufferoffset = prim->indices->buffer_view->offset;
+				relbufferoffset = prim->indices->offset;
+				absbufferoffset = prim->indices->buffer_view->offset;
 				GLint indextype = 0; 
 				if(prim->indices->component_type == cgltf_component_type_r_8u) 
 				{
@@ -276,45 +280,39 @@ int main(void)
 				}
 				if(indextype == 0)
 				{
-					printf("GLTF Load: No GL-compatible index type %s", SceneFile);
+					printf("GLTF Load: No GL-compatible index type: %s", SceneFile);
 					return EXIT_FAILURE;
 				}
 
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, OffsetEBO, count * stride, (void*)(DataBaseAddr + scenebufferoffset));
+				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, OffsetEBO, count * stride, (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
 
 				CreateInfo.IndexType = indextype;
 				CreateInfo.IndexCount = count;
-				CreateInfo.IndexBaseAddr = OffsetEBO;
+				CreateInfo.ByteOffsetEBO = OffsetEBO;
 
 				OffsetEBO += count * stride;
 			}
 
 			attr = &prim->attributes[0]; 
-			scenebufferoffset = attr->data->buffer_view->offset;
+			count = attr->data->count;
+			relbufferoffset = attr->data->offset;
+			absbufferoffset = attr->data->buffer_view->offset;
 
 			stride = attr->data->stride;
 			if(stride != VOID_VATTR_STRIDE || (strcmp(attr->name, "POSITION") != 0))
 			{
-				printf("GLTF Load: unsupported vertex format %s\n", SceneFile);
+				printf("GLTF Load: unsupported vertex layout: %s\n", SceneFile);
 				return EXIT_FAILURE;
 			}
 
-			count = 0;
-			for(int i = 0; i < VOID_VATTR_COUNT; i++)
-			{
-				attr = &prim->attributes[i]; 
-				count += attr->data->count;
-			}
+			CreateInfo.VAttrCount = count;
+			CreateInfo.OffsetVBO = OffsetVBO;
 
 			glBindBuffer(GL_ARRAY_BUFFER, VBO);
-			glBufferSubData(GL_ARRAY_BUFFER, OffsetVBO, count * stride, (void*)(DataBaseAddr + scenebufferoffset));
+			glBufferSubData(GL_ARRAY_BUFFER, OffsetVBO * stride, count * stride, (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
 
-			CreateInfo.VAttrCount = count;
-			CreateInfo.VAttrStride = stride;
-			CreateInfo.VAttrBaseAddr = OffsetVBO;
-
-			OffsetVBO += count * stride;
+			OffsetVBO += count;
 
 			WinHND->GeometryObjects.Alloc(CreateInfo);
 		}
@@ -484,12 +482,12 @@ int main(void)
 			{
 				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexCount[i], 
 							 WinHND->GeometryObjects.IndexType[i], 
-			    				 (void*)WinHND->GeometryObjects.IndexBaseAddr[i], 
-				    			 WinHND->GeometryObjects.VAttrBaseAddr[i]);
+			    				 (void*)WinHND->GeometryObjects.ByteOffsetEBO[i], 
+				    			 WinHND->GeometryObjects.OffsetVBO[i]);
 			}
 			else
 			{
-				glDrawArrays(RenderMode, WinHND->GeometryObjects.VAttrBaseAddr[i], WinHND->GeometryObjects.VAttrCount[i]);
+				glDrawArrays(RenderMode, WinHND->GeometryObjects.OffsetVBO[i], WinHND->GeometryObjects.VAttrCount[i]);
 			}
 		}
 
@@ -521,16 +519,17 @@ int main(void)
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
 			glUniform3fv(objcolor_uni, 1, &WinHND->GeometryObjects.Color[i].x);
+
 			if(WinHND->GeometryObjects.IndexCount[i])
 			{
 				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexCount[i], 
 							 WinHND->GeometryObjects.IndexType[i], 
-			    				 (void*)WinHND->GeometryObjects.IndexBaseAddr[i], 
-				    			 WinHND->GeometryObjects.VAttrBaseAddr[i]);
+			    				 (void*)WinHND->GeometryObjects.ByteOffsetEBO[i], 
+				    			 WinHND->GeometryObjects.OffsetVBO[i]);
 			}
 			else
 			{
-				glDrawArrays(RenderMode, WinHND->GeometryObjects.VAttrBaseAddr[i], WinHND->GeometryObjects.VAttrCount[i]);
+				glDrawArrays(RenderMode, WinHND->GeometryObjects.OffsetVBO[i], WinHND->GeometryObjects.VAttrCount[i]);
 			}
 		}
 
@@ -552,6 +551,7 @@ int main(void)
 		uMATH::Scale(&Model, lightScale);
 		uMATH::Translate(&Model, LightPosition);
 		glUniformMatrix4fv(model_uni, 1, GL_FALSE, &Model.m[0][0]);
+		/*
 			if(WinHND->GeometryObjects.IndexCount[0])
 			{
 				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexCount[0], 
@@ -563,6 +563,7 @@ int main(void)
 			{
 				glDrawArrays(RenderMode, WinHND->GeometryObjects.VAttrBaseAddr[0], WinHND->GeometryObjects.VAttrCount[0]);
 			}
+			*/
 
 		// Blit from HDR to linear normal quad for post-processing, parse inter-frame data
 
