@@ -114,6 +114,7 @@ int main(void)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Resize in config, not in render code
+	// TODO: use glfwSetWindowAttrib() to allow for one-time resizing operations as menu selections
 	glfwWindowHint(GLFW_RESIZABLE, false);
 	GLFWwindow* Window = glfwCreateWindow(SCREEN_X_DIM_DEFAULT,SCREEN_Y_DIM_DEFAULT,"void",0,0);
 	if(!Window)
