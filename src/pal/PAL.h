@@ -22,7 +22,7 @@
 #define VOID_BAD_BUFFER_SIZE -1000
 
 #define SCREEN_X_DIM_DEFAULT 1000.0f
-#define SCREEN_Y_DIM_DEFAULT 800.0f
+#define SCREEN_Y_DIM_DEFAULT 1000.0f
 
 
 //------- TODO: Move to Core module when such a thing exists ----------
