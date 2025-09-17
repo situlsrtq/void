@@ -888,7 +888,7 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 		WinHND->ShouldExit = true;
 	}
 	ImGui::Spacing();
-	ImGui::Text("Frame time: %.4f ms", WinHND->DeltaTime);
+	ImGui::Text("Frame time: %.2f ms", WinHND->DeltaTime * 1000);
 
 	ImGui::End();
 }
