@@ -427,6 +427,7 @@ int main(void)
 	float lightScale = 0.2f;
 
 	float CurrFrameTime = 0;
+	float FrameEndTime = 0;
 	exposure_val = 0.5;
 
 	glEnable(GL_DEPTH_TEST);
@@ -440,6 +441,8 @@ int main(void)
 	bool DemoWindow = false;
 	while (!glfwWindowShouldClose(Window))
 	{
+		CurrFrameTime = glfwGetTime();
+
 		// Handle user input
 
 		glfwPollEvents();
@@ -583,12 +586,14 @@ int main(void)
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+		FrameEndTime = glfwGetTime();
+		WinHND->FrameTimeMS = (FrameEndTime - CurrFrameTime) * 1000.0f;
+
 		glfwSwapBuffers(Window);
 
 		glBindVertexArray(0);
 		glUseProgram(0);
 
-		CurrFrameTime = glfwGetTime();
 		WinHND->DeltaTime = CurrFrameTime - WinHND->PrevFrameTime;
 		WinHND->PrevFrameTime = CurrFrameTime;
 	}
@@ -888,7 +893,9 @@ void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool 
 		WinHND->ShouldExit = true;
 	}
 	ImGui::Spacing();
-	ImGui::Text("Frame time: %.4f ms", WinHND->DeltaTime);
+	ImGui::Text("Frame time: %.2f ms", WinHND->FrameTimeMS);
+	ImGui::Spacing();
+	ImGui::Text("Display rate: %.2f ms", WinHND->DeltaTime * 1000.0f);
 
 	ImGui::End();
 }

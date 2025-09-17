@@ -23,6 +23,7 @@ struct window_handler_t
 	int Height;
 	float DeltaTime;
 	float PrevFrameTime;
+	float FrameTimeMS;
 	uint16_t FirstCameraMove;
 	uint16_t EditorMode;
 	bool ActiveSelection;

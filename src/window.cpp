@@ -15,6 +15,7 @@ window_handler_t* InitWindowHandler(float ScreenX, float ScreenY)
 	res->DeltaTime = 0.0f;
 	res->DeltaTime = 0.0f;
 	res->PrevFrameTime = 0.0f;
+	res->FrameTimeMS = 0.0f;
 	res->FirstCameraMove = 1;
 	res->EditorMode = EMODE_VIEW;
 	res->ActiveSelection = false;
