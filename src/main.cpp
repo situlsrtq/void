@@ -81,7 +81,7 @@ int main(void)
 
 	void* ResourceStringMem = (char *)malloc(4 * V_MIB);
 	char* CurrStringMem = (char *)ResourceStringMem;
-	const char* ResFile = "res/sponza.glb";
+	const char* ResFile = "res/dergen.glb";
 	const char* UIFile = "config/imgui.ini";
 	// Drop the null terminator on OSPath intentionally, since it will be concatenated with paths.
 	// hacky stupid shit, will not last
@@ -116,6 +116,7 @@ int main(void)
 	// Resize in config, not in render code
 	// TODO: use glfwSetWindowAttrib() to allow for one-time resizing operations as menu selections
 	glfwWindowHint(GLFW_RESIZABLE, false);
+
 	GLFWwindow* Window = glfwCreateWindow(SCREEN_X_DIM_DEFAULT,SCREEN_Y_DIM_DEFAULT,"void",0,0);
 	if(!Window)
 	{	
@@ -233,6 +234,7 @@ int main(void)
 	uint8_t* DataBaseAddr = (uint8_t *)data->buffers->data;
 	uint64_t OffsetEBO = 0;
 	uint64_t OffsetVBO = 0;
+	uint8_t EBOPadding = 0;
 	geometry_create_info_t CreateInfo;
 
 	for(uint32_t i = 0; i < data->nodes_count; i++)
@@ -272,14 +274,17 @@ int main(void)
 				if(prim->indices->component_type == cgltf_component_type_r_8u) 
 				{
 					indextype = GL_UNSIGNED_BYTE;
+					EBOPadding = 3;
 				}
 				if(prim->indices->component_type == cgltf_component_type_r_16u) 
 				{
 					indextype =GL_UNSIGNED_SHORT;
+					EBOPadding = 2;
 				}
 				if(prim->indices->component_type == cgltf_component_type_r_32u) 
 				{
 					indextype = GL_UNSIGNED_INT;
+					EBOPadding = 0;
 				}
 				if(indextype == 0)
 				{
@@ -294,7 +299,8 @@ int main(void)
 				CreateInfo.IndexCount = count;
 				CreateInfo.ByteOffsetEBO = OffsetEBO;
 
-				OffsetEBO += count * stride;
+				// Since this is a shared buffer for the entire scene, pad all writes to nearest 32bit boundary to prevent possible misalignments when indextype changes
+				OffsetEBO += (count * stride) + EBOPadding;
 			}
 
 			attr = &prim->attributes[0]; 
