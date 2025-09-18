@@ -25,7 +25,7 @@ void mbox_camera_t::LookAtMouse(double XOffset, double YOffset)
 	direction.y = sin((Pitch * RADIAN));
 	direction.z = sin((Yaw * RADIAN)) * cos((Pitch * RADIAN));
 
-	Eye = uMATH::Normalize(direction);
+	Eye = uMATH::NormalizeV(direction);
 }
 
 

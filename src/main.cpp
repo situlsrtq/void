@@ -1,4 +1,5 @@
 #include "main.h"
+#include "u_math.h"
 
 
 // TODO: Get rid of runtime path discovery in release builds
@@ -55,16 +56,19 @@ cgltf_attribute* FindAttrType(const cgltf_primitive* prim, cgltf_attribute_type 
 	return attr;
 }
 
-void GetNodeMatrix(uMATH::mat4f_t* m, cgltf_node* node)
+void GetNodeMatrix(uMATH::mat4f_t* m, uMATH::quatf_t* p, cgltf_node* node)
 {
-	uMATH::vec3f_t rvec = {node->rotation[1],node->rotation[2],node->rotation[3]};
 	uMATH::vec3f_t trv = {node->translation[0],node->translation[1],node->translation[2]};
+	uMATH::quatf_t q = {node->rotation[0], node->rotation[1],node->rotation[2],node->rotation[3]};
+	uMATH::QuatRotate(p, q);
+	uMATH::mat4f_t r = uMATH::M4FromQuat(*p);
+
 	// Only support uniform scale
 	float scale = ((node->scale[0] + node->scale[1] + node->scale[2]) / 3);
 
-	uMATH::SetIdentity(m);
+	uMATH::SetIdentityM4(m);
 	uMATH::Scale(m, scale);	
-	uMATH::MatrixRotate(m, node->rotation[0], rvec);
+	*m *= r;
 	uMATH::Translate(m, trv);
 }
 
@@ -246,7 +250,8 @@ int main(void)
 		uint64_t count;
                 uint8_t stride;
 		uMATH::mat4f_t nodematrix;
-		GetNodeMatrix(&nodematrix, node);
+		uMATH::quatf_t nodequat;
+		GetNodeMatrix(&nodematrix, &nodequat, node);
 
 		cgltf_mesh* mesh = node->mesh;
 		for(uint32_t t = 0; t < mesh->primitives_count; t++)
@@ -318,11 +323,11 @@ int main(void)
 				return EXIT_FAILURE;
 			}
 
-			CreateInfo.VAttrCount = count;
-			CreateInfo.OffsetVBO = OffsetVBO;
-
 			glBindBuffer(GL_ARRAY_BUFFER, VBO);
 			glBufferSubData(GL_ARRAY_BUFFER, OffsetVBO * stride, count * stride, (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
+
+			CreateInfo.VAttrCount = count;
+			CreateInfo.OffsetVBO = OffsetVBO;
 
 			// No need to pad this offset, because we're not mixing vertex formats within a single buffer
 			OffsetVBO += count;
@@ -563,7 +568,7 @@ int main(void)
 
 		glUniform1f(ambistrgth_uni, 1.0f);
 		glUniform3f(objcolor_uni, 1.0f, 1.0f, 1.0f);
-		SetIdentity(&Model);
+		SetIdentityM4(&Model);
 		uMATH::Scale(&Model, lightScale);
 		uMATH::Translate(&Model, LightPosition);
 		glUniformMatrix4fv(model_uni, 1, GL_FALSE, &Model.m[0][0]);
@@ -651,8 +656,8 @@ void ProcessInput(GLFWwindow *Window)
 	}
 
 	WinHND->Camera.Speed = 2.5f * WinHND->DeltaTime;
-	WinHND->Camera.RelativeXAxis = uMATH::Normalize(uMATH::Cross(WinHND->Camera.Eye, WinHND->Camera.UpAxis));
-	WinHND->Camera.RelativeYAxis = uMATH::Normalize(uMATH::Cross(WinHND->Camera.RelativeXAxis, WinHND->Camera.Eye));
+	WinHND->Camera.RelativeXAxis = uMATH::NormalizeV(uMATH::Cross(WinHND->Camera.Eye, WinHND->Camera.UpAxis));
+	WinHND->Camera.RelativeYAxis = uMATH::NormalizeV(uMATH::Cross(WinHND->Camera.RelativeXAxis, WinHND->Camera.Eye));
 	WinHND->Camera.Move(Window);
 	uMATH::SetCameraView(&WinHND->View, WinHND->Camera.Position, WinHND->Camera.Position + WinHND->Camera.Eye, WinHND->Camera.UpAxis);
 

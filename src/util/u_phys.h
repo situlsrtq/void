@@ -44,7 +44,7 @@ inline uMATH::vec3f_t CastWorldRay(float MouseX, float MouseY, const window_hand
 	uMATH::vec3f_t out = { ray4f.x, ray4f.y, ray4f.z };
 	uMATH::vec3f_t src = Window.Camera.Position;
 	out = out - src;
-	out = uMATH::Normalize(out);
+	out = uMATH::NormalizeV(out);
 
 	return out;
 }

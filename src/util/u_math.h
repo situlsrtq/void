@@ -74,7 +74,7 @@ struct mat4f_t
 {
 	float m[4][4];
 
-	void operator *=(const mat4f_t &s)
+	void operator*=(const mat4f_t& s)
 	{
 		m[0][0] = (m[0][0] * s.m[0][0]) + (m[0][1] * s.m[1][0]) + (m[0][2] * s.m[2][0]) + (m[0][3] * s.m[3][0]);
 		m[0][1] = (m[0][0] * s.m[0][1]) + (m[0][1] * s.m[1][1]) + (m[0][2] * s.m[2][1]) + (m[0][3] * s.m[3][1]);
@@ -97,7 +97,7 @@ struct mat4f_t
 		m[3][3] = (m[3][0] * s.m[0][3]) + (m[3][1] * s.m[1][3]) + (m[3][2] * s.m[2][3]) + (m[3][3] * s.m[3][3]);
 	}
 
-	mat4f_t operator *(const mat4f_t &s) const
+	mat4f_t operator*(const mat4f_t& s) const
 	{
 		mat4f_t res;
 
@@ -126,10 +126,21 @@ struct mat4f_t
 };
 
 
+struct quatf_t
+{
+	float s;
+	float x;
+	float y;
+	float z;
+
+	quatf_t operator*(const quatf_t& q);
+};
+
+
 //-----------------------------------FUNCTIONS---------------------------------------
 
 
-inline vec3f_t Scalar(const vec3f_t &v, float s)
+inline vec3f_t Scalar(const vec3f_t& v, float s)
 {
 	vec3f_t r;
 	r.x = v.x * s;
@@ -140,7 +151,7 @@ inline vec3f_t Scalar(const vec3f_t &v, float s)
 }
 
 
-inline vec4f_t Scalar(const vec4f_t &v, float s)
+inline vec4f_t Scalar(const vec4f_t& v, float s)
 {
 	vec4f_t r;
 	r.x = v.x * s;
@@ -175,7 +186,7 @@ inline vec3f_t Cross(const vec3f_t& v, const vec3f_t& s)
 // Current implementaion returns a Z-basis vector if normalization fails (when len ~= 0)
 // a more robust future version would also implement some kind of flagging mechanism so 
 // the calling code can see when normalization would have failed
-inline vec3f_t Normalize(const vec3f_t &v /*, int* res*/)
+inline vec3f_t NormalizeV(const vec3f_t& v /*, int* res*/)
 {
 	vec3f_t r;
 	float len = sqrtf((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
@@ -195,7 +206,7 @@ inline vec3f_t Normalize(const vec3f_t &v /*, int* res*/)
 }
 
 
-inline void SetIdentity(mat4f_t *t)
+inline void SetIdentityM4(mat4f_t* t)
 {
 	memset(t->m, 0, sizeof(float) * 16);
 	t->m[0][0] = 1;
@@ -205,13 +216,26 @@ inline void SetIdentity(mat4f_t *t)
 }
 
 
+inline vec4f_t MultiplyV4_M4(const vec4f_t& v, const mat4f_t& m)
+{
+	vec4f_t res;
+
+	res.x = (v.x * m.m[0][0]) + (v.x * m.m[1][0]) + (v.x * m.m[2][0]) + (v.x * m.m[3][0]);
+	res.y = (v.y * m.m[0][1]) + (v.y * m.m[1][1]) + (v.y * m.m[2][1]) + (v.y * m.m[3][1]);
+	res.z = (v.z * m.m[0][2]) + (v.z * m.m[1][2]) + (v.z * m.m[2][2]) + (v.z * m.m[3][2]);
+	res.w = (v.w * m.m[0][3]) + (v.w * m.m[1][3]) + (v.w * m.m[2][3]) + (v.w * m.m[3][3]);
+
+	return res;
+}
+
+
 inline void SetCameraView(mat4f_t* t, const vec3f_t& position, const vec3f_t& target, const vec3f_t& upAxis)
 {
-	SetIdentity(t);
+	SetIdentityM4(t);
 
-	vec3f_t direction = Normalize(position - target);
-	vec3f_t right = Normalize(Cross(upAxis, direction));
-	vec3f_t up = Normalize(Cross(direction, right));
+	vec3f_t direction = NormalizeV(position - target);
+	vec3f_t right = NormalizeV(Cross(upAxis, direction));
+	vec3f_t up = NormalizeV(Cross(direction, right));
 
 	t->m[0][0] = right.x;
 	t->m[0][1] = right.y;
@@ -227,7 +251,7 @@ inline void SetCameraView(mat4f_t* t, const vec3f_t& position, const vec3f_t& ta
 
 	// Concatenate translation, rather than call directly, to correctly preserve axial orientation
 	mat4f_t translate = {};
-	SetIdentity(&translate);
+	SetIdentityM4(&translate);
 	translate.m[0][3] -= position.x;
 	translate.m[1][3] -= position.y;
 	translate.m[2][3] -= position.z;
@@ -236,9 +260,9 @@ inline void SetCameraView(mat4f_t* t, const vec3f_t& position, const vec3f_t& ta
 }
 
 
-inline void SetFrustumHFOV(mat4f_t *t, float fov, float aratio, float near, float far)
+inline void SetFrustumHFOV(mat4f_t* t, float fov, float aratio, float near, float far)
 {
-	SetIdentity(t);
+	SetIdentityM4(t);
 
 	float ftan = tanf(fov / 2.0f * RADIAN);
 	float right = near * ftan;
@@ -252,7 +276,7 @@ inline void SetFrustumHFOV(mat4f_t *t, float fov, float aratio, float near, floa
 }
 
 
-inline void EulerRotate(mat4f_t *t, float theta, int axis)
+inline void EulerRotate(mat4f_t* t, float theta, int axis)
 {
 	if(axis == R_AXIS_Z)
 	{
@@ -283,14 +307,14 @@ inline void MatrixRotate(mat4f_t* t, float d, const vec3f_t& r)
 	// Extract scale so it can be added back after rotation 
 	vec3f_t axis = {t->m[0][0], t->m[1][0], t->m[2][0]};
 	float scale = sqrtf((axis.x * axis.x) + (axis.y * axis.y) + (axis.z * axis.z));
-	mat4f_t st = {0};
+	mat4f_t st = {};
 	st.m[0][0] = scale;
 	st.m[1][1] = scale;
 	st.m[2][2] = scale;
 	st.m[3][3] = 1.0f;
 
 	float theta = d * RADIAN;
-	vec3f_t temp = Normalize(r);
+	vec3f_t temp = NormalizeV(r);
 
 	float c = cosf(theta);
 	float s = sinf(theta);
@@ -316,51 +340,7 @@ inline void MatrixRotate(mat4f_t* t, float d, const vec3f_t& r)
 }
 
 
-inline void ExtractRotationM4(const mat4f_t& t, float* theta, vec3f_t* axis)
-{
-	// /!\ This function uses a pure rotation matrix as input (scale must be stripped out beforehand)
-	float trace = t.m[0][0] + t.m[1][1] + t.m[2][2];
-	float cosT = (trace - 1.0f) / 2.0f;
-
-	if (cosT > 1.0f) cosT = 1.0f;
-	if (cosT < -1.0f) cosT = -1.0f;
-
-	// Return angle in degrees rather than radians, as Rotate() takes angle in degrees and converts to rad
-	*theta = acosf(cosT) / RADIAN;
-
-	// Check for degenerate cases (theta ~= 0 and theta ~=180)
-	if (*theta < 0.1f)
-	{
-		axis->x = 0.0f;
-		axis->y = 0.0f;
-		axis->z = 1.0f;
-		*theta = 0.0f;
-	}
-	else if (*theta > 179.9f)
-	{
-		axis->x = sqrtf((t.m[0][0] + 1.0f) / 2.0f);
-		axis->y = sqrtf((t.m[1][1] + 1.0f) / 2.0f);
-		axis->z = sqrtf((t.m[2][2] + 1.0f) / 2.0f);
-
-		if (t.m[0][1] < 0) axis->y = -axis->y;
-		//if (t.m[0][2] < 0) axis->z = -axis->z;
-
-		*axis = Normalize(*axis);
-		*theta = 180.0f;
-	}
-	// Normal case
-	else
-	{
-		axis->x = (t.m[2][1] - t.m[1][2]);
-		axis->y = (t.m[0][2] - t.m[2][0]);
-		axis->z = (t.m[1][0] - t.m[0][1]);
-
-		*axis = Normalize(*axis);
-	}
-}
-
-
-inline void Scale(mat4f_t *t, float s)
+inline void Scale(mat4f_t* t, float s)
 {
 	t->m[0][0] *= s;
 	t->m[1][1] *= s;
@@ -368,24 +348,11 @@ inline void Scale(mat4f_t *t, float s)
 }
 
 
-inline void Translate(mat4f_t *t, const vec3f_t &s)
+inline void Translate(mat4f_t* t, const vec3f_t& s)
 {
 	t->m[0][3] += s.x;
 	t->m[1][3] += s.y;
 	t->m[2][3] += s.z;
-}
-
-
-inline vec4f_t MultiplyV4_M4(const vec4f_t &v, const mat4f_t &m)
-{
-	vec4f_t res;
-
-	res.x = (v.x * m.m[0][0]) + (v.x * m.m[1][0]) + (v.x * m.m[2][0]) + (v.x * m.m[3][0]);
-	res.y = (v.y * m.m[0][1]) + (v.y * m.m[1][1]) + (v.y * m.m[2][1]) + (v.y * m.m[3][1]);
-	res.z = (v.z * m.m[0][2]) + (v.z * m.m[1][2]) + (v.z * m.m[2][2]) + (v.z * m.m[3][2]);
-	res.w = (v.w * m.m[0][3]) + (v.w * m.m[1][3]) + (v.w * m.m[2][3]) + (v.w * m.m[3][3]);
-
-	return res;
 }
 
 
@@ -413,7 +380,7 @@ inline mat4f_t InverseM4(const mat4f_t& m)
 	float det = s0 * c5 - s1 * c4 + s2 * c3 + s3 * c2 - s4 * c1 + s5 * c0;
 	if (det < 0.0001f && det > -0.9999f)
 	{
-		SetIdentity(&res);
+		SetIdentityM4(&res);
 		return res;
 	}
 
@@ -441,6 +408,87 @@ inline mat4f_t InverseM4(const mat4f_t& m)
 
 	return res;
 }
+
+
+inline void SetIdentityQ(quatf_t* p)
+{
+	*p = {1.0f, 0.0f, 0.0f, 0.0f};
+}
+
+
+inline quatf_t NormalizeQ(const quatf_t& p)
+{
+	float Bound = 0.00001f;
+	float d = p.s*p.s + p.x*p.x + p.y*p.y + p.z*p.z;
+	if(d < Bound)
+	{
+		return p;
+	}
+
+	float l = 1.0f / sqrtf(d);
+
+	return quatf_t {p.s * l, p.x * l, p.y * l, p.z * l};
+}
+
+
+inline quatf_t ConjugateQ(const quatf_t& p)
+{
+	return quatf_t {p.s, -p.x, -p.y, -p.z};
+}
+
+
+inline void QuatRotate(quatf_t* p, quatf_t q)
+{
+	quatf_t qi = ConjugateQ(q);
+	*p = q * *p ;
+	*p = *p * qi;
+	// Operation is length preserving, but we only want to store unit quaternions
+	*p = NormalizeQ(*p);
+}
+
+
+inline mat4f_t M4FromQuat(const quatf_t p)
+{
+	float x2 = p.x + p.x;
+	float y2 = p.y + p.y;
+	float z2 = p.z + p.z;
+	float xx2 = p.x * x2; 
+	float xy2 = p.x * y2; 
+	float xz2 = p.x * z2; 
+	float yy2 = p.y * y2; 
+	float yz2 = p.y * z2; 
+	float zz2 = p.z * z2; 
+	float sx2 = p.s *x2;
+	float sy2 = p.s *y2;
+	float sz2 = p.s *z2;
+
+	return mat4f_t
+	{ 1 - (yy2 + zz2),    xy2 - sz2, 	  xz2 + sy2,	      0,
+	  xy2 + sz2,	      1 - (xx2 + zz2),    yz2 - sx2, 	      0,
+	  xz2 - sy2,	      yz2 + sx2, 	  1 - (xx2 + yy2),    0,
+	  0, 		      0, 		  0,		      1 };
+}
+
+//------------------------------Operators-------------------------------------
+
+
+inline quatf_t quatf_t::operator*(const quatf_t& q)
+{
+	vec3f_t pv = {x, y, z};
+	vec3f_t qv = {q.x, q.y, q.z};
+
+	float d = Dot(pv, qv);
+	vec3f_t c = Cross(pv, qv);
+
+	pv = Scalar(pv, q.s);
+	qv = Scalar(qv, s);
+
+	float sres = (s * q.s) - d;
+	vec3f_t vres = c + qv + pv;
+
+	return quatf_t { sres, vres.x, vres.y, vres.z };
+}
+
 
 }
 
