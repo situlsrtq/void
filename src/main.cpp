@@ -299,7 +299,7 @@ int main(void)
 				CreateInfo.IndexCount = count;
 				CreateInfo.ByteOffsetEBO = OffsetEBO;
 
-				// Since this is a shared buffer for the entire scene, pad all writes to nearest 32bit boundary to prevent possible misalignments when indextype changes
+				// Since this is a shared buffer for the entire scene, pad all writes to nearest 32bit boundary to prevent misalignment when indextype changes from a smaller type to a larger one
 				OffsetEBO += (count * stride) + EBOPadding;
 			}
 
@@ -309,7 +309,10 @@ int main(void)
 			absbufferoffset = attr->data->buffer_view->offset;
 
 			stride = attr->data->stride;
-			if(stride != VOID_VATTR_STRIDE || (strcmp(attr->name, "POSITION") != 0))
+			if((stride != VOID_VATTR_STRIDE) || 
+			  (strcmp(attr->name, "POSITION") != 0) ||
+			  (strcmp(prim->attributes[1].name, "NORMAL") != 0) ||
+			  (strcmp(prim->attributes[2].name, "TEXCOORD_0") != 0))
 			{
 				printf("GLTF Load: unsupported vertex layout: %s\n", SceneFile);
 				return EXIT_FAILURE;
@@ -321,6 +324,7 @@ int main(void)
 			glBindBuffer(GL_ARRAY_BUFFER, VBO);
 			glBufferSubData(GL_ARRAY_BUFFER, OffsetVBO * stride, count * stride, (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
 
+			// No need to pad this offset, because we're not mixing vertex formats within a single buffer
 			OffsetVBO += count;
 
 			WinHND->GeometryObjects.Alloc(CreateInfo);
