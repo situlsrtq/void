@@ -15,6 +15,7 @@
 #define R_AXIS_Z -1005
 
 #define RADIAN 0.0174532924f
+#define DEGREE 57.295779513f
 
 
 namespace uMATH

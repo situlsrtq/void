@@ -58,6 +58,7 @@ cgltf_attribute* FindAttrType(const cgltf_primitive* prim, cgltf_attribute_type 
 
 void GetNodeMatrix(uMATH::mat4f_t* m, uMATH::quatf_t* p, cgltf_node* node)
 {
+	uMATH::SetIdentityQ(p);
 	uMATH::vec3f_t trv = {node->translation[0],node->translation[1],node->translation[2]};
 	uMATH::quatf_t q = {node->rotation[0], node->rotation[1],node->rotation[2],node->rotation[3]};
 	uMATH::QuatRotate(p, q);
@@ -279,12 +280,13 @@ int main(void)
 				if(prim->indices->component_type == cgltf_component_type_r_8u) 
 				{
 					indextype = GL_UNSIGNED_BYTE;
-					EBOPadding = 3;
+					EBOPadding = 4 - (count % 4);
+					EBOPadding = (EBOPadding == 4) ? 0 : EBOPadding;
 				}
 				if(prim->indices->component_type == cgltf_component_type_r_16u) 
 				{
 					indextype =GL_UNSIGNED_SHORT;
-					EBOPadding = 2;
+					EBOPadding = (count % 2) * 2;
 				}
 				if(prim->indices->component_type == cgltf_component_type_r_32u) 
 				{
