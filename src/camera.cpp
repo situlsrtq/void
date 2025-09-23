@@ -20,12 +20,12 @@ void mbox_camera_t::LookAtMouse(double XOffset, double YOffset)
 		Pitch = -89.0f;
 	}
 
-	uMATH::vec3f_t direction = {};
-	direction.x = cos((Yaw * RADIAN)) * cos((Pitch * RADIAN));
-	direction.y = sin((Pitch * RADIAN));
-	direction.z = sin((Yaw * RADIAN)) * cos((Pitch * RADIAN));
+	glm::vec3 direction = {};
+	direction.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+	direction.y = sin(glm::radians(Pitch));
+	direction.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch ));
 
-	Eye = uMATH::NormalizeV(direction);
+	Eye = glm::normalize(direction);
 }
 
 
@@ -34,26 +34,26 @@ void mbox_camera_t::Move(GLFWwindow *Window)
 {
 	if(glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS)
 	{
-		Position += Scalar(Eye, Speed);
+		Position += Eye * Speed;
 	}
 	if(glfwGetKey(Window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-		Position -= Scalar(Eye, Speed);
+		Position -= Eye * Speed;
 	}
 	if(glfwGetKey(Window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		Position -= Scalar(RelativeXAxis, Speed);
+		Position -= RelativeXAxis * Speed;
 	}
 	if(glfwGetKey(Window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		Position += Scalar(RelativeXAxis, Speed);
+		Position += RelativeXAxis * Speed;
 	}
 	if(glfwGetKey(Window, GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
-		Position += Scalar(RelativeYAxis, Speed);
+		Position += RelativeYAxis * Speed;
 	}
 	if(glfwGetKey(Window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{
-		Position -= Scalar(RelativeYAxis, Speed);
+		Position -= RelativeYAxis * Speed;
 	}
 }

@@ -8,6 +8,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
+
 #ifndef CGLTF_IMPLEMENTATION
 #define CGLTF_IMPLEMENTATION
 #endif
@@ -18,7 +24,6 @@
 #include "PAL.h"
 
 #include "window.h"
-#include "u_math.h"
 #include "u_mem.h"
 
 

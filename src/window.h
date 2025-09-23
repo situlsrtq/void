@@ -3,7 +3,7 @@
 
 
 #include <imgui/imgui.h>
-#include "u_math.h"
+#include <glm/mat4x4.hpp>
 #include "u_mem.h"
 #include "shader.h"
 #include "renderpass.h"
@@ -38,8 +38,8 @@ struct window_handler_t
 	fb_hdr_t HDRPass;
 	fb_mpick_t PickPass;
 	mbox_camera_t Camera;
-	uMATH::mat4f_t View;
-	uMATH::mat4f_t Projection;
+	glm::mat4 View;
+	glm::mat4 Projection;
 	geometry_create_info_t Active;
 	geometry_state_t GeometryObjects;
 	ImGuiIO ImIO;

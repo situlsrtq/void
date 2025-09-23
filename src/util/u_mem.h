@@ -4,8 +4,8 @@
 
 #include <stdint.h>
 #include <stdio.h>
-
-#include "u_math.h"
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 
 
 #define PROGRAM_MAX_OBJECTS 64
@@ -35,10 +35,10 @@ struct geometry_create_info_t
 	uint64_t VAttrCount;
 	uint64_t ByteOffsetEBO;
 	uint64_t OffsetVBO;
-	uMATH::vec3f_t Color;
-	uMATH::vec3f_t MinBB;
-	uMATH::vec3f_t MaxBB;
-	uMATH::mat4f_t Model;
+	glm::vec3 Color;
+	glm::vec3 MinBB;
+	glm::vec3 MaxBB;
+	glm::mat4 Model;
 };
 
 
@@ -53,10 +53,10 @@ struct geometry_state_t
 	uint64_t VAttrCount[PROGRAM_MAX_OBJECTS];
 	uint64_t ByteOffsetEBO[PROGRAM_MAX_OBJECTS];
 	uint64_t OffsetVBO[PROGRAM_MAX_OBJECTS];
-	uMATH::vec3f_t Color[PROGRAM_MAX_OBJECTS];
-	uMATH::vec3f_t MinBB[PROGRAM_MAX_OBJECTS];
-	uMATH::vec3f_t MaxBB[PROGRAM_MAX_OBJECTS];
-	uMATH::mat4f_t Model[PROGRAM_MAX_OBJECTS];
+	glm::vec3 Color[PROGRAM_MAX_OBJECTS];
+	glm::vec3 MinBB[PROGRAM_MAX_OBJECTS];
+	glm::vec3 MaxBB[PROGRAM_MAX_OBJECTS];
+	glm::mat4 Model[PROGRAM_MAX_OBJECTS];
 
 	void Alloc(const geometry_create_info_t &CreateInfo);
 	void Free(uint8_t FreedIndex);

@@ -1,5 +1,4 @@
 #include "main.h"
-#include "u_math.h"
 
 
 // TODO: Get rid of runtime path discovery in release builds
@@ -56,21 +55,17 @@ cgltf_attribute* FindAttrType(const cgltf_primitive* prim, cgltf_attribute_type 
 	return attr;
 }
 
-void GetNodeMatrix(uMATH::mat4f_t* m, uMATH::quatf_t* p, cgltf_node* node)
+void GetNodeMatrix(glm::mat4* m, glm::quat* p, cgltf_node* node)
 {
-	uMATH::SetIdentityQ(p);
-	uMATH::vec3f_t trv = {node->translation[0],node->translation[1],node->translation[2]};
-	uMATH::quatf_t q = {node->rotation[0], node->rotation[1],node->rotation[2],node->rotation[3]};
-	uMATH::QuatRotate(p, q);
-	uMATH::mat4f_t r = uMATH::M4FromQuat(*p);
+	glm::vec3 trv = {node->translation[0],node->translation[1],node->translation[2]};
+	glm::vec3 scl = {node->scale[0],node->scale[1],node->scale[2]};
+	*p = {node->rotation[3], node->rotation[0], node->rotation[1], node->rotation[2]};
+	glm::mat4 r = glm::mat4_cast(*p);
 
-	// Only support uniform scale
-	float scale = ((node->scale[0] + node->scale[1] + node->scale[2]) / 3);
-
-	uMATH::SetIdentityM4(m);
-	uMATH::Scale(m, scale);	
+	*m = glm::mat4(1.0f);
 	*m *= r;
-	uMATH::Translate(m, trv);
+	*m = glm::translate(*m, trv);
+	*m = glm::scale(*m, scl);	
 }
 
 
@@ -250,8 +245,8 @@ int main(void)
 		uint64_t relbufferoffset;
 		uint64_t count;
                 uint8_t stride;
-		uMATH::mat4f_t nodematrix;
-		uMATH::quatf_t nodequat;
+		glm::mat4 nodematrix;
+		glm::quat nodequat;
 		GetNodeMatrix(&nodematrix, &nodequat, node);
 
 		cgltf_mesh* mesh = node->mesh;
@@ -437,11 +432,11 @@ int main(void)
 
 	// Initialize first-frame data
 
-	uMATH::SetFrustumHFOV(&WinHND->Projection, VOID_HFOV_DEFAULT, SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT, 0.1f, 100.0f);
+	WinHND->Projection = glm::perspective(glm::radians(VOID_HFOV_DEFAULT), SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT, 0.1f, 100.0f);
 
-	uMATH::mat4f_t Model = {};
-	uMATH::vec3f_t LightPosition = { 1.2f, 1.0f, 2.0f };
-	float lightScale = 0.2f;
+	glm::mat4 Model = {};
+	glm::vec3 LightPosition = { 1.2f, 1.0f, 2.0f };
+	glm::vec3 lightScale = {0.2f, 0.2f, 0.2f};
 
 	float CurrFrameTime = 0;
 	float FrameEndTime = 0;
@@ -486,8 +481,8 @@ int main(void)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		WinHND->PickShader.Use();
 
-		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, &WinHND->Projection.m[0][0]);
-		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, &WinHND->View.m[0][0]);
+		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Projection));
+		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(WinHND->View));
 
 		for (unsigned int i = 0; i < WinHND->GeometryObjects.Position; i++)
 		{
@@ -499,7 +494,7 @@ int main(void)
 			glUniform1f(pickingindex_uni, float(i + 1));
 			glUniform1f(pickingtype_uni, float(1));
 
-			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
+			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.Model[i]));
 			
 			if(WinHND->GeometryObjects.IndexCount[i])
 			{
@@ -528,9 +523,9 @@ int main(void)
 		glUniform3f(lightcolor_uni, 1.0f, 1.0f, 1.0f);
 		glUniform3f(lightpos_uni, LightPosition.x, LightPosition.y, LightPosition.z);
 
-		glUniformMatrix4fv(projection_uni, 1, GL_FALSE, &WinHND->Projection.m[0][0]);
+		glUniformMatrix4fv(projection_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Projection));
 
-		glUniformMatrix4fv(view_uni, 1, GL_FALSE, &WinHND->View.m[0][0]);
+		glUniformMatrix4fv(view_uni, 1, GL_FALSE, glm::value_ptr(WinHND->View));
 		glUniform3f(viewpos_uni, WinHND->Camera.Position.x, WinHND->Camera.Position.y, WinHND->Camera.Position.z);
 
 		for (unsigned int i = 0; i < WinHND->GeometryObjects.Position; i++)
@@ -540,8 +535,8 @@ int main(void)
 				continue;
 			}
 
-			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->GeometryObjects.Model[i].m[0][0]);
-			glUniform3fv(objcolor_uni, 1, &WinHND->GeometryObjects.Color[i].x);
+			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.Model[i]));
+			glUniform3fv(objcolor_uni, 1, glm::value_ptr(WinHND->GeometryObjects.Color[i]));
 
 			if(WinHND->GeometryObjects.IndexCount[i])
 			{
@@ -570,10 +565,10 @@ int main(void)
 
 		glUniform1f(ambistrgth_uni, 1.0f);
 		glUniform3f(objcolor_uni, 1.0f, 1.0f, 1.0f);
-		SetIdentityM4(&Model);
-		uMATH::Scale(&Model, lightScale);
-		uMATH::Translate(&Model, LightPosition);
-		glUniformMatrix4fv(model_uni, 1, GL_FALSE, &Model.m[0][0]);
+		Model = glm::mat4(1.0f);
+		Model = glm::scale(Model, lightScale);
+		Model = glm::translate(Model, LightPosition);
+		glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(Model));
 		/*
 			if(WinHND->GeometryObjects.IndexCount[0])
 			{
@@ -637,7 +632,7 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 	WinHND->Height = height;
 
 	// Also resize camera frustum and all existing framebuffers
-	uMATH::SetFrustumHFOV(&WinHND->Projection, VOID_HFOV_DEFAULT, (float)width / (float)height, 0.1f, 100.0f);
+	WinHND->Projection = glm::perspective(glm::radians(VOID_HFOV_DEFAULT), (float)width / (float)height, 0.1f, 100.0f);
 	WinHND->HDRPass.Release();
 	WinHND->HDRPass.Init(width, height);
 	WinHND->PickPass.Release();
@@ -658,10 +653,10 @@ void ProcessInput(GLFWwindow *Window)
 	}
 
 	WinHND->Camera.Speed = 2.5f * WinHND->DeltaTime;
-	WinHND->Camera.RelativeXAxis = uMATH::NormalizeV(uMATH::Cross(WinHND->Camera.Eye, WinHND->Camera.UpAxis));
-	WinHND->Camera.RelativeYAxis = uMATH::NormalizeV(uMATH::Cross(WinHND->Camera.RelativeXAxis, WinHND->Camera.Eye));
+	WinHND->Camera.RelativeXAxis = glm::normalize(glm::cross(WinHND->Camera.Eye, WinHND->Camera.UpAxis));
+	WinHND->Camera.RelativeYAxis = glm::normalize(glm::cross(WinHND->Camera.RelativeXAxis, WinHND->Camera.Eye));
 	WinHND->Camera.Move(Window);
-	uMATH::SetCameraView(&WinHND->View, WinHND->Camera.Position, WinHND->Camera.Position + WinHND->Camera.Eye, WinHND->Camera.UpAxis);
+	WinHND->View = glm::lookAt(WinHND->Camera.Position, WinHND->Camera.Position + WinHND->Camera.Eye, WinHND->Camera.UpAxis);
 
 	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS || WinHND->ShouldExit)
 	{
