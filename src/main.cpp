@@ -55,12 +55,12 @@ cgltf_attribute* FindAttrType(const cgltf_primitive* prim, cgltf_attribute_type 
 	return attr;
 }
 
-void GetNodeMatrix(glm::mat4* m, glm::quat* p, cgltf_node* node)
+void GetNodeMatrix(glm::mat4* m, cgltf_node* node)
 {
 	glm::vec3 trv = {node->translation[0],node->translation[1],node->translation[2]};
 	glm::vec3 scl = {node->scale[0],node->scale[1],node->scale[2]};
-	*p = {node->rotation[3], node->rotation[0], node->rotation[1], node->rotation[2]};
-	glm::mat4 r = glm::mat4_cast(*p);
+	glm::quat p = {node->rotation[3], node->rotation[0], node->rotation[1], node->rotation[2]};
+	glm::mat4 r = glm::mat4_cast(p);
 
 	*m = glm::mat4(1.0f);
 	*m = glm::translate(*m, trv);
@@ -244,10 +244,9 @@ int main(void)
 		uint64_t absbufferoffset;
 		uint64_t relbufferoffset;
 		uint64_t count;
-                uint8_t stride;
+        uint8_t stride;
 		glm::mat4 nodematrix;
-		glm::quat nodequat;
-		GetNodeMatrix(&nodematrix, &nodequat, node);
+		GetNodeMatrix(&nodematrix, node);
 
 		cgltf_mesh* mesh = node->mesh;
 		for(uint32_t t = 0; t < mesh->primitives_count; t++)
