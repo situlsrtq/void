@@ -81,7 +81,7 @@ int main(void)
 
 	void* ResourceStringMem = (char *)malloc(4 * V_MIB);
 	char* CurrStringMem = (char *)ResourceStringMem;
-	const char* ResFile = "res/sponza.glb";
+	const char* ResFile = "res/test.glb";
 	const char* UIFile = "config/imgui.ini";
 	// Drop the null terminator on OSPath intentionally, since it will be concatenated with paths.
 	// hacky stupid shit, will not last
@@ -569,19 +569,18 @@ int main(void)
 		Model = glm::scale(Model, lightScale);
 		Model = glm::translate(Model, LightPosition);
 		glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(Model));
-		/*
-			if(WinHND->GeometryObjects.IndexCount[0])
-			{
-				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexCount[0], 
-							 WinHND->GeometryObjects.IndexType[0], 
-			    				 (void*)WinHND->GeometryObjects.IndexBaseAddr[0], 
-				    			 WinHND->GeometryObjects.VAttrBaseAddr[0]);
-			}
-			else
-			{
-				glDrawArrays(RenderMode, WinHND->GeometryObjects.VAttrBaseAddr[0], WinHND->GeometryObjects.VAttrCount[0]);
-			}
-			*/
+
+		if(WinHND->GeometryObjects.IndexCount[0])
+		{
+			glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexCount[0], 
+			    WinHND->GeometryObjects.IndexType[0], 
+			    (void*)WinHND->GeometryObjects.ByteOffsetEBO[0], 
+			    WinHND->GeometryObjects.OffsetVBO[0]);
+		}
+		else
+	{
+			glDrawArrays(RenderMode, WinHND->GeometryObjects.OffsetVBO[0], WinHND->GeometryObjects.VAttrCount[0]);
+		}
 
 		// Blit from HDR to linear normal quad for post-processing, parse inter-frame data
 
