@@ -63,8 +63,8 @@ void GetNodeMatrix(glm::mat4* m, glm::quat* p, cgltf_node* node)
 	glm::mat4 r = glm::mat4_cast(*p);
 
 	*m = glm::mat4(1.0f);
-	*m *= r;
 	*m = glm::translate(*m, trv);
+	*m *= r;
 	*m = glm::scale(*m, scl);	
 }
 
@@ -81,7 +81,7 @@ int main(void)
 
 	void* ResourceStringMem = (char *)malloc(4 * V_MIB);
 	char* CurrStringMem = (char *)ResourceStringMem;
-	const char* ResFile = "res/dergen.glb";
+	const char* ResFile = "res/sponza.glb";
 	const char* UIFile = "config/imgui.ini";
 	// Drop the null terminator on OSPath intentionally, since it will be concatenated with paths.
 	// hacky stupid shit, will not last
