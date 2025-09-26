@@ -1,5 +1,6 @@
 #include "main.h"
 
+//test comment
 
 // TODO: Get rid of runtime path discovery in release builds
 
