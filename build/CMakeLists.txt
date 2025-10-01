@@ -24,7 +24,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	add_compile_options(/W4 /wd4996)
 	# Including .h files here due to a quirk of Visual Studio's CMAKE implementation - necessary for seeing files in editor
-	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/*.h" "../src/util/*.cpp" "../src/util/*.h" "../src/pal/*.cpp" "../src/pal/*.h" "../vendor/imgui/*.cpp")
+	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/*.h" "../src/util/*.cpp" "../src/util/*.h" "../src/pal/*.cpp" "../src/pal/*.h" "../vendor/imgui/*.cpp" "../vendor/glad/glad.c")
 
 	add_executable(${PROJECT_NAME} ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:Debug>:DEBUG>)
