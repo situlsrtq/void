@@ -1,7 +1,8 @@
 #version 460 core
 
-in vec3 Normal;
 in vec3 WorldPos;
+in vec3 Normal;
+in vec2 TexCoord;
 
 out vec4 FragColor;
 
@@ -11,9 +12,14 @@ uniform vec3 lightcolor;
 uniform vec3 viewpos;
 uniform float ambientstrength;
 
+uniform sampler2D albedo;
+
 void main()
 
 {
+    vec4 Objcolor = texture(albedo, TexCoord);
+    vec3 o = vec3(Objcolor);
+
     // ambient
     vec3 ambient = ambientstrength * lightcolor;
 
@@ -31,6 +37,6 @@ void main()
     vec3 specular = specularstrength * spec * lightcolor;
 
     // output
-    vec3 result = objcolor * (ambient + diffuse + specular);
+    vec3 result = o * (ambient + diffuse + specular);
     FragColor = vec4(result, 1.0f);
 }

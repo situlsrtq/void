@@ -81,7 +81,7 @@ int main(void)
 
 	void* ResourceStringMem = (char *)malloc(4 * V_MIB);
 	char* CurrStringMem = (char *)ResourceStringMem;
-	const char* ResFile = "res/sponza.glb";
+	const char* ResFile = "res/test.glb";
 	const char* UIFile = "config/imgui.ini";
 	// Drop the null terminator on OSPath intentionally, since it will be concatenated with paths.
 	// hacky stupid shit, will not last
@@ -239,6 +239,7 @@ int main(void)
 	uint8_t EBOPadding = 0;
 	geometry_create_info_t CreateInfo;
 
+	unsigned int texture = 0;
 	for(uint32_t i = 0; i < data->nodes_count; i++)
 	{
 		cgltf_node* node = &data->nodes[i];
@@ -329,6 +330,27 @@ int main(void)
 
 			// No need to pad this offset, because we're not mixing vertex formats within a single buffer
 			OffsetVBO += count;
+
+			absbufferoffset = prim->material->pbr_metallic_roughness.base_color_texture.texture->image->buffer_view->offset;
+			uint32_t texsize = prim->material->pbr_metallic_roughness.base_color_texture.texture->image->buffer_view->size;  
+			int width = 0;
+			int height = 0;
+			int nchannels = 0;
+			unsigned char* texdata = stbi_load_from_memory(DataBaseAddr + absbufferoffset, texsize, &width, &height, &nchannels, 3);
+			(void)nchannels;
+
+			glGenTextures(1, &texture);
+			glBindTexture(GL_TEXTURE_2D, texture);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, 0);
+
+			stbi_image_free(texdata);
 
 			WinHND->GeometryObjects.Alloc(CreateInfo);
 		}
@@ -474,6 +496,8 @@ int main(void)
 
 		glBindVertexArray(VAO);
 
+		glBindTexture(GL_TEXTURE_2D, texture);
+
 		// Mouse Picking Pass
 
 		WinHND->PickPass.Bind_W();
@@ -571,6 +595,7 @@ int main(void)
 		Model = glm::translate(Model, LightPosition);
 		glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(Model));
 
+		/*
 		if(WinHND->GeometryObjects.IndexCount[0])
 		{
 			glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexCount[0], 
@@ -579,9 +604,10 @@ int main(void)
 			    WinHND->GeometryObjects.OffsetVBO[0]);
 		}
 		else
-	{
+		{
 			glDrawArrays(RenderMode, WinHND->GeometryObjects.OffsetVBO[0], WinHND->GeometryObjects.VAttrCount[0]);
 		}
+		*/
 
 		// Blit from HDR to linear normal quad for post-processing, parse inter-frame data
 
