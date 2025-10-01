@@ -81,7 +81,7 @@ int main(void)
 
 	void* ResourceStringMem = (char *)malloc(4 * V_MIB);
 	char* CurrStringMem = (char *)ResourceStringMem;
-	const char* ResFile = "res/test.glb";
+	const char* ResFile = "res/sponza.glb";
 	const char* UIFile = "config/imgui.ini";
 	// Drop the null terminator on OSPath intentionally, since it will be concatenated with paths.
 	// hacky stupid shit, will not last
@@ -180,8 +180,10 @@ int main(void)
 //------------------------------------------------------------------------------------------------------------
 	
 	// TODO: turn gltf processing into a module, define a standardized gltf format for game resources and support only that. 
+	// TODO: pass in VAO/EBO?VBO?
 	// TODO: texture loading
-	// TODO: bounding box construction from min/max params
+	// TODO: bounding box construction from min/max params at node level
+	// TODO: collision hull at mesh level
 
 	// Initialize mesh data and positions
 
@@ -244,7 +246,7 @@ int main(void)
 		uint64_t absbufferoffset;
 		uint64_t relbufferoffset;
 		uint64_t count;
-        uint8_t stride;
+		uint8_t stride;
 		glm::mat4 nodematrix;
 		GetNodeMatrix(&nodematrix, node);
 
@@ -332,7 +334,7 @@ int main(void)
 		}
 	}
 	
-	// TODO: switch to glMultiDrawElementsBaseVertex - eventually glDrawElementsIndirectCommand
+	// TODO: switch to glDrawElementsIndirectCommand
 	// /!\ remember to make changes where the draw calls actually happen too
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -470,9 +472,9 @@ int main(void)
 
 		//Render passes
 
-		// Mouse Picking Pass
-
 		glBindVertexArray(VAO);
+
+		// Mouse Picking Pass
 
 		WinHND->PickPass.Bind_W();
 
@@ -600,9 +602,6 @@ int main(void)
 		WinHND->FrameTimeMS = (FrameEndTime - CurrFrameTime) * 1000.0f;
 
 		glfwSwapBuffers(Window);
-
-		glBindVertexArray(0);
-		glUseProgram(0);
 
 		WinHND->DeltaTime = CurrFrameTime - WinHND->PrevFrameTime;
 		WinHND->PrevFrameTime = CurrFrameTime;

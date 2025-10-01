@@ -13,7 +13,7 @@ include_directories(../src ../src/util ../src/pal ../vendor)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_compile_options(-Wall -Wextra -Werror)
-	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/util/*.cpp" "../src/pal/*.cpp" "../vendor/imgui/*.cpp")
+	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/util/*.cpp" "../src/pal/*.cpp" "../vendor/imgui/*.cpp" "../vendor/glad/glad.c")
 
 	add_executable(${PROJECT_NAME} ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:Debug>:DEBUG>)
