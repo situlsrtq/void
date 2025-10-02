@@ -12,13 +12,14 @@ uniform vec3 lightcolor;
 uniform vec3 viewpos;
 uniform float ambientstrength;
 
-uniform sampler2D albedo;
+layout(binding = 0) uniform sampler2D alb_map;
+layout(binding = 1) uniform sampler2D metlrgh_map;
+layout(binding = 2) uniform sampler2D norm_map;
 
 void main()
 
 {
-    vec4 Objcolor = texture(albedo, TexCoord);
-    vec3 o = vec3(Objcolor);
+    vec4 Objcolor = texture(norm_map, TexCoord);
 
     // ambient
     vec3 ambient = ambientstrength * lightcolor;
@@ -37,6 +38,5 @@ void main()
     vec3 specular = specularstrength * spec * lightcolor;
 
     // output
-    vec3 result = o * (ambient + diffuse + specular);
-    FragColor = vec4(result, 1.0f);
+    FragColor = Objcolor * (vec4(ambient, 1.0f) + vec4(diffuse, 1.0f) + vec4(specular, 1.0f));
 }

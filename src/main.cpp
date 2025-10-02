@@ -239,7 +239,7 @@ int main(void)
 	uint8_t EBOPadding = 0;
 	geometry_create_info_t CreateInfo;
 
-	unsigned int texture = 0;
+	unsigned int textures[3] = {};
 	for(uint32_t i = 0; i < data->nodes_count; i++)
 	{
 		cgltf_node* node = &data->nodes[i];
@@ -331,24 +331,61 @@ int main(void)
 			// No need to pad this offset, because we're not mixing vertex formats within a single buffer
 			OffsetVBO += count;
 
-			absbufferoffset = prim->material->pbr_metallic_roughness.base_color_texture.texture->image->buffer_view->offset;
-			uint32_t texsize = prim->material->pbr_metallic_roughness.base_color_texture.texture->image->buffer_view->size;  
-			int width = 0;
-			int height = 0;
-			int nchannels = 0;
-			unsigned char* texdata = stbi_load_from_memory(DataBaseAddr + absbufferoffset, texsize, &width, &height, &nchannels, 3);
-			(void)nchannels;
-
-			glGenTextures(1, &texture);
-			glBindTexture(GL_TEXTURE_2D, texture);
+			glGenTextures(3, textures);
+			glBindTexture(GL_TEXTURE_2D, textures[0]);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
+			absbufferoffset = prim->material->pbr_metallic_roughness.base_color_texture.texture->image->buffer_view->offset;
+			uint32_t texsize = prim->material->pbr_metallic_roughness.base_color_texture.texture->image->buffer_view->size;  
+			int width = 0;
+			int height = 0;
+			int nchannels = 0;
+			unsigned char* texdata = stbi_load_from_memory(DataBaseAddr + absbufferoffset, texsize, &width, &height, &nchannels, 0);
+			(void)nchannels;
+
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
 			glGenerateMipmap(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, 0);
+
+			stbi_image_free(texdata);
+
+			glBindTexture(GL_TEXTURE_2D, textures[1]);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+			absbufferoffset = prim->material->pbr_metallic_roughness.metallic_roughness_texture.texture->image->buffer_view->offset;
+			texsize = prim->material->pbr_metallic_roughness.metallic_roughness_texture.texture->image->buffer_view->size;  
+			width = 0;
+			height = 0;
+			nchannels = 0;
+			texdata = stbi_load_from_memory(DataBaseAddr + absbufferoffset, texsize, &width, &height, &nchannels, 3);
+			(void)nchannels;
+
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
+			glGenerateMipmap(GL_TEXTURE_2D);
+
+			stbi_image_free(texdata);
+
+			glBindTexture(GL_TEXTURE_2D, textures[2]);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+			absbufferoffset = prim->material->normal_texture.texture->image->buffer_view->offset;
+			texsize = prim->material->normal_texture.texture->image->buffer_view->size;  
+			width = 0;
+			height = 0;
+			nchannels = 0;
+			texdata = stbi_load_from_memory(DataBaseAddr + absbufferoffset, texsize, &width, &height, &nchannels, 3);
+			(void)nchannels;
+
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
+			glGenerateMipmap(GL_TEXTURE_2D);
 
 			stbi_image_free(texdata);
 
@@ -496,7 +533,12 @@ int main(void)
 
 		glBindVertexArray(VAO);
 
-		glBindTexture(GL_TEXTURE_2D, texture);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textures[0]);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, textures[1]);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, textures[2]);
 
 		// Mouse Picking Pass
 
