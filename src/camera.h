@@ -1,12 +1,10 @@
 #ifndef VOID_CAMERA_H
 #define VOID_CAMERA_H
 
-
 #include <GLFW/glfw3.h>
 #include <glm/trigonometric.hpp>
 #include <glm/geometric.hpp>
 #include <glm/vec3.hpp>
-
 
 struct mbox_camera_t
 {
@@ -16,8 +14,8 @@ struct mbox_camera_t
 	float Yaw = -90.0f;
 	float Pitch = 0.0f;
 
-	glm::vec3 Eye = {0.0f,0.0f,-1.0f};
-	glm::vec3 UpAxis = {0.0f,1.0f,0.0f};
+	glm::vec3 Eye = {0.0f, 0.0f, -1.0f};
+	glm::vec3 UpAxis = {0.0f, 1.0f, 0.0f};
 
 	// Runtime values - changed by user actions
 	glm::vec3 Position = {0.0f, 0.0f, 3.0f};
@@ -25,8 +23,7 @@ struct mbox_camera_t
 	glm::vec3 RelativeYAxis = {};
 
 	void LookAtMouse(double XOffset, double YOffset);
-	void Move(GLFWwindow *Window);
+	void Move(GLFWwindow* Window);
 };
-
 
 #endif

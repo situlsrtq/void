@@ -1,7 +1,6 @@
 #ifndef MBOX_WINDOW_H
 #define MBOX_WINDOW_H
 
-
 #include <imgui/imgui.h>
 #include <glm/mat4x4.hpp>
 #include "u_mem.h"
@@ -9,11 +8,9 @@
 #include "renderpass.h"
 #include "camera.h"
 
-
 #define EMODE_VIEW 0
 #define EMODE_GEOMETRY 1
 #define EMODE_LIGHTS 2
-
 
 // Monolithic object an unfortunate consequence of using GLFW - future improvements could write a better base layer
 // for cross-platform windowing and simplify this object
@@ -45,8 +42,6 @@ struct window_handler_t
 	ImGuiIO ImIO;
 };
 
-
 window_handler_t* InitWindowHandler(float ScreenX, float ScreenY);
-
 
 #endif

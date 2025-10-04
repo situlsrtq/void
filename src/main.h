@@ -1,7 +1,6 @@
 #ifndef VOID_RENDERTHREAD_H
 #define VOID_RENDERTHREAD_H
 
-
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
@@ -32,12 +31,10 @@
 #include "u_mem.h"
 #include "scene.h"
 
-
 #define VOID_HFOV_DEFAULT 45.0f
 #define VOID_VATTR_STRIDE 32
 #define VOID_VATTR_COUNT 3
 #define VOID_TEX_COUNT 3
-
 
 // int RenderSystemsInit(window_handler_t*& WinHND);
 
@@ -52,7 +49,6 @@ void ProcessInput(GLFWwindow* Window);
 
 // TODO: Split out into UI module
 
-void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool *PostWindow, bool *DemoWindow);
-
+void GenerateInterfaceElements(window_handler_t* WinHND, bool* HelpWindow, bool* PostWindow, bool* DemoWindow);
 
 #endif

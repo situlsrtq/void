@@ -1,13 +1,11 @@
 #ifndef VOID_UTIL_H
 #define VOID_UTIL_H
 
-
 #include <cstddef>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-
 
 namespace UTIL
 {
@@ -23,7 +21,6 @@ inline void Free(T*& ptr)
 	ptr = 0x0;
 }
 
-}
-
+} // namespace UTIL
 
 #endif

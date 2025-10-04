@@ -1,18 +1,15 @@
 #include "PAL.h"
 #ifdef VOID_PLATFORM_LINUX
 
-
 #include <unistd.h>
-
 
 // TODO: Move to Core module
 #define VOID_DIR_HEAD "/void/"
-		
-char g_PathBuffer_r[VOID_PATH_MAX+1];
+
+char g_PathBuffer_r[VOID_PATH_MAX + 1];
 char* g_OSPath_r = g_PathBuffer_r;
 
-
-int PAL::GetPath(char *buf, int64_t size)
+int PAL::GetPath(char* buf, int64_t size)
 {
 	printf("-----WARNING, OBTAINIG EXE PATH AT RUNTIME-----\n");
 	printf("If you are actively working on source code this is fine.\n");
@@ -33,8 +30,8 @@ int PAL::GetPath(char *buf, int64_t size)
 
 	// readlink() gives us the full path, including the executable, but we only want the base directory
 	// for the program, so we use a sliding window to find it and trim the unnecessary data
-	
-	int i = len, k = len-1, res = 1;
+
+	int i = len, k = len - 1, res = 1;
 	char temp = '/';
 	char* slide;
 	while(res)
@@ -45,7 +42,7 @@ int PAL::GetPath(char *buf, int64_t size)
 			return EXIT_FAILURE;
 		}
 
-		i = k+1;
+		i = k + 1;
 		k--;
 
 		while(buf[k] != '/')
@@ -65,7 +62,6 @@ int PAL::GetPath(char *buf, int64_t size)
 
 	return EXIT_SUCCESS;
 }
-
 
 void* PAL::AlignedAlloc(size_t size, size_t alignment)
 {

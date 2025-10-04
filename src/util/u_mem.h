@@ -1,18 +1,15 @@
 #ifndef MBOX_UMEMORY_H
 #define MBOX_UMEMORY_H
 
-
 #include <stdint.h>
 #include <stdio.h>
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 
-
 #define PROGRAM_MAX_OBJECTS 64
 #define VIS_STATUS_VISIBLE 1
 #define VIS_STATUS_INVISIBLE 0
 #define VIS_STATUS_FREED 2
-
 
 // For internal use, never user-accessible
 struct free_list_t
@@ -24,13 +21,11 @@ struct free_list_t
 	uint8_t Pop();
 };
 
-
 struct texture_info_t
 {
 	unsigned int TexCount;
 	unsigned int TexArray[3];
 };
-
 
 // User accessible
 struct geometry_create_info_t
@@ -49,8 +44,7 @@ struct geometry_create_info_t
 	glm::mat4 Model;
 };
 
-
-//User accessible
+// User accessible
 struct geometry_state_t
 {
 	uint8_t Position;
@@ -67,14 +61,13 @@ struct geometry_state_t
 	glm::vec3 MaxBB[PROGRAM_MAX_OBJECTS];
 	glm::mat4 Model[PROGRAM_MAX_OBJECTS];
 
-	void Alloc(const geometry_create_info_t &CreateInfo);
+	void Alloc(const geometry_create_info_t& CreateInfo);
 	void Free(uint8_t FreedIndex);
-	
+
 	private:
-	
+
 	// Prevent Push() or Pop() being called outside of provided Alloc(), Free() functions
 	free_list_t FreeList;
 };
-
 
 #endif

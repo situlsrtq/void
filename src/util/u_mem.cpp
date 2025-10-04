@@ -1,6 +1,5 @@
 #include "u_mem.h"
 
-
 uint8_t free_list_t::Pop()
 {
 	NextFreePosition--;
@@ -8,7 +7,6 @@ uint8_t free_list_t::Pop()
 	uint8_t res = OpenPositions[NextFreePosition];
 	return res;
 }
-
 
 void free_list_t::Push(uint8_t FreedIndex)
 {
@@ -22,8 +20,7 @@ void free_list_t::Push(uint8_t FreedIndex)
 	NextFreePosition++;
 }
 
-
-void geometry_state_t::Alloc(const geometry_create_info_t &CreateInfo)
+void geometry_state_t::Alloc(const geometry_create_info_t& CreateInfo)
 {
 	uint8_t index;
 
@@ -35,7 +32,7 @@ void geometry_state_t::Alloc(const geometry_create_info_t &CreateInfo)
 	{
 		index = Position;
 
-		if (index >= PROGRAM_MAX_OBJECTS)
+		if(index >= PROGRAM_MAX_OBJECTS)
 		{
 			printf("System: Object Limit Reached\n");
 			return;
@@ -57,15 +54,14 @@ void geometry_state_t::Alloc(const geometry_create_info_t &CreateInfo)
 	Model[index] = CreateInfo.Model;
 }
 
-
 void geometry_state_t::Free(uint8_t FreedIndex)
 {
-	if (Position == 0)
+	if(Position == 0)
 	{
 		printf("System: Object array empty, nothing to free\n");
 		return;
 	}
-	if (FreedIndex >= Position || FreedIndex >= PROGRAM_MAX_OBJECTS)
+	if(FreedIndex >= Position || FreedIndex >= PROGRAM_MAX_OBJECTS)
 	{
 		printf("System: Out of bounds on free list\n");
 		return;

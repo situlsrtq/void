@@ -1,7 +1,6 @@
 #ifndef VOID_SCENE_H
 #define VOID_SCENE_H
 
-
 #include <stdio.h>
 
 #include <cgltf/cgltf.h>
@@ -18,8 +17,7 @@
 #include "window.h"
 #include "u_mem.h"
 
-
-int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned int *VAO, unsigned int *EBO, unsigned int *VBO, unsigned int VAStride, unsigned int VACount, unsigned int TexCount);
-
+int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned int* VAO, unsigned int* EBO,
+		     unsigned int* VBO, unsigned int VAStride, unsigned int VACount, unsigned int TexCount);
 
 #endif

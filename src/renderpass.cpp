@@ -1,11 +1,10 @@
 #include "renderpass.h"
 
-
 //-------------------------HDR---------------------------
 
 int fb_hdr_t::Init(uint32_t Width, uint32_t Height)
 {
-	if (FBO != 0)
+	if(FBO != 0)
 	{
 		printf("System: attempt to reinitialize existing framebuffer. Call Release() first\n");
 		return EXIT_FAILURE;
@@ -30,7 +29,7 @@ int fb_hdr_t::Init(uint32_t Width, uint32_t Height)
 
 	GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
-	if (Status != GL_FRAMEBUFFER_COMPLETE)
+	if(Status != GL_FRAMEBUFFER_COMPLETE)
 	{
 		printf("System: Framebuffer (picking) gen error: 0x%x\n", Status);
 		return EXIT_FAILURE;
@@ -43,17 +42,17 @@ int fb_hdr_t::Init(uint32_t Width, uint32_t Height)
 
 void fb_hdr_t::Release()
 {
-	if (FBO != 0)
+	if(FBO != 0)
 	{
 		glDeleteFramebuffers(1, &FBO);
 	}
 
-	if (ColorBuffer != 0)
+	if(ColorBuffer != 0)
 	{
 		glDeleteTextures(1, &ColorBuffer);
 	}
 
-	if (DepthBuffer != 0)
+	if(DepthBuffer != 0)
 	{
 		glDeleteTextures(1, &DepthBuffer);
 	}
@@ -72,7 +71,7 @@ void fb_hdr_t::Bind()
 
 int fb_mpick_t::Init(uint32_t Width, uint32_t Height)
 {
-	if (FBO != 0)
+	if(FBO != 0)
 	{
 		printf("System: attempt to reinitialize existing framebuffer. Call Release() first\n");
 		return EXIT_FAILURE;
@@ -98,7 +97,7 @@ int fb_mpick_t::Init(uint32_t Width, uint32_t Height)
 
 	GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
-	if (Status != GL_FRAMEBUFFER_COMPLETE)
+	if(Status != GL_FRAMEBUFFER_COMPLETE)
 	{
 		printf("System: Framebuffer (picking) gen error: 0x%x\n", Status);
 		return EXIT_FAILURE;
@@ -111,20 +110,19 @@ int fb_mpick_t::Init(uint32_t Width, uint32_t Height)
 	return EXIT_SUCCESS;
 }
 
-
 void fb_mpick_t::Release()
 {
-	if (FBO != 0)
+	if(FBO != 0)
 	{
 		glDeleteFramebuffers(1, &FBO);
 	}
 
-	if (IndexTex != 0)
+	if(IndexTex != 0)
 	{
 		glDeleteTextures(1, &IndexTex);
 	}
 
-	if (DepthTex != 0)
+	if(DepthTex != 0)
 	{
 		glDeleteTextures(1, &DepthTex);
 	}
@@ -137,12 +135,10 @@ void fb_mpick_t::Bind_W()
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FBO);
 }
 
-
 void fb_mpick_t::Unbind_W()
 {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
-
 
 texel_info_t fb_mpick_t::GetInfo(uint32_t X, uint32_t Y)
 {

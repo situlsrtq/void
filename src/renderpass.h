@@ -1,12 +1,10 @@
 #ifndef VOID_RENDERPASS_H
 #define VOID_RENDERPASS_H
 
-
 #include <glad/glad.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-
 
 //-------------------------HDR---------------------------
 
@@ -31,7 +29,6 @@ struct texel_info_t
 	float Type;
 };
 
-
 struct fb_mpick_t
 {
 	uint32_t FBO;
@@ -48,6 +45,5 @@ struct fb_mpick_t
 };
 
 //-----------------------------------------------------
-
 
 #endif
