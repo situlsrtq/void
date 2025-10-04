@@ -50,6 +50,7 @@ void geometry_state_t::Alloc(const geometry_create_info_t &CreateInfo)
 	VAttrCount[index] = CreateInfo.VAttrCount;
 	ByteOffsetEBO[index] = CreateInfo.ByteOffsetEBO;
 	OffsetVBO[index] = CreateInfo.OffsetVBO;
+	TexInfo[index] = CreateInfo.TexInfo;
 	Color[index] = CreateInfo.Color;
 	MinBB[index] = CreateInfo.MinBB;
 	MaxBB[index] = CreateInfo.MaxBB;

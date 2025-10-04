@@ -8,7 +8,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#ifndef GLM_ENABLE_EXPERIMENTAL
 #define GLM_ENABLE_EXPERIMENTAL
+#endif
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -17,12 +19,10 @@
 #ifndef CGLTF_IMPLEMENTATION
 #define CGLTF_IMPLEMENTATION
 #endif
-#include <cgltf/cgltf.h>
 
 #ifndef STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #endif
-#include <stb/stb_image.h>
 
 #include <stdint.h>
 
@@ -30,13 +30,13 @@
 
 #include "window.h"
 #include "u_mem.h"
+#include "scene.h"
 
 
 #define VOID_HFOV_DEFAULT 45.0f
-
-//TODO: put in glb module
 #define VOID_VATTR_STRIDE 32
 #define VOID_VATTR_COUNT 3
+#define VOID_TEX_COUNT 3
 
 
 // int RenderSystemsInit(window_handler_t*& WinHND);

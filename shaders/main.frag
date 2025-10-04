@@ -19,7 +19,7 @@ layout(binding = 2) uniform sampler2D norm_map;
 void main()
 
 {
-    vec4 Objcolor = texture(norm_map, TexCoord);
+    vec4 Objcolor = texture(alb_map, TexCoord);
 
     // ambient
     vec3 ambient = ambientstrength * lightcolor;

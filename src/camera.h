@@ -1,5 +1,5 @@
-#ifndef MBOX_CAMERA_H
-#define MBOX_CAMERA_H
+#ifndef VOID_CAMERA_H
+#define VOID_CAMERA_H
 
 
 #include <GLFW/glfw3.h>

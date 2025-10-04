@@ -38,37 +38,6 @@ unsigned int exposure_uni;
 float exposure_val;
 
 
-cgltf_attribute* FindAttrType(const cgltf_primitive* prim, cgltf_attribute_type type)
-{
-	cgltf_attribute* attr = &prim->attributes[0];
-
-	for(uint32_t i = 0; i < prim->attributes_count; i++)
-	{
-		if(prim->attributes[i].type != type) continue;
-
-		attr = &prim->attributes[i];
-		return attr;
-	}
-
-	attr = 0x0;
-	printf("GLTF: Attribute type not found %s\n", "peepee, map to attr_type later");
-	return attr;
-}
-
-void GetNodeMatrix(glm::mat4* m, cgltf_node* node)
-{
-	glm::vec3 trv = {node->translation[0],node->translation[1],node->translation[2]};
-	glm::vec3 scl = {node->scale[0],node->scale[1],node->scale[2]};
-	glm::quat p = {node->rotation[3], node->rotation[0], node->rotation[1], node->rotation[2]};
-	glm::mat4 r = glm::mat4_cast(p);
-
-	*m = glm::mat4(1.0f);
-	*m = glm::translate(*m, trv);
-	*m *= r;
-	*m = glm::scale(*m, scl);	
-}
-
-
 int main(void)
 {
 	int res = PAL::GetPath(g_PathBuffer_r, VOID_PATH_MAX);
@@ -81,7 +50,7 @@ int main(void)
 
 	void* ResourceStringMem = (char *)malloc(4 * V_MIB);
 	char* CurrStringMem = (char *)ResourceStringMem;
-	const char* ResFile = "res/test.glb";
+	const char* ResFile = "res/sponza.glb";
 	const char* UIFile = "config/imgui.ini";
 	// Drop the null terminator on OSPath intentionally, since it will be concatenated with paths.
 	// hacky stupid shit, will not last
@@ -179,21 +148,9 @@ int main(void)
 
 //------------------------------------------------------------------------------------------------------------
 	
-	// TODO: turn gltf processing into a module, define a standardized gltf format for game resources and support only that. 
-	// TODO: pass in VAO/EBO?VBO?
 	// TODO: texture loading
 	// TODO: bounding box construction from min/max params at node level
 	// TODO: collision hull at mesh level
-
-	// Initialize mesh data and positions
-
-	size_t NumSceneBytes;
-	res = UTIL::GetFileSize(SceneFile, &NumSceneBytes);
-	if(res == EXIT_FAILURE)
-	{
-		printf("Resources: could not access scene file %s\n", SceneFile);
-		return EXIT_FAILURE;
-	}
 
 	unsigned int VAO;
 	glGenVertexArrays(1, &VAO);
@@ -202,196 +159,8 @@ int main(void)
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
 
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, NumSceneBytes, 0x0, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, NumSceneBytes, 0x0, GL_DYNAMIC_DRAW);
-
-	cgltf_options opt;
-	memset(&opt, 0, sizeof(opt));
-	cgltf_data* data = 0x0;
-
-	cgltf_result cgl_res = cgltf_parse_file(&opt, SceneFile, &data);
-	if(cgl_res != cgltf_result_success) 
-	{
-		printf("GLTF Load: could not parse file %s", SceneFile);
-		return EXIT_FAILURE;
-	}
-
-	cgl_res = cgltf_load_buffers(&opt, data, SceneFile);
-	if(cgl_res != cgltf_result_success) 
-	{
-		printf("GLTF Load: could not validate file %s", SceneFile);
-		return EXIT_FAILURE;
-	}
-
-	cgl_res = cgltf_validate(data);
-	if(cgl_res != cgltf_result_success) 
-	{
-		printf("GLTF Load: could not validate file %s", SceneFile);
-		return EXIT_FAILURE;
-	}
-
-	uint8_t* DataBaseAddr = (uint8_t *)data->buffers->data;
-	uint64_t OffsetEBO = 0;
-	uint64_t OffsetVBO = 0;
-	uint8_t EBOPadding = 0;
-	geometry_create_info_t CreateInfo;
-
-	unsigned int textures[3] = {};
-	for(uint32_t i = 0; i < data->nodes_count; i++)
-	{
-		cgltf_node* node = &data->nodes[i];
-
-		uint64_t absbufferoffset;
-		uint64_t relbufferoffset;
-		uint64_t count;
-		uint8_t stride;
-		glm::mat4 nodematrix;
-		GetNodeMatrix(&nodematrix, node);
-
-		cgltf_mesh* mesh = node->mesh;
-		for(uint32_t t = 0; t < mesh->primitives_count; t++)
-		{
-			memset(&CreateInfo, 0, sizeof(CreateInfo));
-			CreateInfo.Color = { 1.0f, 1.0f, 1.0f };
-			CreateInfo.Model = nodematrix;
-
-			cgltf_primitive* prim = &mesh->primitives[t];
-			cgltf_attribute* attr;
-
-     			if(prim->attributes_count != VOID_VATTR_COUNT)
-     			{
-				printf("GLTF Load: unsupported vertex format: %s\n", SceneFile);
-			     	return EXIT_FAILURE;
-    			}
-
-			if(prim->indices)
-			{
-				count = prim->indices->count;
-				stride = prim->indices->stride;
-				relbufferoffset = prim->indices->offset;
-				absbufferoffset = prim->indices->buffer_view->offset;
-				GLint indextype = 0; 
-				if(prim->indices->component_type == cgltf_component_type_r_8u) 
-				{
-					indextype = GL_UNSIGNED_BYTE;
-					EBOPadding = 4 - (count % 4);
-					EBOPadding = (EBOPadding == 4) ? 0 : EBOPadding;
-				}
-				if(prim->indices->component_type == cgltf_component_type_r_16u) 
-				{
-					indextype =GL_UNSIGNED_SHORT;
-					EBOPadding = (count % 2) * 2;
-				}
-				if(prim->indices->component_type == cgltf_component_type_r_32u) 
-				{
-					indextype = GL_UNSIGNED_INT;
-					EBOPadding = 0;
-				}
-				if(indextype == 0)
-				{
-					printf("GLTF Load: No GL-compatible index type: %s", SceneFile);
-					return EXIT_FAILURE;
-				}
-
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, OffsetEBO, count * stride, (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
-
-				CreateInfo.IndexType = indextype;
-				CreateInfo.IndexCount = count;
-				CreateInfo.ByteOffsetEBO = OffsetEBO;
-
-				// Since this is a shared buffer for the entire scene, pad all writes to nearest 32bit boundary to prevent misalignment when indextype changes from a smaller type to a larger one
-				OffsetEBO += (count * stride) + EBOPadding;
-			}
-
-			attr = &prim->attributes[0]; 
-			count = attr->data->count;
-			relbufferoffset = attr->data->offset;
-			absbufferoffset = attr->data->buffer_view->offset;
-
-			stride = attr->data->stride;
-			if((stride != VOID_VATTR_STRIDE) || 
-			  (strcmp(attr->name, "POSITION") != 0) ||
-			  (strcmp(prim->attributes[1].name, "NORMAL") != 0) ||
-			  (strcmp(prim->attributes[2].name, "TEXCOORD_0") != 0))
-			{
-				printf("GLTF Load: unsupported vertex layout: %s\n", SceneFile);
-				return EXIT_FAILURE;
-			}
-
-			glBindBuffer(GL_ARRAY_BUFFER, VBO);
-			glBufferSubData(GL_ARRAY_BUFFER, OffsetVBO * stride, count * stride, (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
-
-			CreateInfo.VAttrCount = count;
-			CreateInfo.OffsetVBO = OffsetVBO;
-
-			// No need to pad this offset, because we're not mixing vertex formats within a single buffer
-			OffsetVBO += count;
-
-			glGenTextures(3, textures);
-			glBindTexture(GL_TEXTURE_2D, textures[0]);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-			absbufferoffset = prim->material->pbr_metallic_roughness.base_color_texture.texture->image->buffer_view->offset;
-			uint32_t texsize = prim->material->pbr_metallic_roughness.base_color_texture.texture->image->buffer_view->size;  
-			int width = 0;
-			int height = 0;
-			int nchannels = 0;
-			unsigned char* texdata = stbi_load_from_memory(DataBaseAddr + absbufferoffset, texsize, &width, &height, &nchannels, 0);
-			(void)nchannels;
-
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
-			glGenerateMipmap(GL_TEXTURE_2D);
-
-			stbi_image_free(texdata);
-
-			glBindTexture(GL_TEXTURE_2D, textures[1]);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-			absbufferoffset = prim->material->pbr_metallic_roughness.metallic_roughness_texture.texture->image->buffer_view->offset;
-			texsize = prim->material->pbr_metallic_roughness.metallic_roughness_texture.texture->image->buffer_view->size;  
-			width = 0;
-			height = 0;
-			nchannels = 0;
-			texdata = stbi_load_from_memory(DataBaseAddr + absbufferoffset, texsize, &width, &height, &nchannels, 3);
-			(void)nchannels;
-
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
-			glGenerateMipmap(GL_TEXTURE_2D);
-
-			stbi_image_free(texdata);
-
-			glBindTexture(GL_TEXTURE_2D, textures[2]);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-			absbufferoffset = prim->material->normal_texture.texture->image->buffer_view->offset;
-			texsize = prim->material->normal_texture.texture->image->buffer_view->size;  
-			width = 0;
-			height = 0;
-			nchannels = 0;
-			texdata = stbi_load_from_memory(DataBaseAddr + absbufferoffset, texsize, &width, &height, &nchannels, 3);
-			(void)nchannels;
-
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, texdata);
-			glGenerateMipmap(GL_TEXTURE_2D);
-
-			stbi_image_free(texdata);
-
-			WinHND->GeometryObjects.Alloc(CreateInfo);
-		}
-	}
+	res = LoadSceneFromGLB(SceneFile, WinHND, &VAO, &EBO, &VBO, 
+			       VOID_VATTR_STRIDE, VOID_VATTR_COUNT, VOID_TEX_COUNT);
 	
 	// TODO: switch to glDrawElementsIndirectCommand
 	// /!\ remember to make changes where the draw calls actually happen too
@@ -404,8 +173,6 @@ int main(void)
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, VOID_VATTR_STRIDE, (void*)24);
 	glEnableVertexAttribArray(2);
 	glBindVertexArray(0);
-
-	cgltf_free(data);
 
 //------------------------------------------------------------------------------------------------------------
 
@@ -533,14 +300,8 @@ int main(void)
 
 		glBindVertexArray(VAO);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textures[0]);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, textures[1]);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, textures[2]);
-
-		// Mouse Picking Pass
+#ifdef DEBUG		
+		// Mouse Picking Pass for Scene Editor
 
 		WinHND->PickPass.Bind_W();
 
@@ -577,6 +338,7 @@ int main(void)
 		}
 
 		WinHND->PickPass.Unbind_W();
+#endif
 
 		// Object Geometry Pass
 		
@@ -604,6 +366,13 @@ int main(void)
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.Model[i]));
 			glUniform3fv(objcolor_uni, 1, glm::value_ptr(WinHND->GeometryObjects.Color[i]));
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, WinHND->GeometryObjects.TexInfo[i].TexArray[0]);
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, WinHND->GeometryObjects.TexInfo[i].TexArray[1]);
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, WinHND->GeometryObjects.TexInfo[i].TexArray[2]);
 
 			if(WinHND->GeometryObjects.IndexCount[i])
 			{

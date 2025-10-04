@@ -14,7 +14,7 @@
 #define VIS_STATUS_FREED 2
 
 
-// For internal use by geometry_state_t, never user-accessible
+// For internal use, never user-accessible
 struct free_list_t
 {
 	uint8_t NextFreePosition = 0;
@@ -22,6 +22,13 @@ struct free_list_t
 
 	void Push(uint8_t Index);
 	uint8_t Pop();
+};
+
+
+struct texture_info_t
+{
+	unsigned int TexCount;
+	unsigned int TexArray[3];
 };
 
 
@@ -35,6 +42,7 @@ struct geometry_create_info_t
 	uint64_t VAttrCount;
 	uint64_t ByteOffsetEBO;
 	uint64_t OffsetVBO;
+	texture_info_t TexInfo;
 	glm::vec3 Color;
 	glm::vec3 MinBB;
 	glm::vec3 MaxBB;
@@ -53,6 +61,7 @@ struct geometry_state_t
 	uint64_t VAttrCount[PROGRAM_MAX_OBJECTS];
 	uint64_t ByteOffsetEBO[PROGRAM_MAX_OBJECTS];
 	uint64_t OffsetVBO[PROGRAM_MAX_OBJECTS];
+	texture_info_t TexInfo[PROGRAM_MAX_OBJECTS];
 	glm::vec3 Color[PROGRAM_MAX_OBJECTS];
 	glm::vec3 MinBB[PROGRAM_MAX_OBJECTS];
 	glm::vec3 MaxBB[PROGRAM_MAX_OBJECTS];
