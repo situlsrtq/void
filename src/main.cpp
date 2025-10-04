@@ -147,7 +147,6 @@ int main(void)
 
 	//------------------------------------------------------------------------------------------------------------
 
-	// TODO: texture loading
 	// TODO: bounding box construction from min/max params at node level
 	// TODO: collision hull at mesh level
 
