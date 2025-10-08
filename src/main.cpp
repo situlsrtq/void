@@ -46,7 +46,7 @@ int main(void)
 
 	void* ResourceStringMem = (char*)malloc(4 * V_MIB);
 	char* CurrStringMem = (char*)ResourceStringMem;
-	const char* ResFile = "res/sponza.glb";
+	const char* ResFile = "res/NormalTangentMirrorTest.glb";
 	const char* UIFile = "config/imgui.ini";
 	// Drop the null terminator on OSPath intentionally, since it will be concatenated with
 	// paths. hacky stupid shit, will not last
@@ -145,34 +145,53 @@ int main(void)
 		return EXIT_FAILURE;
 	}
 
-	//------------------------------------------------------------------------------------------------------------
-
 	// TODO: bounding box construction from min/max params at node level
 	// TODO: collision hull at mesh level
 
 	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);
-	unsigned int EBO;
-	glGenBuffers(1, &EBO);
-	unsigned int VBO;
-	glGenBuffers(1, &VBO);
+	glCreateVertexArrays(1, &VAO);
 
-	res = LoadSceneFromGLB(SceneFile, WinHND, &VAO, &EBO, &VBO, VOID_VATTR_STRIDE, VOID_VATTR_COUNT,
-			       VOID_TEX_COUNT);
+	vertex_buffer_info_t VBufferState = {};
+	glCreateBuffers(VOID_VBUFCOUNT_FMT, VBufferState.VBufferArray);
+	glNamedBufferStorage(VBufferState.VBufferArray[INDEX_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[POS_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[NORM_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[TAN_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[TEX_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
+
+	glVertexArrayElementBuffer(VAO, VBufferState.VBufferArray[INDEX_BUFFER]); // sizeof(vec3)
+	glVertexArrayVertexBuffer(VAO, 0, VBufferState.VBufferArray[POS_BUFFER], 0, 12); // sizeof(vec3)
+	glVertexArrayVertexBuffer(VAO, 1, VBufferState.VBufferArray[NORM_BUFFER], 0, 12); // sizeof(vec3)
+	glVertexArrayVertexBuffer(VAO, 2, VBufferState.VBufferArray[TAN_BUFFER], 0, 16); // sizeof(vec3)
+	glVertexArrayVertexBuffer(VAO, 3, VBufferState.VBufferArray[TEX_BUFFER], 0, 8); // sizeof(vec3)
+	
+	glEnableVertexArrayAttrib(VAO, 0);
+	glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(VAO, 0, 0);
+
+	glEnableVertexArrayAttrib(VAO, 1);
+	glVertexArrayAttribFormat(VAO, 1, 3, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(VAO, 1, 1);
+
+	glEnableVertexArrayAttrib(VAO, 2);
+	glVertexArrayAttribFormat(VAO, 2, 4, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(VAO, 2, 2);
+
+	glEnableVertexArrayAttrib(VAO, 3);
+	glVertexArrayAttribFormat(VAO, 3, 2, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(VAO, 3, 3);
+
+	res = LoadSceneFromGLB(SceneFile, WinHND, &VAO, &VBufferState, VOID_TEX_COUNT);
+	if(res == EXIT_FAILURE)
+	{
+		printf("System: Could not load scene file: %s", SceneFile);
+		return EXIT_FAILURE;
+	}
 
 	// TODO: switch to glDrawElementsIndirectCommand
 	// /!\ remember to make changes where the draw calls actually happen too
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VOID_VATTR_STRIDE, (void*)0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, VOID_VATTR_STRIDE, (void*)12);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, VOID_VATTR_STRIDE, (void*)24);
-	glEnableVertexAttribArray(2);
 	glBindVertexArray(0);
-
-	//------------------------------------------------------------------------------------------------------------
 
 	// Initialize Render passes
 
@@ -324,17 +343,17 @@ int main(void)
 			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE,
 					   glm::value_ptr(WinHND->GeometryObjects.Model[i]));
 
-			if(WinHND->GeometryObjects.IndexCount[i])
+			if(WinHND->GeometryObjects.IndexInfo[i].IndexCount)
 			{
-				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexCount[i],
-							 WinHND->GeometryObjects.IndexType[i],
-							 (void*)WinHND->GeometryObjects.ByteOffsetEBO[i],
-							 WinHND->GeometryObjects.OffsetVBO[i]);
+				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexInfo[i].IndexCount,
+							 WinHND->GeometryObjects.IndexInfo[i].IndexType,
+							 (void*)WinHND->GeometryObjects.IndexInfo[i].ByteOffsetEBO,
+							 WinHND->GeometryObjects.VertexInfo[i].VertexOffset);
 			}
 			else
 			{
-				glDrawArrays(RenderMode, WinHND->GeometryObjects.OffsetVBO[i],
-					     WinHND->GeometryObjects.VAttrCount[i]);
+				glDrawArrays(RenderMode, WinHND->GeometryObjects.VertexInfo[i].VertexOffset,
+					     WinHND->GeometryObjects.VertexInfo[i].VAttrCount);
 			}
 		}
 
@@ -376,17 +395,17 @@ int main(void)
 			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, WinHND->GeometryObjects.TexInfo[i].TexArray[2]);
 
-			if(WinHND->GeometryObjects.IndexCount[i])
+			if(WinHND->GeometryObjects.IndexInfo[i].IndexCount)
 			{
-				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexCount[i],
-							 WinHND->GeometryObjects.IndexType[i],
-							 (void*)WinHND->GeometryObjects.ByteOffsetEBO[i],
-							 WinHND->GeometryObjects.OffsetVBO[i]);
+				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexInfo[i].IndexCount,
+							 WinHND->GeometryObjects.IndexInfo[i].IndexType,
+							 (void*)WinHND->GeometryObjects.IndexInfo[i].ByteOffsetEBO,
+							 WinHND->GeometryObjects.VertexInfo[i].VertexOffset);
 			}
 			else
 			{
-				glDrawArrays(RenderMode, WinHND->GeometryObjects.OffsetVBO[i],
-					     WinHND->GeometryObjects.VAttrCount[i]);
+				glDrawArrays(RenderMode, WinHND->GeometryObjects.VertexInfo[i].VertexOffset,
+					     WinHND->GeometryObjects.VertexInfo[i].VAttrCount);
 			}
 		}
 

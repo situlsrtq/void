@@ -15,9 +15,10 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include "window.h"
+#include "rendertypes.h"
 #include "u_mem.h"
 
-int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned int* VAO, unsigned int* EBO,
-		     unsigned int* VBO, unsigned int VAStride, unsigned int VACount, unsigned int TexCount);
+int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned int* VAO,
+		     vertex_buffer_info_t* VBufferState, unsigned int TexCount);
 
 #endif

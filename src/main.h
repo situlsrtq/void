@@ -29,12 +29,9 @@
 
 #include "window.h"
 #include "u_mem.h"
-#include "scene.h"
+#include "gltf.h"
 
 #define VOID_HFOV_DEFAULT 45.0f
-#define VOID_VATTR_STRIDE 32
-#define VOID_VATTR_COUNT 3
-#define VOID_TEX_COUNT 3
 
 // int RenderSystemsInit(window_handler_t*& WinHND);
 

@@ -2,6 +2,7 @@
 
 in vec3 WorldPos;
 in vec3 Normal;
+in vec4 Bitangent;
 in vec2 TexCoord;
 
 out vec4 FragColor;
@@ -19,7 +20,7 @@ layout(binding = 2) uniform sampler2D norm_map;
 void main()
 
 {
-    vec4 Objcolor = texture(alb_map, TexCoord);
+    vec4 Objcolor = texture(norm_map, TexCoord);
 
     // ambient
     vec3 ambient = ambientstrength * lightcolor;

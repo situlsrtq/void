@@ -1,12 +1,13 @@
-#ifndef MBOX_UMEMORY_H
-#define MBOX_UMEMORY_H
+#ifndef VOID_UMEMORY_H
+#define VOID_UMEMORY_H
 
 #include <stdint.h>
 #include <stdio.h>
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
+#include "rendertypes.h"
 
-#define PROGRAM_MAX_OBJECTS 64
+#define PROGRAM_MAX_OBJECTS 255
 #define VIS_STATUS_VISIBLE 1
 #define VIS_STATUS_INVISIBLE 0
 #define VIS_STATUS_FREED 2
@@ -21,22 +22,13 @@ struct free_list_t
 	uint8_t Pop();
 };
 
-struct texture_info_t
-{
-	unsigned int TexCount;
-	unsigned int TexArray[3];
-};
-
 // User accessible
 struct geometry_create_info_t
 {
 	bool New;
 	bool Deleted;
-	uint32_t IndexType;
-	uint64_t IndexCount;
-	uint64_t VAttrCount;
-	uint64_t ByteOffsetEBO;
-	uint64_t OffsetVBO;
+	index_info_t IndexInfo;
+	vertex_info_t VertexInfo;
 	texture_info_t TexInfo;
 	glm::vec3 Color;
 	glm::vec3 MinBB;
@@ -50,11 +42,8 @@ struct geometry_state_t
 	uint8_t Position;
 	uint8_t Visible[PROGRAM_MAX_OBJECTS];
 
-	uint32_t IndexType[PROGRAM_MAX_OBJECTS];
-	uint32_t IndexCount[PROGRAM_MAX_OBJECTS];
-	uint64_t VAttrCount[PROGRAM_MAX_OBJECTS];
-	uint64_t ByteOffsetEBO[PROGRAM_MAX_OBJECTS];
-	uint64_t OffsetVBO[PROGRAM_MAX_OBJECTS];
+	index_info_t IndexInfo[PROGRAM_MAX_OBJECTS];
+	vertex_info_t VertexInfo[PROGRAM_MAX_OBJECTS];
 	texture_info_t TexInfo[PROGRAM_MAX_OBJECTS];
 	glm::vec3 Color[PROGRAM_MAX_OBJECTS];
 	glm::vec3 MinBB[PROGRAM_MAX_OBJECTS];

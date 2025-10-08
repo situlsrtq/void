@@ -42,11 +42,8 @@ void geometry_state_t::Alloc(const geometry_create_info_t& CreateInfo)
 	}
 
 	Visible[index] = VIS_STATUS_VISIBLE;
-	IndexType[index] = CreateInfo.IndexType;
-	IndexCount[index] = CreateInfo.IndexCount;
-	VAttrCount[index] = CreateInfo.VAttrCount;
-	ByteOffsetEBO[index] = CreateInfo.ByteOffsetEBO;
-	OffsetVBO[index] = CreateInfo.OffsetVBO;
+	IndexInfo[index] = CreateInfo.IndexInfo;
+	VertexInfo[index] = CreateInfo.VertexInfo;
 	TexInfo[index] = CreateInfo.TexInfo;
 	Color[index] = CreateInfo.Color;
 	MinBB[index] = CreateInfo.MinBB;
