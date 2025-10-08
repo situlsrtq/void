@@ -45,6 +45,11 @@ int main(void)
 	// thread will be heaviest user
 
 	void* ResourceStringMem = (char*)malloc(4 * V_MIB);
+	if(!ResourceStringMem)
+	{
+		return EXIT_FAILURE;
+	}
+
 	char* CurrStringMem = (char*)ResourceStringMem;
 	const char* ResFile = "res/NormalTangentMirrorTest.glb";
 	const char* UIFile = "config/imgui.ini";
@@ -148,9 +153,6 @@ int main(void)
 	// TODO: bounding box construction from min/max params at node level
 	// TODO: collision hull at mesh level
 
-	unsigned int VAO;
-	glCreateVertexArrays(1, &VAO);
-
 	vertex_buffer_info_t VBufferState = {};
 	glCreateBuffers(VOID_VBUFCOUNT_FMT, VBufferState.VBufferArray);
 	glNamedBufferStorage(VBufferState.VBufferArray[INDEX_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
@@ -158,6 +160,9 @@ int main(void)
 	glNamedBufferStorage(VBufferState.VBufferArray[NORM_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
 	glNamedBufferStorage(VBufferState.VBufferArray[TAN_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
 	glNamedBufferStorage(VBufferState.VBufferArray[TEX_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
+
+	unsigned int VAO;
+	glCreateVertexArrays(1, &VAO);
 
 	glVertexArrayElementBuffer(VAO, VBufferState.VBufferArray[INDEX_BUFFER]); // sizeof(vec3)
 	glVertexArrayVertexBuffer(VAO, 0, VBufferState.VBufferArray[POS_BUFFER], 0, 12); // sizeof(vec3)
@@ -321,7 +326,7 @@ int main(void)
 #ifdef DEBUG
 		// Mouse Picking Pass for Scene Editor
 
-		WinHND->PickPass.Bind_W();
+		WinHND->PickPass.Bind();
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -356,8 +361,6 @@ int main(void)
 					     WinHND->GeometryObjects.VertexInfo[i].VAttrCount);
 			}
 		}
-
-		WinHND->PickPass.Unbind_W();
 #endif
 
 		// Object Geometry Pass
@@ -583,10 +586,10 @@ void ProcessInput(GLFWwindow* Window)
 	{
 		if(LMouseWasDown)
 		{
-			/*
 			texel_info_t res = WinHND->PickPass.GetInfo((uint32_t)WinHND->PrevMouseX,
-			(uint32_t)(WinHND->Height - WinHND->PrevMouseY)); if
-			(WinHND->ActiveSelection && WinHND->Active.Deleted != true)
+			(uint32_t)(WinHND->Height - WinHND->PrevMouseY)); 
+			/*
+			if(WinHND->ActiveSelection && WinHND->Active.Deleted != true)
 			{
 				WinHND->Active.ComposeModelM4();
 				WinHND->GeometryObjects.Alloc(WinHND->Active);
