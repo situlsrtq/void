@@ -76,7 +76,7 @@ cgltf_attribute* FindAttrType(const cgltf_primitive* prim, cgltf_attribute_type 
 	}
 
 	attr = 0x0;
-	printf("GLTF: Attribute type not found %s\n", attr->name);
+	printf("GLTF: Attribute type not found %d\n", type);
 	return attr;
 }
 
@@ -163,14 +163,14 @@ int UploadTexture_2Dmipped(unsigned int Texture, const uint8_t* DataBaseAddr, ui
 	int width;
 	int height;
 	uint32_t format;
+	uint32_t internalformat;
 	int nchannels = 0;
 	unsigned char* texdata = 0x0;
 
-	glBindTexture(GL_TEXTURE_2D, Texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTextureParameteri(Texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTextureParameteri(Texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTextureParameteri(Texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTextureParameteri(Texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	texdata = stbi_load_from_memory(DataBaseAddr + Offset, Size, &width, &height, &nchannels, 0);
 
@@ -178,20 +178,23 @@ int UploadTexture_2Dmipped(unsigned int Texture, const uint8_t* DataBaseAddr, ui
 	{
 		case 2:
 			format = GL_RG;
+			internalformat = GL_RG8;
 			break;
 		case 3:
 			format = GL_RGB;
+			internalformat = GL_RGB8;
 			break;
 		case 4:
 			format = GL_RGBA;
+			internalformat = GL_RGBA8;
 			break;
 		default:
 			printf("GLTF: Could not obtain valid texture format from image\n");
 			return EXIT_FAILURE;
 	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, texdata);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	glTextureStorage2D(Texture, 1, internalformat, width, height); 
+	glTextureSubImage2D(Texture, 0,	0, 0, width, height, format, GL_UNSIGNED_BYTE, texdata);
 
 	stbi_image_free(texdata);
 
@@ -204,7 +207,8 @@ int LoadTextures(uint32_t TexCount, geometry_create_info_t* CreateInfo, const cg
 	int res;
 	uint32_t texsize;
 	uint64_t absbufferoffset;
-	glGenTextures(TexCount, CreateInfo->TexInfo.TexArray);
+
+	glCreateTextures(GL_TEXTURE_2D, TexCount, CreateInfo->TexInfo.TexArray);
 
 	cgltf_texture* filetex = prim->material->pbr_metallic_roughness.base_color_texture.texture;
 	if(filetex)

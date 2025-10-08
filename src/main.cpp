@@ -388,12 +388,9 @@ int main(void)
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.Model[i]));
 			glUniform3fv(objcolor_uni, 1, glm::value_ptr(WinHND->GeometryObjects.Color[i]));
 
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, WinHND->GeometryObjects.TexInfo[i].TexArray[0]);
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, WinHND->GeometryObjects.TexInfo[i].TexArray[1]);
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, WinHND->GeometryObjects.TexInfo[i].TexArray[2]);
+			glBindTextureUnit(0, WinHND->GeometryObjects.TexInfo[i].TexArray[0]);
+			glBindTextureUnit(1, WinHND->GeometryObjects.TexInfo[i].TexArray[1]);
+			glBindTextureUnit(2, WinHND->GeometryObjects.TexInfo[i].TexArray[2]);
 
 			if(WinHND->GeometryObjects.IndexInfo[i].IndexCount)
 			{
