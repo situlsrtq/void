@@ -288,8 +288,6 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 		return EXIT_FAILURE;
 	}
 
-	glBindVertexArray(*VAO);
-
 	cgltf_options opt;
 	memset(&opt, 0, sizeof(opt));
 	cgltf_data* data = 0x0;
@@ -318,8 +316,9 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 	uint8_t* DataBaseAddr = (uint8_t*)data->buffers->data;
 	geometry_create_info_t CreateInfo;
 
-	printf("Loading scene data: %s\n", SceneFile);
-	printf("If your textures are PNGs or other non-delivery formats, this will take a long fucking time\n");
+	glBindVertexArray(*VAO);
+
+	printf("Loading gltf data: %s\n", SceneFile);
 
 	for(uint32_t i = 0; i < data->nodes_count; i++)
 	{
