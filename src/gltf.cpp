@@ -76,7 +76,7 @@ cgltf_attribute* FindAttrType(const cgltf_primitive* prim, cgltf_attribute_type 
 	}
 
 	attr = 0x0;
-	printf("GLTF: Attribute type not found %d\n", type);
+	printf("GLTF: Attribute type not found\n");
 	return attr;
 }
 
@@ -84,6 +84,11 @@ int LoadVertices(vertex_buffer_info_t* VBufferState, geometry_create_info_t* Cre
 		 const uint8_t* DataBaseAddr)
 {
 	cgltf_attribute* attr = FindAttrType(prim, cgltf_attribute_type_position);
+	if(!attr)
+	{
+		printf("GLTF: unsupported vertex format (no position attr)\n");
+		return EXIT_FAILURE;
+	}
 	CreateInfo->VertexInfo.VAttrCount = attr->data->count;
 	uint64_t relbufferoffset = attr->data->offset;
 	uint64_t absbufferoffset = attr->data->buffer_view->offset;
@@ -105,6 +110,11 @@ int LoadVertices(vertex_buffer_info_t* VBufferState, geometry_create_info_t* Cre
 	VBufferState->CurrPosOffset += CreateInfo->VertexInfo.VAttrCount;
 
 	attr = FindAttrType(prim, cgltf_attribute_type_normal);
+	if(!attr)
+	{
+		printf("GLTF: unsupported vertex format (no normal attr)\n");
+		return EXIT_FAILURE;
+	}
 	relbufferoffset = attr->data->offset;
 	absbufferoffset = attr->data->buffer_view->offset;
 
@@ -121,24 +131,39 @@ int LoadVertices(vertex_buffer_info_t* VBufferState, geometry_create_info_t* Cre
 
 	VBufferState->CurrNormOffset += CreateInfo->VertexInfo.VAttrCount;
 
+	// Only requre this attribute if model uses a normal map
 	attr = FindAttrType(prim, cgltf_attribute_type_tangent);
-	relbufferoffset = attr->data->offset;
-	absbufferoffset = attr->data->buffer_view->offset;
-
-	stride = attr->data->stride;
-	if(stride != 16)
+	if(prim->material->normal_texture.texture && !attr)
 	{
-		printf("GLTF: unsupported vertex layout (tangent)\n");
+		printf("GLTF: unsupported vertex format (no tangent attr on normal mapped mesh)\n");
 		return EXIT_FAILURE;
 	}
 
-	glNamedBufferSubData(VBufferState->VBufferArray[TAN_BUFFER], VBufferState->CurrTanOffset * stride,
-			     CreateInfo->VertexInfo.VAttrCount * stride,
-			     (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
+	if(attr)
+	{
+		relbufferoffset = attr->data->offset;
+		absbufferoffset = attr->data->buffer_view->offset;
 
-	VBufferState->CurrTanOffset += CreateInfo->VertexInfo.VAttrCount;
+		stride = attr->data->stride;
+		if(stride != 16)
+		{
+			printf("GLTF: unsupported vertex layout (tangent)\n");
+			return EXIT_FAILURE;
+		}
+
+		glNamedBufferSubData(VBufferState->VBufferArray[TAN_BUFFER], VBufferState->CurrTanOffset * stride,
+				     CreateInfo->VertexInfo.VAttrCount * stride,
+				     (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
+
+		VBufferState->CurrTanOffset += CreateInfo->VertexInfo.VAttrCount;
+	}
 
 	attr = FindAttrType(prim, cgltf_attribute_type_texcoord);
+	if(!attr)
+	{
+		printf("GLTF: unsupported vertex format (no texcoord attr)\n");
+		return EXIT_FAILURE;
+	}
 	relbufferoffset = attr->data->offset;
 	absbufferoffset = attr->data->buffer_view->offset;
 
