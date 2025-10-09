@@ -2,7 +2,7 @@
 
 in vec3 WorldPos;
 in vec3 Normal;
-in vec4 Bitangent;
+in vec4 Tangent;
 in vec2 TexCoord;
 
 out vec4 FragColor;
@@ -20,13 +20,18 @@ layout(binding = 2) uniform sampler2D norm_map;
 void main()
 
 {
-    vec4 Objcolor = texture(norm_map, TexCoord);
+    vec4 Objcolor = texture(alb_map, TexCoord);
+
+    // bitangent frame perturbed normals
+    vec3 vNt = texture(norm_map, TexCoord).rgb * 2.0f - 1.0f;
+    vec3 tangent = Tangent.xyz;
+    vec3 bitangent = cross(Normal, Tangent.xyz) * Tangent.w;
+    vec3 norm = normalize(vNt.x * tangent + vNt.y * bitangent + vNt.z * Normal);
 
     // ambient
     vec3 ambient = ambientstrength * lightcolor;
 
     // diffuse
-    vec3 norm = normalize(Normal);
     vec3 lightdir = normalize(lightpos - WorldPos);
     float angle = max(dot(norm, lightdir), 0.0);
     vec3 diffuse = angle * lightcolor;

@@ -11,7 +11,7 @@ uniform mat4 projection;
 
 out vec3 WorldPos;
 out vec3 Normal;
-out vec4 Bitangent;
+out vec4 Tangent;
 out vec2 TexCoord;
 
 void main()
@@ -20,6 +20,6 @@ void main()
     WorldPos = vec3(model * vec4(aPos, 1.0));
     // Right now, just cast model to mat3 - implement inverse transpose on CPU if non-uniform scaling/shear support becomes necessary
     Normal = mat3(model) * aNormal;
-    Bitangent = aTan;
+    Tangent = aTan;
     TexCoord = aTex;
 }

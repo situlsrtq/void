@@ -155,21 +155,21 @@ int main(void)
 
 	vertex_buffer_info_t VBufferState = {};
 	glCreateBuffers(VOID_VBUFCOUNT_FMT, VBufferState.VBufferArray);
-	glNamedBufferStorage(VBufferState.VBufferArray[INDEX_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[POS_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[NORM_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[TAN_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[TEX_BUFFER], 100*V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[INDEX_BUFFER], 100 * V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[POS_BUFFER], 100 * V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[NORM_BUFFER], 100 * V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[TAN_BUFFER], 100 * V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[TEX_BUFFER], 100 * V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
 
 	unsigned int VAO;
 	glCreateVertexArrays(1, &VAO);
 
-	glVertexArrayElementBuffer(VAO, VBufferState.VBufferArray[INDEX_BUFFER]); // sizeof(vec3)
-	glVertexArrayVertexBuffer(VAO, 0, VBufferState.VBufferArray[POS_BUFFER], 0, 12); // sizeof(vec3)
+	glVertexArrayElementBuffer(VAO, VBufferState.VBufferArray[INDEX_BUFFER]);	  // sizeof(vec3)
+	glVertexArrayVertexBuffer(VAO, 0, VBufferState.VBufferArray[POS_BUFFER], 0, 12);  // sizeof(vec3)
 	glVertexArrayVertexBuffer(VAO, 1, VBufferState.VBufferArray[NORM_BUFFER], 0, 12); // sizeof(vec3)
-	glVertexArrayVertexBuffer(VAO, 2, VBufferState.VBufferArray[TAN_BUFFER], 0, 16); // sizeof(vec3)
-	glVertexArrayVertexBuffer(VAO, 3, VBufferState.VBufferArray[TEX_BUFFER], 0, 8); // sizeof(vec3)
-	
+	glVertexArrayVertexBuffer(VAO, 2, VBufferState.VBufferArray[TAN_BUFFER], 0, 16);  // sizeof(vec3)
+	glVertexArrayVertexBuffer(VAO, 3, VBufferState.VBufferArray[TEX_BUFFER], 0, 8);	  // sizeof(vec3)
+
 	glEnableVertexArrayAttrib(VAO, 0);
 	glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
 	glVertexArrayAttribBinding(VAO, 0, 0);
@@ -586,9 +586,9 @@ void ProcessInput(GLFWwindow* Window)
 	{
 		if(LMouseWasDown)
 		{
-			texel_info_t res = WinHND->PickPass.GetInfo((uint32_t)WinHND->PrevMouseX,
-			(uint32_t)(WinHND->Height - WinHND->PrevMouseY)); 
 			/*
+			texel_info_t res = WinHND->PickPass.GetInfo((uint32_t)WinHND->PrevMouseX,
+								    (uint32_t)(WinHND->Height - WinHND->PrevMouseY));
 			if(WinHND->ActiveSelection && WinHND->Active.Deleted != true)
 			{
 				WinHND->Active.ComposeModelM4();
