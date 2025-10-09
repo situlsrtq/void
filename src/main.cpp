@@ -51,7 +51,7 @@ int main(void)
 	}
 
 	char* CurrStringMem = (char*)ResourceStringMem;
-	const char* ResFile = "res/NormalTangentMirrorTest.glb";
+	const char* ResFile = "res/chess.glb";
 	const char* UIFile = "config/imgui.ini";
 	// Drop the null terminator on OSPath intentionally, since it will be concatenated with
 	// paths. hacky stupid shit, will not last
@@ -189,7 +189,7 @@ int main(void)
 	res = LoadSceneFromGLB(SceneFile, WinHND, &VAO, &VBufferState, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
 	{
-		printf("System: Could not load scene file: %s", SceneFile);
+		printf("System: Could not load scene file: %s\n", SceneFile);
 		return EXIT_FAILURE;
 	}
 
