@@ -48,6 +48,7 @@ void geometry_state_t::Alloc(const geometry_create_info_t& CreateInfo)
 	Color[index] = CreateInfo.Color;
 	MinBB[index] = CreateInfo.MinBB;
 	MaxBB[index] = CreateInfo.MaxBB;
+	ModelInvTrans[index] = CreateInfo.ModelInvTrans;
 	Model[index] = CreateInfo.Model;
 }
 

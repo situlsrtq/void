@@ -325,6 +325,7 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 
 		glm::mat4 nodematrix;
 		GetNodeMatrix(&nodematrix, node);
+		glm::mat3 node_inv_trans = glm::mat3(inverse(transpose(nodematrix)));
 
 		cgltf_mesh* mesh = node->mesh;
 		for(uint32_t t = 0; t < mesh->primitives_count; t++)
@@ -332,6 +333,7 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 			memset(&CreateInfo, 0, sizeof(CreateInfo));
 			CreateInfo.Color = {1.0f, 1.0f, 1.0f};
 			CreateInfo.Model = nodematrix;
+			CreateInfo.ModelInvTrans = node_inv_trans;
 
 			cgltf_primitive* prim = &mesh->primitives[t];
 

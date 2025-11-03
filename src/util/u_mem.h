@@ -33,6 +33,7 @@ struct geometry_create_info_t
 	glm::vec3 Color;
 	glm::vec3 MinBB;
 	glm::vec3 MaxBB;
+	glm::mat3 ModelInvTrans;
 	glm::mat4 Model;
 };
 
@@ -48,6 +49,7 @@ struct geometry_state_t
 	glm::vec3 Color[PROGRAM_MAX_OBJECTS];
 	glm::vec3 MinBB[PROGRAM_MAX_OBJECTS];
 	glm::vec3 MaxBB[PROGRAM_MAX_OBJECTS];
+	glm::mat3 ModelInvTrans[PROGRAM_MAX_OBJECTS];
 	glm::mat4 Model[PROGRAM_MAX_OBJECTS];
 
 	void Alloc(const geometry_create_info_t& CreateInfo);

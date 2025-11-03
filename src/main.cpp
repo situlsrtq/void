@@ -23,6 +23,7 @@ uint8_t LMouseWasDown;
 uint8_t RMouseWasDown;
 
 unsigned int model_uni;
+unsigned int minvt_uni;
 unsigned int view_uni;
 unsigned int viewpos_uni;
 unsigned int projection_uni;
@@ -51,7 +52,7 @@ int main(void)
 	}
 
 	char* CurrStringMem = (char*)ResourceStringMem;
-	const char* ResFile = "res/chess.glb";
+	const char* ResFile = "res/sponza.glb";
 	const char* UIFile = "config/imgui.ini";
 	// Drop the null terminator on OSPath intentionally, since it will be concatenated with
 	// paths. hacky stupid shit, will not last
@@ -224,6 +225,7 @@ int main(void)
 	}
 
 	model_uni = glGetUniformLocation(WinHND->MainShader.ID, "model");
+	minvt_uni = glGetUniformLocation(WinHND->MainShader.ID, "minvt");
 	view_uni = glGetUniformLocation(WinHND->MainShader.ID, "view");
 	viewpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "viewpos");
 	projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
@@ -389,6 +391,7 @@ int main(void)
 			}
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.Model[i]));
+			glUniformMatrix3fv(minvt_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.ModelInvTrans[i]));
 			glUniform3fv(objcolor_uni, 1, glm::value_ptr(WinHND->GeometryObjects.Color[i]));
 
 			glBindTextureUnit(0, WinHND->GeometryObjects.TexInfo[i].TexArray[0]);
@@ -538,6 +541,7 @@ void ProcessInput(GLFWwindow* Window)
 		{
 			WinHND->MainShader.Rebuild();
 			model_uni = glGetUniformLocation(WinHND->MainShader.ID, "model");
+			minvt_uni = glGetUniformLocation(WinHND->MainShader.ID, "minvt");
 			view_uni = glGetUniformLocation(WinHND->MainShader.ID, "view");
 			viewpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "viewpos");
 			projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
