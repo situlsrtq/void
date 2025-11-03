@@ -48,9 +48,9 @@ int LoadIndices(vertex_buffer_info_t* VBufferState, geometry_create_info_t* Crea
 	glNamedBufferSubData(VBufferState->VBufferArray[INDEX_BUFFER], VBufferState->CurrIndexByteOffset,
 			     count * stride, (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
 
-	CreateInfo->IndexInfo.IndexType = indextype;
-	CreateInfo->IndexInfo.IndexCount = count;
-	CreateInfo->IndexInfo.ByteOffsetEBO = VBufferState->CurrIndexByteOffset;
+	CreateInfo->Interleaved.IndexInfo.IndexType = indextype;
+	CreateInfo->Interleaved.IndexInfo.IndexCount = count;
+	CreateInfo->Interleaved.IndexInfo.ByteOffsetEBO = VBufferState->CurrIndexByteOffset;
 
 	// Since this is a shared buffer for the entire scene, pad all writes to nearest 32bit
 	// boundary to prevent misalignment when indextype changes from a smaller type to a
@@ -88,7 +88,7 @@ int LoadVertices(vertex_buffer_info_t* VBufferState, geometry_create_info_t* Cre
 		printf("GLTF: unsupported vertex format (no position attr)\n");
 		return EXIT_FAILURE;
 	}
-	CreateInfo->VertexInfo.VAttrCount = attr->data->count;
+	CreateInfo->Interleaved.VertexInfo.VAttrCount = attr->data->count;
 	uint64_t relbufferoffset = attr->data->offset;
 	uint64_t absbufferoffset = attr->data->buffer_view->offset;
 
@@ -100,13 +100,13 @@ int LoadVertices(vertex_buffer_info_t* VBufferState, geometry_create_info_t* Cre
 	}
 
 	glNamedBufferSubData(VBufferState->VBufferArray[POS_BUFFER], VBufferState->CurrPosOffset * stride,
-			     CreateInfo->VertexInfo.VAttrCount * stride,
+			     CreateInfo->Interleaved.VertexInfo.VAttrCount * stride,
 			     (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
 
-	CreateInfo->VertexInfo.VertexOffset = VBufferState->CurrPosOffset;
+	CreateInfo->Interleaved.VertexInfo.VertexOffset = VBufferState->CurrPosOffset;
 
 	// No need to pad this offset, because we're not mixing vertex formats within a single buffer
-	VBufferState->CurrPosOffset += CreateInfo->VertexInfo.VAttrCount;
+	VBufferState->CurrPosOffset += CreateInfo->Interleaved.VertexInfo.VAttrCount;
 
 	attr = FindAttrType(prim, cgltf_attribute_type_normal);
 	if(!attr)
@@ -125,10 +125,10 @@ int LoadVertices(vertex_buffer_info_t* VBufferState, geometry_create_info_t* Cre
 	}
 
 	glNamedBufferSubData(VBufferState->VBufferArray[NORM_BUFFER], VBufferState->CurrNormOffset * stride,
-			     CreateInfo->VertexInfo.VAttrCount * stride,
+			     CreateInfo->Interleaved.VertexInfo.VAttrCount * stride,
 			     (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
 
-	VBufferState->CurrNormOffset += CreateInfo->VertexInfo.VAttrCount;
+	VBufferState->CurrNormOffset += CreateInfo->Interleaved.VertexInfo.VAttrCount;
 
 	// Only requre this attribute if model uses a normal map
 	attr = FindAttrType(prim, cgltf_attribute_type_tangent);
@@ -151,10 +151,10 @@ int LoadVertices(vertex_buffer_info_t* VBufferState, geometry_create_info_t* Cre
 		}
 
 		glNamedBufferSubData(VBufferState->VBufferArray[TAN_BUFFER], VBufferState->CurrTanOffset * stride,
-				     CreateInfo->VertexInfo.VAttrCount * stride,
+				     CreateInfo->Interleaved.VertexInfo.VAttrCount * stride,
 				     (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
 
-		VBufferState->CurrTanOffset += CreateInfo->VertexInfo.VAttrCount;
+		VBufferState->CurrTanOffset += CreateInfo->Interleaved.VertexInfo.VAttrCount;
 	}
 
 	attr = FindAttrType(prim, cgltf_attribute_type_texcoord);
@@ -174,10 +174,10 @@ int LoadVertices(vertex_buffer_info_t* VBufferState, geometry_create_info_t* Cre
 	}
 
 	glNamedBufferSubData(VBufferState->VBufferArray[TEX_BUFFER], VBufferState->CurrTexOffset * stride,
-			     CreateInfo->VertexInfo.VAttrCount * stride,
+			     CreateInfo->Interleaved.VertexInfo.VAttrCount * stride,
 			     (void*)(DataBaseAddr + absbufferoffset + relbufferoffset));
 
-	VBufferState->CurrTexOffset += CreateInfo->VertexInfo.VAttrCount;
+	VBufferState->CurrTexOffset += CreateInfo->Interleaved.VertexInfo.VAttrCount;
 
 	return EXIT_SUCCESS;
 }
@@ -232,14 +232,14 @@ int LoadTextures(uint32_t TexCount, geometry_create_info_t* CreateInfo, const cg
 	uint32_t texsize;
 	uint64_t absbufferoffset;
 
-	glCreateTextures(GL_TEXTURE_2D, TexCount, CreateInfo->TexInfo.TexArray);
+	glCreateTextures(GL_TEXTURE_2D, TexCount, CreateInfo->Interleaved.TexInfo.TexArray);
 
 	cgltf_texture* filetex = prim->material->pbr_metallic_roughness.base_color_texture.texture;
 	if(filetex)
 	{
 		texsize = filetex->image->buffer_view->size;
 		absbufferoffset = filetex->image->buffer_view->offset;
-		res = UploadTexture_2Dmipped(CreateInfo->TexInfo.TexArray[0], DataBaseAddr, absbufferoffset, texsize);
+		res = UploadTexture_2Dmipped(CreateInfo->Interleaved.TexInfo.TexArray[0], DataBaseAddr, absbufferoffset, texsize);
 		if(res == EXIT_FAILURE)
 		{
 			return EXIT_FAILURE;
@@ -251,7 +251,7 @@ int LoadTextures(uint32_t TexCount, geometry_create_info_t* CreateInfo, const cg
 	{
 		texsize = filetex->image->buffer_view->size;
 		absbufferoffset = filetex->image->buffer_view->offset;
-		res = UploadTexture_2Dmipped(CreateInfo->TexInfo.TexArray[1], DataBaseAddr, absbufferoffset, texsize);
+		res = UploadTexture_2Dmipped(CreateInfo->Interleaved.TexInfo.TexArray[1], DataBaseAddr, absbufferoffset, texsize);
 		if(res == EXIT_FAILURE)
 		{
 			return EXIT_FAILURE;
@@ -263,7 +263,7 @@ int LoadTextures(uint32_t TexCount, geometry_create_info_t* CreateInfo, const cg
 	{
 		texsize = filetex->image->buffer_view->size;
 		absbufferoffset = filetex->image->buffer_view->offset;
-		res = UploadTexture_2Dmipped(CreateInfo->TexInfo.TexArray[2], DataBaseAddr, absbufferoffset, texsize);
+		res = UploadTexture_2Dmipped(CreateInfo->Interleaved.TexInfo.TexArray[2], DataBaseAddr, absbufferoffset, texsize);
 		if(res == EXIT_FAILURE)
 		{
 			return EXIT_FAILURE;
@@ -331,9 +331,9 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 		for(uint32_t t = 0; t < mesh->primitives_count; t++)
 		{
 			memset(&CreateInfo, 0, sizeof(CreateInfo));
-			CreateInfo.Color = {1.0f, 1.0f, 1.0f};
+			CreateInfo.Interleaved.Color = {1.0f, 1.0f, 1.0f};
 			CreateInfo.Model = nodematrix;
-			CreateInfo.ModelInvTrans = node_inv_trans;
+			CreateInfo.Interleaved.ModelInvTrans = node_inv_trans;
 
 			cgltf_primitive* prim = &mesh->primitives[t];
 

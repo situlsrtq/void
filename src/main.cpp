@@ -350,17 +350,17 @@ int main(void)
 			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE,
 					   glm::value_ptr(WinHND->GeometryObjects.Model[i]));
 
-			if(WinHND->GeometryObjects.IndexInfo[i].IndexCount)
+			if(WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount)
 			{
-				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexInfo[i].IndexCount,
-							 WinHND->GeometryObjects.IndexInfo[i].IndexType,
-							 (void*)WinHND->GeometryObjects.IndexInfo[i].ByteOffsetEBO,
-							 WinHND->GeometryObjects.VertexInfo[i].VertexOffset);
+				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount,
+							 WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexType,
+							 (void*)WinHND->GeometryObjects.Interleaved[i].IndexInfo.ByteOffsetEBO,
+							 WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset);
 			}
 			else
 			{
-				glDrawArrays(RenderMode, WinHND->GeometryObjects.VertexInfo[i].VertexOffset,
-					     WinHND->GeometryObjects.VertexInfo[i].VAttrCount);
+				glDrawArrays(RenderMode, WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset,
+					     WinHND->GeometryObjects.Interleaved[i].VertexInfo.VAttrCount);
 			}
 		}
 #endif
@@ -391,24 +391,24 @@ int main(void)
 			}
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.Model[i]));
-			glUniformMatrix3fv(minvt_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.ModelInvTrans[i]));
-			glUniform3fv(objcolor_uni, 1, glm::value_ptr(WinHND->GeometryObjects.Color[i]));
+			glUniformMatrix3fv(minvt_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.Interleaved[i].ModelInvTrans));
+			glUniform3fv(objcolor_uni, 1, glm::value_ptr(WinHND->GeometryObjects.Interleaved[i].Color));
 
-			glBindTextureUnit(0, WinHND->GeometryObjects.TexInfo[i].TexArray[0]);
-			glBindTextureUnit(1, WinHND->GeometryObjects.TexInfo[i].TexArray[1]);
-			glBindTextureUnit(2, WinHND->GeometryObjects.TexInfo[i].TexArray[2]);
+			glBindTextureUnit(0, WinHND->GeometryObjects.Interleaved[i].TexInfo.TexArray[0]);
+			glBindTextureUnit(1, WinHND->GeometryObjects.Interleaved[i].TexInfo.TexArray[1]);
+			glBindTextureUnit(2, WinHND->GeometryObjects.Interleaved[i].TexInfo.TexArray[2]);
 
-			if(WinHND->GeometryObjects.IndexInfo[i].IndexCount)
+			if(WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount)
 			{
-				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexInfo[i].IndexCount,
-							 WinHND->GeometryObjects.IndexInfo[i].IndexType,
-							 (void*)WinHND->GeometryObjects.IndexInfo[i].ByteOffsetEBO,
-							 WinHND->GeometryObjects.VertexInfo[i].VertexOffset);
+				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount,
+							 WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexType,
+							 (void*)WinHND->GeometryObjects.Interleaved[i].IndexInfo.ByteOffsetEBO,
+							 WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset);
 			}
 			else
 			{
-				glDrawArrays(RenderMode, WinHND->GeometryObjects.VertexInfo[i].VertexOffset,
-					     WinHND->GeometryObjects.VertexInfo[i].VAttrCount);
+				glDrawArrays(RenderMode, WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset,
+					     WinHND->GeometryObjects.Interleaved[i].VertexInfo.VAttrCount);
 			}
 		}
 
@@ -560,7 +560,7 @@ void ProcessInput(GLFWwindow* Window)
 	}
 	if(glfwGetKey(Window, GLFW_KEY_N) == GLFW_RELEASE)
 	{
-		if(NKeyWasDown || WinHND->Active.New == true)
+		if(NKeyWasDown)
 		{
 			/*
 			uMATH::vec3f_t p = { 0.0f,0.0f,4.5f };
@@ -610,7 +610,6 @@ void ProcessInput(GLFWwindow* Window)
 			*/
 		}
 		LMouseWasDown = 0;
-		WinHND->Active.Deleted = false;
 	}
 	if(glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
@@ -734,11 +733,6 @@ void GenerateInterfaceElements(window_handler_t* WinHND, bool* HelpWindow, bool*
 #endif
 	ImGui::Begin("Scene Controls");
 
-	ImGui::Spacing();
-	if(ImGui::Button("New Object (n)"))
-	{
-		WinHND->Active.New = true;
-	}
 	ImGui::Spacing();
 	if(ImGui::Button("Post-Processing"))
 	{

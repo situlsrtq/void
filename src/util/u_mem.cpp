@@ -42,13 +42,7 @@ void geometry_state_t::Alloc(const geometry_create_info_t& CreateInfo)
 	}
 
 	Visible[index] = VIS_STATUS_VISIBLE;
-	IndexInfo[index] = CreateInfo.IndexInfo;
-	VertexInfo[index] = CreateInfo.VertexInfo;
-	TexInfo[index] = CreateInfo.TexInfo;
-	Color[index] = CreateInfo.Color;
-	MinBB[index] = CreateInfo.MinBB;
-	MaxBB[index] = CreateInfo.MaxBB;
-	ModelInvTrans[index] = CreateInfo.ModelInvTrans;
+	Interleaved[index] = CreateInfo.Interleaved;
 	Model[index] = CreateInfo.Model;
 }
 

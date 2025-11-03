@@ -31,8 +31,8 @@ window_handler_t* InitWindowHandler(float ScreenX, float ScreenY)
 	res->Camera.Eye = {0.0f, 0.0f, -1.0f};
 	res->Camera.UpAxis = {0.0f, 1.0f, 0.0f};
 
-	res->Active.Deleted = false;
-	res->Active.Color = {1.0f, 0.5f, 0.31f};
+	res->Active.Interleaved.Deleted = false;
+	res->Active.Interleaved.Color = {1.0f, 0.5f, 0.31f};
 
 	return res;
 }

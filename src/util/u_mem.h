@@ -23,7 +23,7 @@ struct free_list_t
 };
 
 // User accessible
-struct geometry_create_info_t
+struct geometry_interleaved_info_t
 {
 	bool New;
 	bool Deleted;
@@ -34,6 +34,11 @@ struct geometry_create_info_t
 	glm::vec3 MinBB;
 	glm::vec3 MaxBB;
 	glm::mat3 ModelInvTrans;
+};
+
+struct geometry_create_info_t
+{
+	geometry_interleaved_info_t Interleaved;
 	glm::mat4 Model;
 };
 
@@ -43,13 +48,7 @@ struct geometry_state_t
 	uint8_t Position;
 	uint8_t Visible[PROGRAM_MAX_OBJECTS];
 
-	index_info_t IndexInfo[PROGRAM_MAX_OBJECTS];
-	vertex_info_t VertexInfo[PROGRAM_MAX_OBJECTS];
-	texture_info_t TexInfo[PROGRAM_MAX_OBJECTS];
-	glm::vec3 Color[PROGRAM_MAX_OBJECTS];
-	glm::vec3 MinBB[PROGRAM_MAX_OBJECTS];
-	glm::vec3 MaxBB[PROGRAM_MAX_OBJECTS];
-	glm::mat3 ModelInvTrans[PROGRAM_MAX_OBJECTS];
+	geometry_interleaved_info_t Interleaved[PROGRAM_MAX_OBJECTS];
 	glm::mat4 Model[PROGRAM_MAX_OBJECTS];
 
 	void Alloc(const geometry_create_info_t& CreateInfo);
