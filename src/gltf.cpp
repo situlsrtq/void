@@ -76,7 +76,6 @@ cgltf_attribute* FindAttrType(const cgltf_primitive* prim, cgltf_attribute_type 
 	}
 
 	attr = 0x0;
-	printf("GLTF: Attribute type not found\n");
 	return attr;
 }
 
