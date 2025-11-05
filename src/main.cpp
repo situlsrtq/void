@@ -352,10 +352,11 @@ int main(void)
 
 			if(WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount)
 			{
-				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount,
-							 WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexType,
-							 (void*)WinHND->GeometryObjects.Interleaved[i].IndexInfo.ByteOffsetEBO,
-							 WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset);
+				glDrawElementsBaseVertex(
+					RenderMode, WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount,
+					WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexType,
+					(void*)WinHND->GeometryObjects.Interleaved[i].IndexInfo.ByteOffsetEBO,
+					WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset);
 			}
 			else
 			{
@@ -391,7 +392,8 @@ int main(void)
 			}
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.Model[i]));
-			glUniformMatrix3fv(minvt_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.Interleaved[i].ModelInvTrans));
+			glUniformMatrix3fv(minvt_uni, 1, GL_FALSE,
+					   glm::value_ptr(WinHND->GeometryObjects.Interleaved[i].ModelInvTrans));
 			glUniform3fv(objcolor_uni, 1, glm::value_ptr(WinHND->GeometryObjects.Interleaved[i].Color));
 
 			glBindTextureUnit(0, WinHND->GeometryObjects.Interleaved[i].TexInfo.TexArray[0]);
@@ -400,10 +402,11 @@ int main(void)
 
 			if(WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount)
 			{
-				glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount,
-							 WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexType,
-							 (void*)WinHND->GeometryObjects.Interleaved[i].IndexInfo.ByteOffsetEBO,
-							 WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset);
+				glDrawElementsBaseVertex(
+					RenderMode, WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount,
+					WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexType,
+					(void*)WinHND->GeometryObjects.Interleaved[i].IndexInfo.ByteOffsetEBO,
+					WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset);
 			}
 			else
 			{

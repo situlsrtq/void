@@ -13,7 +13,7 @@ include_directories(../src ../src/util ../src/pal ../vendor)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_compile_options(-Wall -Wextra -Werror -fno-exceptions $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>)
-	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/util/*.cpp" "../src/pal/*.cpp" "../vendor/imgui/*.cpp" "../vendor/glad/glad.c")
+	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/util/*.cpp" "../src/pal/*.cpp" "../vendor/imgui/*.cpp" "../vendor/glad/glad.c" "../vendor/murmur/MurmurHash3.cpp")
 
 	add_executable(${PROJECT_NAME} ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:Debug>:DEBUG>)
@@ -24,7 +24,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	add_compile_options(/W4 /wd4996 /D_HAS_EXCEPTIONS=0 /GR-)
 	# Including .h files here due to a quirk of Visual Studio's CMAKE implementation - necessary for seeing files in editor
-	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/*.h" "../src/util/*.cpp" "../src/util/*.h" "../src/pal/*.cpp" "../src/pal/*.h" "../vendor/imgui/*.cpp" "../vendor/glad/glad.c")
+	file(GLOB SOURCES "../src/*.cpp" "../src/*.c" "../src/*.h" "../src/util/*.cpp" "../src/util/*.h" "../src/pal/*.cpp" "../src/pal/*.h" "../vendor/imgui/*.cpp" "../vendor/glad/glad.c" "../vendor/murmur/MurmurHash3.cpp")
 
 	add_executable(${PROJECT_NAME} ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:Debug>:DEBUG>)
