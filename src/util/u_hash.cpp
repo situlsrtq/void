@@ -5,6 +5,7 @@ void hash_table_t::Move(robin_node_t res, robin_node_t* frame, uint32_t probes_b
 	if (probes_before_boundary == 0)
 	{
 		frame = &table[0];
+		probes_before_boundary = TABLE_SIZE;
 	}
 
 	if(frame->flag == FLAG_AVAILABLE)
@@ -22,6 +23,7 @@ void hash_table_t::Move(robin_node_t res, robin_node_t* frame, uint32_t probes_b
 	if (probes_before_boundary == 0)
 	{
 		frame = &table[0];
+		probes_before_boundary = TABLE_SIZE;
 	}
 
 	while(frame->displacement > res.displacement)
@@ -32,6 +34,7 @@ void hash_table_t::Move(robin_node_t res, robin_node_t* frame, uint32_t probes_b
 		if(probes_before_boundary == 0)
 		{
 			frame = &table[0];
+			probes_before_boundary = TABLE_SIZE;
 		}
 	}
 
@@ -66,6 +69,7 @@ uint32_t hash_table_t::Find(void* search_key, int len)
 	MurmurHash3_x86_32(search_key, len, TABLE_SEED, &hashed_key);
 	hashed_key %= TABLE_SIZE;
 
+	uint32_t probes_before_boundary = TABLE_SIZE - hashed_key;
 	uint32_t displacement = 0;
 	robin_node_t* frame = &table[hashed_key];
 
@@ -78,6 +82,12 @@ uint32_t hash_table_t::Find(void* search_key, int len)
 
 		frame++;
 		displacement++;
+		probes_before_boundary--;
+		if(probes_before_boundary == 0)
+		{
+			frame = &table[0];
+			probes_before_boundary = TABLE_SIZE;
+		}
 	}
 
 	return KEY_NOT_FOUND;
