@@ -353,6 +353,7 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 
 	printf("Loading gltf data: %s\n", SceneFile);
 
+	uint32_t hash_key;
 	for(uint32_t i = 0; i < data->nodes_count; i++)
 	{
 		cgltf_node* node = &data->nodes[i];
@@ -362,30 +363,37 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 		glm::mat3 node_inv_trans = glm::mat3(inverse(transpose(nodematrix)));
 
 		cgltf_mesh* mesh = node->mesh;
-		for(uint32_t t = 0; t < mesh->primitives_count; t++)
+		hash_key = g_test_table->Find(mesh->name, strlen(mesh->name));
+		if(hash_key == KEY_NOT_FOUND)
 		{
-			memset(&CreateInfo, 0, sizeof(CreateInfo));
-			CreateInfo.Interleaved.Color = {1.0f, 1.0f, 1.0f};
-			CreateInfo.Model = nodematrix;
-			CreateInfo.Interleaved.ModelInvTrans = node_inv_trans;
-
-			cgltf_primitive* prim = &mesh->primitives[t];
-
-			if(prim->indices)
+			for(uint32_t t = 0; t < mesh->primitives_count; t++)
 			{
-				res = LoadIndices(VBufferState, &CreateInfo, prim, DataBaseAddr);
+				memset(&CreateInfo, 0, sizeof(CreateInfo));
+				CreateInfo.Interleaved.Color = {1.0f, 1.0f, 1.0f};
+				CreateInfo.Model = nodematrix;
+				CreateInfo.Interleaved.ModelInvTrans = node_inv_trans;
+
+				cgltf_primitive* prim = &mesh->primitives[t];
+
+				if(prim->indices)
+				{
+					res = LoadIndices(VBufferState, &CreateInfo, prim, DataBaseAddr);
+					if(res == EXIT_FAILURE)
+					{
+						return EXIT_FAILURE;
+					}
+				}
+
+				res = LoadVertices(VBufferState, &CreateInfo, prim, DataBaseAddr);
 				if(res == EXIT_FAILURE)
 				{
 					return EXIT_FAILURE;
 				}
+				
+				INSERT RECORD INTO HASH FOR MESH DATA
 			}
 
-			res = LoadVertices(VBufferState, &CreateInfo, prim, DataBaseAddr);
-			if(res == EXIT_FAILURE)
-			{
-				return EXIT_FAILURE;
-			}
-
+			FIND WAY TO BETTER ALLOW FOR DIFFERENT TEXTURES ON A SHARED MESH
 			res = LoadTextures(TexCount, &CreateInfo, prim, DataBaseAddr);
 			if(res == EXIT_FAILURE)
 			{
