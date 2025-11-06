@@ -42,6 +42,8 @@ int main(void)
 		printf("PAL: Failed to initialize file path\n");
 	}
 
+	g_test_table = (hash_table_t*)calloc(1, sizeof(hash_table_t));
+
 	// TODO: per-thread string memory system, to be sized based on thread's need. Rendering
 	// thread will be heaviest user
 

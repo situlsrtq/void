@@ -30,7 +30,10 @@ struct hash_table_t
 
 	private:
 
-	void Move(robin_node_t res, robin_node_t* frame, uint32_t probes_before_boundary);
+	uint32_t probes_before_boundary;
+	void Move(robin_node_t res, robin_node_t* frame);
 };
+
+extern hash_table_t* g_test_table;
 
 #endif

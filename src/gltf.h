@@ -17,6 +17,7 @@
 #include "window.h"
 #include "rendertypes.h"
 #include "u_mem.h"
+#include "u_hash.h"
 
 int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned int* VAO,
 		     vertex_buffer_info_t* VBufferState, unsigned int TexCount);

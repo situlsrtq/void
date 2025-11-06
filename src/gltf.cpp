@@ -229,6 +229,7 @@ int LoadTextures(uint32_t TexCount, geometry_create_info_t* CreateInfo, const cg
 		 const uint8_t* DataBaseAddr)
 {
 	int res;
+	uint32_t hash_res;
 	uint32_t texsize;
 	uint64_t absbufferoffset;
 
@@ -237,36 +238,69 @@ int LoadTextures(uint32_t TexCount, geometry_create_info_t* CreateInfo, const cg
 	cgltf_texture* filetex = prim->material->pbr_metallic_roughness.base_color_texture.texture;
 	if(filetex)
 	{
-		texsize = filetex->image->buffer_view->size;
-		absbufferoffset = filetex->image->buffer_view->offset;
-		res = UploadTexture_2Dmipped(CreateInfo->Interleaved.TexInfo.TexArray[0], DataBaseAddr, absbufferoffset, texsize);
-		if(res == EXIT_FAILURE)
+		hash_res = g_test_table->Find(filetex->image->name, strlen(filetex->image->name));
+		if(hash_res == KEY_NOT_FOUND)
 		{
-			return EXIT_FAILURE;
+			texsize = filetex->image->buffer_view->size;
+			absbufferoffset = filetex->image->buffer_view->offset;
+			res = UploadTexture_2Dmipped(CreateInfo->Interleaved.TexInfo.TexArray[0], DataBaseAddr,
+						     absbufferoffset, texsize);
+			if(res == EXIT_FAILURE)
+			{
+				return EXIT_FAILURE;
+			}
+			g_test_table->Insert(filetex->image->name, strlen(filetex->image->name),
+					     CreateInfo->Interleaved.TexInfo.TexArray[0]);
+		}
+		else
+		{
+			CreateInfo->Interleaved.TexInfo.TexArray[0] = hash_res;
 		}
 	}
 
 	filetex = prim->material->pbr_metallic_roughness.metallic_roughness_texture.texture;
 	if(filetex)
 	{
-		texsize = filetex->image->buffer_view->size;
-		absbufferoffset = filetex->image->buffer_view->offset;
-		res = UploadTexture_2Dmipped(CreateInfo->Interleaved.TexInfo.TexArray[1], DataBaseAddr, absbufferoffset, texsize);
-		if(res == EXIT_FAILURE)
+		hash_res = g_test_table->Find(filetex->image->name, strlen(filetex->image->name));
+		if(hash_res == KEY_NOT_FOUND)
 		{
-			return EXIT_FAILURE;
+			texsize = filetex->image->buffer_view->size;
+			absbufferoffset = filetex->image->buffer_view->offset;
+			res = UploadTexture_2Dmipped(CreateInfo->Interleaved.TexInfo.TexArray[1], DataBaseAddr,
+						     absbufferoffset, texsize);
+			if(res == EXIT_FAILURE)
+			{
+				return EXIT_FAILURE;
+			}
+			g_test_table->Insert(filetex->image->name, strlen(filetex->image->name),
+					     CreateInfo->Interleaved.TexInfo.TexArray[1]);
+		}
+		else
+		{
+			CreateInfo->Interleaved.TexInfo.TexArray[1] = hash_res;
 		}
 	}
 
 	filetex = prim->material->normal_texture.texture;
 	if(filetex)
 	{
-		texsize = filetex->image->buffer_view->size;
-		absbufferoffset = filetex->image->buffer_view->offset;
-		res = UploadTexture_2Dmipped(CreateInfo->Interleaved.TexInfo.TexArray[2], DataBaseAddr, absbufferoffset, texsize);
-		if(res == EXIT_FAILURE)
+		hash_res = g_test_table->Find(filetex->image->name, strlen(filetex->image->name));
+		if(hash_res == KEY_NOT_FOUND)
 		{
-			return EXIT_FAILURE;
+			texsize = filetex->image->buffer_view->size;
+			absbufferoffset = filetex->image->buffer_view->offset;
+			res = UploadTexture_2Dmipped(CreateInfo->Interleaved.TexInfo.TexArray[2], DataBaseAddr,
+						     absbufferoffset, texsize);
+			if(res == EXIT_FAILURE)
+			{
+				return EXIT_FAILURE;
+			}
+			g_test_table->Insert(filetex->image->name, strlen(filetex->image->name),
+					     CreateInfo->Interleaved.TexInfo.TexArray[2]);
+		}
+		else
+		{
+			CreateInfo->Interleaved.TexInfo.TexArray[2] = hash_res;
 		}
 	}
 

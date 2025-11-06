@@ -1,6 +1,8 @@
 #include "u_hash.h"
 
-void hash_table_t::Move(robin_node_t res, robin_node_t* frame, uint32_t probes_before_boundary)
+hash_table_t* g_test_table = 0x0;
+
+void hash_table_t::Move(robin_node_t res, robin_node_t* frame)
 {
 	if (probes_before_boundary == 0)
 	{
@@ -45,7 +47,8 @@ void hash_table_t::Move(robin_node_t res, robin_node_t* frame, uint32_t probes_b
 		frame->value = res.value;	
 		frame->displacement = res.displacement;	
 		frame->flag = FLAG_POPULATED;	
-		Move(temp, frame++, probes_before_boundary--);
+		probes_before_boundary--;
+		Move(temp, frame++);
 		return;
 	}
 }
@@ -55,12 +58,12 @@ void hash_table_t::Insert(void* key, int len, uint32_t value)
 	uint32_t hashed_key;
 	MurmurHash3_x86_32(key, len, TABLE_SEED, &hashed_key);
 	hashed_key %= TABLE_SIZE;
-	uint32_t probes_before_boundary = TABLE_SIZE - hashed_key;
+	probes_before_boundary = TABLE_SIZE - hashed_key;
 
 	robin_node_t res = {key, value, 0, 0};
 	robin_node_t* frame = &table[hashed_key];
 
-	Move(res, frame, probes_before_boundary);
+	Move(res, frame);
 }
 
 uint32_t hash_table_t::Find(void* search_key, int len)
@@ -69,7 +72,7 @@ uint32_t hash_table_t::Find(void* search_key, int len)
 	MurmurHash3_x86_32(search_key, len, TABLE_SEED, &hashed_key);
 	hashed_key %= TABLE_SIZE;
 
-	uint32_t probes_before_boundary = TABLE_SIZE - hashed_key;
+	probes_before_boundary = TABLE_SIZE - hashed_key;
 	uint32_t displacement = 0;
 	robin_node_t* frame = &table[hashed_key];
 
