@@ -105,7 +105,7 @@ int LoadVertices(vertex_buffer_info_t* VBufferState, geometry_create_info_t* Cre
 
 	CreateInfo->Interleaved.VertexInfo.VertexOffset = VBufferState->CurrPosOffset;
 
-	// No need to pad this offset, because we're not mixing vertex formats within a single buffer
+	// No need to pad this offset, because we're tracking the count, not an address
 	VBufferState->CurrPosOffset += CreateInfo->Interleaved.VertexInfo.VAttrCount;
 
 	attr = FindAttrType(prim, cgltf_attribute_type_normal);
@@ -182,7 +182,7 @@ int LoadVertices(vertex_buffer_info_t* VBufferState, geometry_create_info_t* Cre
 	return EXIT_SUCCESS;
 }
 
-int UploadTexture_2Dmipped(unsigned int Texture, const uint8_t* DataBaseAddr, uint64_t Offset, uint32_t Size)
+int UploadTexture_2D(unsigned int Texture, const uint8_t* DataBaseAddr, uint64_t Offset, uint32_t Size)
 {
 	int width;
 	int height;
@@ -225,82 +225,70 @@ int UploadTexture_2Dmipped(unsigned int Texture, const uint8_t* DataBaseAddr, ui
 	return EXIT_SUCCESS;
 }
 
-int LoadTextures(uint32_t TexCount, geometry_create_info_t* CreateInfo, const cgltf_primitive* prim,
-		 const uint8_t* DataBaseAddr)
+int TextureToGPU(geometry_create_info_t* CreateInfo, const uint32_t Texture, const cgltf_texture* filetex, const uint8_t* DataBaseAddr)
 {
 	int res;
 	uint32_t hash_res;
 	uint32_t texsize;
 	uint64_t absbufferoffset;
 
+	hash_res = g_test_table->Find(filetex->image->name, strlen(filetex->image->name));
+	if(hash_res == KEY_NOT_FOUND)
+	{
+		texsize = filetex->image->buffer_view->size;
+		absbufferoffset = filetex->image->buffer_view->offset;
+
+		res = UploadTexture_2D(CreateInfo->Interleaved.TexInfo.TexArray[Texture], DataBaseAddr, absbufferoffset, texsize);
+		if(res == EXIT_FAILURE)
+		{
+			return EXIT_FAILURE;
+		}
+
+		g_test_table->Insert(filetex->image->name, strlen(filetex->image->name),
+				     CreateInfo->Interleaved.TexInfo.TexArray[Texture]);
+	}
+	else
+	{
+		CreateInfo->Interleaved.TexInfo.TexArray[Texture] = hash_res;
+	}
+
+	return EXIT_SUCCESS;
+}
+
+int LoadTextures(uint32_t TexCount, geometry_create_info_t* CreateInfo, const cgltf_primitive* prim,
+		 const uint8_t* DataBaseAddr)
+{
+	int res;
+
 	glCreateTextures(GL_TEXTURE_2D, TexCount, CreateInfo->Interleaved.TexInfo.TexArray);
 
 	cgltf_texture* filetex = prim->material->pbr_metallic_roughness.base_color_texture.texture;
 	if(filetex)
 	{
-		hash_res = g_test_table->Find(filetex->image->name, strlen(filetex->image->name));
-		if(hash_res == KEY_NOT_FOUND)
+		res = TextureToGPU(CreateInfo, 0, filetex, DataBaseAddr);
+		if(res == EXIT_FAILURE)
 		{
-			texsize = filetex->image->buffer_view->size;
-			absbufferoffset = filetex->image->buffer_view->offset;
-			res = UploadTexture_2Dmipped(CreateInfo->Interleaved.TexInfo.TexArray[0], DataBaseAddr,
-						     absbufferoffset, texsize);
-			if(res == EXIT_FAILURE)
-			{
-				return EXIT_FAILURE;
-			}
-			g_test_table->Insert(filetex->image->name, strlen(filetex->image->name),
-					     CreateInfo->Interleaved.TexInfo.TexArray[0]);
-		}
-		else
-		{
-			CreateInfo->Interleaved.TexInfo.TexArray[0] = hash_res;
+			return EXIT_FAILURE;
 		}
 	}
 
 	filetex = prim->material->pbr_metallic_roughness.metallic_roughness_texture.texture;
 	if(filetex)
 	{
-		hash_res = g_test_table->Find(filetex->image->name, strlen(filetex->image->name));
-		if(hash_res == KEY_NOT_FOUND)
+		res = TextureToGPU(CreateInfo, 1, filetex, DataBaseAddr);
+		if(res == EXIT_FAILURE)
 		{
-			texsize = filetex->image->buffer_view->size;
-			absbufferoffset = filetex->image->buffer_view->offset;
-			res = UploadTexture_2Dmipped(CreateInfo->Interleaved.TexInfo.TexArray[1], DataBaseAddr,
-						     absbufferoffset, texsize);
-			if(res == EXIT_FAILURE)
-			{
-				return EXIT_FAILURE;
-			}
-			g_test_table->Insert(filetex->image->name, strlen(filetex->image->name),
-					     CreateInfo->Interleaved.TexInfo.TexArray[1]);
-		}
-		else
-		{
-			CreateInfo->Interleaved.TexInfo.TexArray[1] = hash_res;
+			return EXIT_FAILURE;
 		}
 	}
 
 	filetex = prim->material->normal_texture.texture;
 	if(filetex)
 	{
-		hash_res = g_test_table->Find(filetex->image->name, strlen(filetex->image->name));
-		if(hash_res == KEY_NOT_FOUND)
+		res = TextureToGPU(CreateInfo, 2, filetex, DataBaseAddr);
+		if(res == EXIT_FAILURE)
 		{
-			texsize = filetex->image->buffer_view->size;
-			absbufferoffset = filetex->image->buffer_view->offset;
-			res = UploadTexture_2Dmipped(CreateInfo->Interleaved.TexInfo.TexArray[2], DataBaseAddr,
-						     absbufferoffset, texsize);
-			if(res == EXIT_FAILURE)
-			{
-				return EXIT_FAILURE;
-			}
-			g_test_table->Insert(filetex->image->name, strlen(filetex->image->name),
-					     CreateInfo->Interleaved.TexInfo.TexArray[2]);
-		}
-		else
-		{
-			CreateInfo->Interleaved.TexInfo.TexArray[2] = hash_res;
+			return EXIT_FAILURE;
 		}
 	}
 
