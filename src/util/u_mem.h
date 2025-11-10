@@ -1,69 +1,64 @@
-#ifndef MBOX_UMEMORY_H
-#define MBOX_UMEMORY_H
-
+#ifndef VOID_UMEMORY_H
+#define VOID_UMEMORY_H
 
 #include <stdint.h>
 #include <stdio.h>
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
+#include "rendertypes.h"
 
-#include "u_math.h"
-
-
-#define PROGRAM_MAX_OBJECTS 64
+#define PROGRAM_MAX_OBJECTS 255
+#define OBJECT_ALLOC_ERROR PROGRAM_MAX_OBJECTS+1
 #define VIS_STATUS_VISIBLE 1
 #define VIS_STATUS_INVISIBLE 0
 #define VIS_STATUS_FREED 2
 
-
-// For internal use by geometry_state_t, never user-accessible
+// For internal use, never user-accessible
 struct free_list_t
 {
-	uint8_t NextFreePosition = 0;
-	uint8_t OpenPositions[PROGRAM_MAX_OBJECTS];
+	uint32_t NextFreePosition = 0;
+	uint32_t OpenPositions[PROGRAM_MAX_OBJECTS];
 
-	void Push(uint8_t Index);
-	uint8_t Pop();
+	void Push(uint32_t Index);
+	uint32_t Pop();
 };
 
-
 // User accessible
-struct geometry_create_info_t
+struct geometry_interleaved_info_t
 {
 	bool New;
 	bool Deleted;
-	float Intensity;
-	float Scale;
-	float RotationAngle;
-	uMATH::vec3f_t RotationAxis;
-	uMATH::vec3f_t Position;
-	uMATH::vec3f_t Color;
-	uMATH::mat4f_t Model;
-
-	void DecomposeModelM4();
-	void ComposeModelM4();
+	index_info_t IndexInfo;
+	vertex_info_t VertexInfo;
+	texture_info_t TexInfo;
+	glm::vec3 Color;
+	glm::vec3 MinBB;
+	glm::vec3 MaxBB;
+	glm::mat3 ModelInvTrans;
 };
 
+struct geometry_create_info_t
+{
+	geometry_interleaved_info_t Interleaved;
+	glm::mat4 Model;
+};
 
-//User accessible
+// User accessible
 struct geometry_state_t
 {
+	uint32_t Position;
 	uint8_t Visible[PROGRAM_MAX_OBJECTS];
-	float Scale[PROGRAM_MAX_OBJECTS];
-	float Intensity[PROGRAM_MAX_OBJECTS];
 
-	uMATH::vec3f_t Color[PROGRAM_MAX_OBJECTS];
-	uMATH::mat4f_t Model[PROGRAM_MAX_OBJECTS];
+	geometry_interleaved_info_t Interleaved[PROGRAM_MAX_OBJECTS];
+	glm::mat4 Model[PROGRAM_MAX_OBJECTS];
 
-	uint8_t Position;
+	uint32_t Alloc(const geometry_create_info_t& CreateInfo);
+	void Free(uint32_t FreedIndex);
 
-	void Alloc();
-	void Alloc(const geometry_create_info_t &CreateInfo);
-	void Free(uint8_t FreedIndex);
-	
 	private:
-	
+
 	// Prevent Push() or Pop() being called outside of provided Alloc(), Free() functions
 	free_list_t FreeList;
 };
-
 
 #endif

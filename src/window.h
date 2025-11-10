@@ -1,19 +1,16 @@
 #ifndef MBOX_WINDOW_H
 #define MBOX_WINDOW_H
 
-
-#include "../vendor/imgui/imgui.h"
-#include "u_math.h"
+#include <imgui/imgui.h>
+#include <glm/mat4x4.hpp>
 #include "u_mem.h"
 #include "shader.h"
-#include "picking.h"
+#include "renderpass.h"
 #include "camera.h"
-
 
 #define EMODE_VIEW 0
 #define EMODE_GEOMETRY 1
 #define EMODE_LIGHTS 2
-
 
 // Monolithic object an unfortunate consequence of using GLFW - future improvements could write a better base layer
 // for cross-platform windowing and simplify this object
@@ -23,6 +20,7 @@ struct window_handler_t
 	int Height;
 	float DeltaTime;
 	float PrevFrameTime;
+	float FrameTimeMS;
 	uint16_t FirstCameraMove;
 	uint16_t EditorMode;
 	bool ActiveSelection;
@@ -32,18 +30,18 @@ struct window_handler_t
 	double PrevMouseY;
 
 	shader_program_t MainShader;
+	shader_program_t PostShader;
 	shader_program_t PickShader;
+	fb_hdr_t HDRPass;
 	fb_mpick_t PickPass;
 	mbox_camera_t Camera;
-	uMATH::mat4f_t View;
-	uMATH::mat4f_t Projection;
+	glm::mat4 View;
+	glm::mat4 Projection;
 	geometry_create_info_t Active;
 	geometry_state_t GeometryObjects;
 	ImGuiIO ImIO;
 };
 
-
 window_handler_t* InitWindowHandler(float ScreenX, float ScreenY);
-
 
 #endif

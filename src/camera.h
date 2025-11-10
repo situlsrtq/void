@@ -1,10 +1,10 @@
-#ifndef MBOX_CAMERA_H
-#define MBOX_CAMERA_H
+#ifndef VOID_CAMERA_H
+#define VOID_CAMERA_H
 
-
-#include "../vendor/GLFW/glfw3.h"
-#include "util/u_math.h"
-
+#include <GLFW/glfw3.h>
+#include <glm/trigonometric.hpp>
+#include <glm/geometric.hpp>
+#include <glm/vec3.hpp>
 
 struct mbox_camera_t
 {
@@ -14,17 +14,16 @@ struct mbox_camera_t
 	float Yaw = -90.0f;
 	float Pitch = 0.0f;
 
-	uMATH::vec3f_t Eye = {0.0f,0.0f,-1.0f};
-	uMATH::vec3f_t UpAxis = {0.0f,1.0f,0.0f};
+	glm::vec3 Eye = {0.0f, 0.0f, -1.0f};
+	glm::vec3 UpAxis = {0.0f, 1.0f, 0.0f};
 
 	// Runtime values - changed by user actions
-	uMATH::vec3f_t Position = {0.0f, 0.0f, 3.0f};
-	uMATH::vec3f_t RelativeXAxis = {};
-	uMATH::vec3f_t RelativeYAxis = {};
+	glm::vec3 Position = {0.0f, 0.0f, 3.0f};
+	glm::vec3 RelativeXAxis = {};
+	glm::vec3 RelativeYAxis = {};
 
 	void LookAtMouse(double XOffset, double YOffset);
-	void Move(GLFWwindow *Window);
+	void Move(GLFWwindow* Window);
 };
-
 
 #endif
