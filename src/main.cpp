@@ -339,9 +339,10 @@ int main(void)
 		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Projection));
 		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(WinHND->View));
 
-		for(unsigned int i = 0; i < WinHND->GeometryObjects.Position; i++)
+		for(unsigned int i = 0; i < WinHND->Scene.NodePosition; i++)
 		{
-			if(WinHND->GeometryObjects.Visible[i] == VIS_STATUS_FREED)
+			node_create_info_t Node = WinHND->Scene.Node[i];
+			if(Node.Visible == VIS_STATUS_FREED)
 			{
 				continue;
 			}
@@ -350,20 +351,23 @@ int main(void)
 			glUniform1f(pickingtype_uni, float(1));
 
 			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE,
-					   glm::value_ptr(WinHND->GeometryObjects.Model[i]));
+					   glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
 
-			if(WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount)
+			for(int t = 0; t < Node.NumPrimitives; t++)
 			{
-				glDrawElementsBaseVertex(
-					RenderMode, WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount,
-					WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexType,
-					(void*)WinHND->GeometryObjects.Interleaved[i].IndexInfo.ByteOffsetEBO,
-					WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset);
-			}
-			else
-			{
-				glDrawArrays(RenderMode, WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset,
-					     WinHND->GeometryObjects.Interleaved[i].VertexInfo.VAttrCount);
+				primitive_create_info_t Prim = WinHND->Scene.Prim[Node.MeshBaseIndex + t];
+				if(Prim.IndexInfo.IndexCount)
+				{
+					glDrawElementsBaseVertex(RenderMode, Prim.IndexInfo.IndexCount,
+								 Prim.IndexInfo.IndexType,
+								 (void*)Prim.IndexInfo.ByteOffsetEBO,
+								 Prim.VertexInfo.VertexOffset);
+				}
+				else
+				{
+					glDrawArrays(RenderMode, Prim.VertexInfo.VertexOffset,
+						     Prim.VertexInfo.VAttrCount);
+				}
 			}
 		}
 #endif
@@ -386,34 +390,41 @@ int main(void)
 		glUniform3f(viewpos_uni, WinHND->Camera.Position.x, WinHND->Camera.Position.y,
 			    WinHND->Camera.Position.z);
 
-		for(unsigned int i = 0; i < WinHND->GeometryObjects.Position; i++)
+		for(unsigned int i = 0; i < WinHND->Scene.NodePosition; i++)
 		{
-			if(WinHND->GeometryObjects.Visible[i] == VIS_STATUS_FREED)
+			node_create_info_t Node = WinHND->Scene.Node[i];
+			if(Node.Visible == VIS_STATUS_FREED)
 			{
 				continue;
 			}
 
-			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.Model[i]));
-			glUniformMatrix3fv(minvt_uni, 1, GL_FALSE,
-					   glm::value_ptr(WinHND->GeometryObjects.Interleaved[i].ModelInvTrans));
-			glUniform3fv(objcolor_uni, 1, glm::value_ptr(WinHND->GeometryObjects.Interleaved[i].Color));
+			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
 
-			glBindTextureUnit(0, WinHND->GeometryObjects.Interleaved[i].TexInfo.TexArray[0]);
-			glBindTextureUnit(1, WinHND->GeometryObjects.Interleaved[i].TexInfo.TexArray[1]);
-			glBindTextureUnit(2, WinHND->GeometryObjects.Interleaved[i].TexInfo.TexArray[2]);
+			for(int t = 0; t < Node.NumPrimitives; t++)
+			{
+				primitive_create_info_t Prim = WinHND->Scene.Prim[Node.MeshBaseIndex + t];
 
-			if(WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount)
-			{
-				glDrawElementsBaseVertex(
-					RenderMode, WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount,
-					WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexType,
-					(void*)WinHND->GeometryObjects.Interleaved[i].IndexInfo.ByteOffsetEBO,
-					WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset);
-			}
-			else
-			{
-				glDrawArrays(RenderMode, WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset,
-					     WinHND->GeometryObjects.Interleaved[i].VertexInfo.VAttrCount);
+				glUniformMatrix3fv(minvt_uni, 1, GL_FALSE,
+						   glm::value_ptr(Prim.ModelInvTrans));
+				glUniform3fv(objcolor_uni, 1,
+					     glm::value_ptr(Prim.Color));
+
+				glBindTextureUnit(0, Prim.TexInfo.TexArray[0]);
+				glBindTextureUnit(1, Prim.TexInfo.TexArray[1]);
+				glBindTextureUnit(2, Prim.TexInfo.TexArray[2]);
+
+				if(Prim.IndexInfo.IndexCount)
+				{
+					glDrawElementsBaseVertex(RenderMode, Prim.IndexInfo.IndexCount,
+								 Prim.IndexInfo.IndexType,
+								 (void*)Prim.IndexInfo.ByteOffsetEBO,
+								 Prim.VertexInfo.VertexOffset);
+				}
+				else
+				{
+					glDrawArrays(RenderMode, Prim.VertexInfo.VertexOffset,
+						     Prim.VertexInfo.VAttrCount);
+				}
 			}
 		}
 

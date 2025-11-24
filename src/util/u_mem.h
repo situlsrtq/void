@@ -14,7 +14,7 @@
 #define VIS_STATUS_FREED 2
 
 // For internal use, never user-accessible
-struct free_list_t
+struct free_index_list_t
 {
 	uint32_t NextFreePosition = 0;
 	uint32_t OpenPositions[PROGRAM_MAX_OBJECTS];
@@ -23,11 +23,28 @@ struct free_list_t
 	uint32_t Pop();
 };
 
-// User accessible
-struct geometry_interleaved_info_t
+struct free_block_list_t
 {
-	bool New;
-	bool Deleted;
+	/*
+		Linked List
+	*/
+
+	void Push(uint32_t Index);
+	uint32_t Pop();
+};
+
+// User accessible
+struct mesh_create_info_t
+{
+	/*
+		Eventually, a 'mesh' will track/manage the primitives that make it up, and keep a 
+		list of the nodes that reference it. But I don't want to deal with that right now 
+		and will implement it later
+	*/
+};
+
+struct primitive_create_info_t
+{
 	index_info_t IndexInfo;
 	vertex_info_t VertexInfo;
 	texture_info_t TexInfo;
@@ -37,28 +54,33 @@ struct geometry_interleaved_info_t
 	glm::mat3 ModelInvTrans;
 };
 
-struct geometry_create_info_t
+struct node_create_info_t
 {
-	geometry_interleaved_info_t Interleaved;
-	glm::mat4 Model;
+	uint32_t Visible;
+	uint32_t MeshBaseIndex;
+	uint32_t NumPrimitives;
 };
 
 // User accessible
-struct geometry_state_t
+struct scene_info_t
 {
-	uint32_t Position;
-	uint8_t Visible[PROGRAM_MAX_OBJECTS];
+	uint32_t PrimPosition;
+	uint32_t NodePosition;
 
-	geometry_interleaved_info_t Interleaved[PROGRAM_MAX_OBJECTS];
-	glm::mat4 Model[PROGRAM_MAX_OBJECTS];
+	primitive_create_info_t Prim[PROGRAM_MAX_OBJECTS];
+	node_create_info_t Node[PROGRAM_MAX_OBJECTS];
+	glm::mat4 ModelMatrix[PROGRAM_MAX_OBJECTS];
 
-	uint32_t Alloc(const geometry_create_info_t& CreateInfo);
-	void Free(uint32_t FreedIndex);
+	uint32_t AddMesh(const mesh_create_info_t& CreateInfo);
+	uint32_t AddPrimitive(const primitive_create_info_t& CreateInfo);
+	uint32_t AddNode(const node_create_info_t& CreateInfo, const glm::mat4& ModelIn);
+	void FreeNode(uint32_t FreedIndex);
 
 	private:
 
 	// Prevent Push() or Pop() being called outside of provided Alloc(), Free() functions
-	free_list_t FreeList;
+	free_index_list_t NodeList;
+	free_index_list_t PrimList;
 };
 
 #endif
