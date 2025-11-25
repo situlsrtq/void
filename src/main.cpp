@@ -292,7 +292,7 @@ int main(void)
 	glm::vec3 LightPosition = {1.2f, 1.0f, 2.0f};
 	glm::vec3 lightScale = {0.2f, 0.2f, 0.2f};
 
-	float CurrFrameTime = 0;
+	float FrameStartTime = 0;
 	float FrameEndTime = 0;
 	exposure_val = 0.5;
 
@@ -307,7 +307,7 @@ int main(void)
 	bool DemoWindow = false;
 	while(!glfwWindowShouldClose(Window))
 	{
-		CurrFrameTime = glfwGetTime();
+		FrameStartTime = glfwGetTime();
 
 		// Handle user input
 
@@ -478,12 +478,12 @@ int main(void)
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		FrameEndTime = glfwGetTime();
-		WinHND->FrameTimeMS = (FrameEndTime - CurrFrameTime) * 1000.0f;
+		WinHND->FrameTimeMS = (FrameEndTime - FrameStartTime) * 1000.0f;
 
 		glfwSwapBuffers(Window);
 
-		WinHND->DeltaTime = CurrFrameTime - WinHND->PrevFrameTime;
-		WinHND->PrevFrameTime = CurrFrameTime;
+		WinHND->DeltaTime = FrameEndTime - WinHND->PrevFrameTime;
+		WinHND->PrevFrameTime = FrameEndTime;
 	}
 
 	// Free resources and exit - not technically necessary when this is the end of the program,
