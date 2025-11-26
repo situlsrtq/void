@@ -10,18 +10,15 @@
 #include "u_mem.h"
 
 #define PROGRAM_MAX_OBJECTS 255
-#define OBJECT_ALLOC_ERROR PROGRAM_MAX_OBJECTS+1
+#define OBJECT_ALLOC_ERROR PROGRAM_MAX_OBJECTS + 1
 #define VIS_STATUS_VISIBLE 1
 #define VIS_STATUS_INVISIBLE 0
 #define VIS_STATUS_FREED 2
 
 struct mesh_create_info_t
 {
-	/*
-		Eventually, a 'mesh' will track/manage the primitives that make it up, and keep a 
-		list of the nodes that reference it. But I don't want to deal with that right now 
-		and will implement it later
-	*/
+	uint32_t base_index;
+	uint32_t size;
 };
 
 struct primitive_create_info_t
@@ -60,8 +57,8 @@ struct scene_info_t
 	private:
 
 	// Prevent Push() or Pop() being called outside of provided Alloc(), Free() functions
-	free_index_list_t NodeList;
-	free_index_list_t PrimList;
+	index_free_list_t NodeList;
+	block_free_list_t PrimList;
 };
 
 #endif

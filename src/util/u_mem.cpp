@@ -20,6 +20,31 @@ void index_free_list_t::Push(uint32_t FreedIndex)
 	NextFreePosition++;
 }
 
+uint32_t block_free_list_t::Pop(uint32_t req_size, uint32_t position)
+{
+	if(req_size > largest_block)
+	{
+		return position;
+	}
+
+	uint32_t res = root->base_index;
+
+	root->base_index += req_size;
+	root->size -= req_size;
+
+	linked_block_t* node = root;
+	while(node->size < node->next->size)
+	{
+		linked_block_t* temp = node->next;
+		node->next = temp->next;
+		temp->prev = node->prev;
+		node->prev = temp;
+		temp->next = node;
+	}
+
+	return res;
+}
+
 void block_free_list_t::Push(uint32_t base_index, uint32_t size)
 {
 	if(root == 0x0)
@@ -67,29 +92,33 @@ void block_free_list_t::Merge(linked_block_t* node)
 		node->size += node->next->size;
 		if(node->next->next != 0x0)
 		{
-			node->next->next->prev = node;
 			linked_block_t* temp = node->next->next;
+			temp->prev = node;
 			UTIL::Free(node->next);
 			node->next = temp;
 		}
 		else
 		{
 			UTIL::Free(node->next);
-			node->next = 0x0;
 		}
 	}
 
 	if((node->prev != 0x0) && ((node->prev->base_index + node->prev->size) == node->base_index))
 	{
-		node->prev->size += node->size;
-		node->prev->next = node->next;
-		if(node->prev->size > largest_block)
-		{
-			largest_block = node->prev->size;
-			root = node->prev;
-		}
-		UTIL::Free(node);
-		return;
+		linked_block_t* temp = node;
+		node = node->prev;
+		node->size += temp->size;
+		node->next = temp->next;
+		UTIL::Free(temp);
+	}
+
+	while((node->prev != 0x0) && (node->size > node->prev->size))
+	{
+		linked_block_t* temp = node->prev;
+		node->prev = temp->prev;
+		temp->next = node->next;
+		node->next = temp;
+		temp->prev = node;
 	}
 
 	return;

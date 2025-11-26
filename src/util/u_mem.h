@@ -7,6 +7,7 @@
 #include "u_util.h"
 
 #define PROGRAM_MAX_OBJECTS 255
+#define BOUNDS_REACHED PROGRAM_MAX_OBJECTS+1
 
 struct index_free_list_t
 {
@@ -31,7 +32,7 @@ struct block_free_list_t
 	uint32_t largest_block;
 
 	void Push(uint32_t base_index, uint32_t size);
-	uint32_t Pop(uint32_t size);
+	uint32_t Pop(uint32_t req_size, uint32_t position);
 	void Merge(linked_block_t* node);
 };
 
