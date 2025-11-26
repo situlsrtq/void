@@ -1,5 +1,5 @@
-#ifndef VOID_SCENE_H
-#define VOID_SCENE_H
+#ifndef VOID_GLTF_LOADER_H
+#define VOID_GLTF_LOADER_H
 
 #include <stdio.h>
 
@@ -16,7 +16,7 @@
 
 #include "window.h"
 #include "rendertypes.h"
-#include "u_mem.h"
+#include "scene.h"
 #include "u_hash.h"
 
 int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned int* VAO,

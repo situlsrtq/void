@@ -353,7 +353,7 @@ int main(void)
 			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE,
 					   glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
 
-			for(int t = 0; t < Node.NumPrimitives; t++)
+			for(uint32_t t = 0; t < Node.NumPrimitives; t++)
 			{
 				primitive_create_info_t Prim = WinHND->Scene.Prim[Node.MeshBaseIndex + t];
 				if(Prim.IndexInfo.IndexCount)
@@ -400,7 +400,7 @@ int main(void)
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
 
-			for(int t = 0; t < Node.NumPrimitives; t++)
+			for(uint32_t t = 0; t < Node.NumPrimitives; t++)
 			{
 				primitive_create_info_t Prim = WinHND->Scene.Prim[Node.MeshBaseIndex + t];
 

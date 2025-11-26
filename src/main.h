@@ -29,6 +29,7 @@
 
 #include "window.h"
 #include "u_mem.h"
+#include "scene.h"
 #include "gltf.h"
 
 #define VOID_HFOV_DEFAULT 45.0f

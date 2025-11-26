@@ -398,6 +398,7 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 			NodeInfo.MeshBaseIndex = mesh_index;
 			NodeInfo.NumPrimitives = mesh->primitives_count;
 			node_index = WinHND->Scene.AddNode(NodeInfo, node_matrix);
+			(void)node_index; // this will be added to the list of nodes in mesh
 
 			g_test_table->Insert(mesh->name, strlen(mesh->name), mesh_index);
 		}
