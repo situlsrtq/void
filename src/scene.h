@@ -38,7 +38,6 @@ struct node_create_info_t
 	uint32_t MeshIndex;
 };
 
-// User accessible
 struct scene_info_t
 {
 	uint32_t MeshPosition;
@@ -58,7 +57,7 @@ struct scene_info_t
 
 	private:
 
-	// Prevent Push() or Pop() being called outside of provided Alloc(), Free() functions
+	// Prevent Push() or Pop() being called outside of provided Add(), Free() functions
 	index_free_list_t MeshList;
 	index_free_list_t NodeList;
 	block_free_list_t PrimList;

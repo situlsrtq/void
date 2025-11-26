@@ -45,7 +45,7 @@ int main(void)
 	g_test_table = (hash_table_t*)calloc(1, sizeof(hash_table_t));
 
 	// TODO: per-thread string memory system, to be sized based on thread's need. Rendering
-	// thread will be heaviest user
+	// manager will be heaviest user
 
 	void* ResourceStringMem = (char*)malloc(4 * V_MIB);
 	if(!ResourceStringMem)
@@ -89,7 +89,7 @@ int main(void)
 	// Resize in config, not in render code
 	// TODO: use glfwSetWindowAttrib() to allow for one-time resizing operations as menu
 	// selections
-	glfwWindowHint(GLFW_RESIZABLE, false);
+	glfwWindowHint(GLFW_RESIZABLE, true);
 
 	GLFWwindow* Window = glfwCreateWindow(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT, "void", 0, 0);
 	if(!Window)

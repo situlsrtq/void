@@ -399,7 +399,7 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 			NodeInfo.Visible = VIS_STATUS_VISIBLE;
 			NodeInfo.MeshIndex = mesh_index;
 			node_index = WinHND->Scene.AddNode(NodeInfo, node_matrix);
-			(void)node_index; // this will be added to the list of nodes in mesh
+			(void)node_index; // TODO: add node to a list of associated nodes in the mesh
 
 			g_test_table->Insert(mesh->name, strlen(mesh->name), mesh_index);
 		}

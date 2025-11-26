@@ -37,9 +37,7 @@ struct window_handler_t
 	mbox_camera_t Camera;
 	glm::mat4 View;
 	glm::mat4 Projection;
-	// for fucking with primitives, later
-	primitive_create_info_t Active;
-	//
+	primitive_create_info_t Active; // for fucking with primitives, later
 	scene_info_t Scene;
 	ImGuiIO ImIO;
 };

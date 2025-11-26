@@ -11,10 +11,6 @@ window_handler_t* InitWindowHandler(float ScreenX, float ScreenY)
 
 	res->Width = ScreenX;
 	res->Height = ScreenY;
-	res->DeltaTime = 0.0f;
-	res->DeltaTime = 0.0f;
-	res->PrevFrameTime = 0.0f;
-	res->FrameTimeMS = 0.0f;
 	res->FirstCameraMove = 1;
 	res->EditorMode = EMODE_VIEW;
 	res->ActiveSelection = false;
@@ -24,9 +20,7 @@ window_handler_t* InitWindowHandler(float ScreenX, float ScreenY)
 	res->PrevMouseY = ScreenY / 2.0f;
 
 	res->Camera.Sensitivity = 0.1f;
-	res->Camera.Speed = 0.0f;
 	res->Camera.Yaw = -90.0f;
-	res->Camera.Pitch = 0.0f;
 	res->Camera.Position = {0.0f, 0.0f, 3.0f};
 	res->Camera.Eye = {0.0f, 0.0f, -1.0f};
 	res->Camera.UpAxis = {0.0f, 1.0f, 0.0f};
