@@ -40,6 +40,23 @@ uint32_t scene_info_t::AddMesh(uint32_t num_primitives)
 	return index;
 }
 
+void scene_info_t::FreeMesh(uint32_t FreedIndex)
+{
+	if(MeshPosition == 0)
+	{
+		printf("System: Object array empty, nothing to free\n");
+		return;
+	}
+	if(FreedIndex >= MeshPosition || FreedIndex >= PROGRAM_MAX_OBJECTS)
+	{
+		printf("System: Out of bounds on free list\n");
+		return;
+	}
+
+	PrimList.Push(Mesh[FreedIndex].base_index, Mesh[FreedIndex].size);
+	MeshList.Push(FreedIndex);
+}
+
 void scene_info_t::AddPrimitive(const primitive_create_info_t& CreateInfo, uint32_t index)
 {
 	Prim[index] = CreateInfo;

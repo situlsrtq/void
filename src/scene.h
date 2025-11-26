@@ -51,6 +51,7 @@ struct scene_info_t
 	glm::mat4 ModelMatrix[PROGRAM_MAX_OBJECTS];
 
 	uint32_t AddMesh(uint32_t num_primitives);
+	void FreeMesh(uint32_t FreedIndex);
 	void AddPrimitive(const primitive_create_info_t& CreateInfo, uint32_t index);
 	uint32_t AddNode(const node_create_info_t& CreateInfo, const glm::mat4& ModelIn);
 	void FreeNode(uint32_t FreedIndex);
