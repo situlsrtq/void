@@ -15,7 +15,7 @@
 #define VIS_STATUS_INVISIBLE 0
 #define VIS_STATUS_FREED 2
 
-struct mesh_create_info_t
+struct mesh_info_t
 {
 	uint32_t base_index;
 	uint32_t size;
@@ -35,28 +35,30 @@ struct primitive_create_info_t
 struct node_create_info_t
 {
 	uint32_t Visible;
-	uint32_t MeshBaseIndex;
-	uint32_t NumPrimitives;
+	uint32_t MeshIndex;
 };
 
 // User accessible
 struct scene_info_t
 {
+	uint32_t MeshPosition;
 	uint32_t PrimPosition;
 	uint32_t NodePosition;
 
+	mesh_info_t Mesh[PROGRAM_MAX_OBJECTS];
 	primitive_create_info_t Prim[PROGRAM_MAX_OBJECTS];
 	node_create_info_t Node[PROGRAM_MAX_OBJECTS];
 	glm::mat4 ModelMatrix[PROGRAM_MAX_OBJECTS];
 
-	uint32_t AddMesh(const mesh_create_info_t& CreateInfo);
-	uint32_t AddPrimitive(const primitive_create_info_t& CreateInfo);
+	uint32_t AddMesh(uint32_t num_primitives);
+	void AddPrimitive(const primitive_create_info_t& CreateInfo, uint32_t index);
 	uint32_t AddNode(const node_create_info_t& CreateInfo, const glm::mat4& ModelIn);
 	void FreeNode(uint32_t FreedIndex);
 
 	private:
 
 	// Prevent Push() or Pop() being called outside of provided Alloc(), Free() functions
+	index_free_list_t MeshList;
 	index_free_list_t NodeList;
 	block_free_list_t PrimList;
 };

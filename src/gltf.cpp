@@ -358,6 +358,12 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 		mesh_index = g_test_table->Find(mesh->name, strlen(mesh->name)); 
 		if(mesh_index == KEY_NOT_FOUND)
 		{
+			mesh_index = WinHND->Scene.AddMesh(mesh->primitives_count);
+			if(mesh_index == OBJECT_ALLOC_ERROR)
+			{
+				return EXIT_FAILURE;
+			}
+
 			for(uint32_t t = 0; t < mesh->primitives_count; t++)
 			{
 				memset(&PrimInfo, 0, sizeof(PrimInfo));
@@ -387,24 +393,21 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 					return EXIT_FAILURE;
 				}
 
-				// Unnecesary when mesh container is implemented
-				if(t == 0) mesh_index = WinHND->Scene.AddPrimitive(PrimInfo);
-				else
-				{
-					WinHND->Scene.AddPrimitive(PrimInfo);
-				}
+				WinHND->Scene.AddPrimitive(PrimInfo, WinHND->Scene.Mesh[mesh_index].base_index + t);
 			}
 
-			NodeInfo.MeshBaseIndex = mesh_index;
-			NodeInfo.NumPrimitives = mesh->primitives_count;
+			NodeInfo.Visible = VIS_STATUS_VISIBLE;
+			NodeInfo.MeshIndex = mesh_index;
 			node_index = WinHND->Scene.AddNode(NodeInfo, node_matrix);
 			(void)node_index; // this will be added to the list of nodes in mesh
 
 			g_test_table->Insert(mesh->name, strlen(mesh->name), mesh_index);
 		}
 
-		// cant add non-hashed nodes until mesh container is implemented
-
+		NodeInfo.Visible = VIS_STATUS_VISIBLE;
+		NodeInfo.MeshIndex = mesh_index;
+		node_index = WinHND->Scene.AddNode(NodeInfo, node_matrix);
+		(void)node_index; // TODO: add node to a list of associated nodes in the mesh
 	}
 
 	cgltf_free(data);

@@ -353,9 +353,10 @@ int main(void)
 			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE,
 					   glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
 
-			for(uint32_t t = 0; t < Node.NumPrimitives; t++)
+			mesh_info_t Mesh = WinHND->Scene.Mesh[Node.MeshIndex];
+			for(uint32_t t = 0; t < Mesh.size; t++)
 			{
-				primitive_create_info_t Prim = WinHND->Scene.Prim[Node.MeshBaseIndex + t];
+				primitive_create_info_t Prim = WinHND->Scene.Prim[Mesh.base_index + t];
 				if(Prim.IndexInfo.IndexCount)
 				{
 					glDrawElementsBaseVertex(RenderMode, Prim.IndexInfo.IndexCount,
@@ -400,9 +401,10 @@ int main(void)
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
 
-			for(uint32_t t = 0; t < Node.NumPrimitives; t++)
+			mesh_info_t Mesh = WinHND->Scene.Mesh[Node.MeshIndex];
+			for(uint32_t t = 0; t < Mesh.size; t++)
 			{
-				primitive_create_info_t Prim = WinHND->Scene.Prim[Node.MeshBaseIndex + t];
+				primitive_create_info_t Prim = WinHND->Scene.Prim[Mesh.base_index + t];
 
 				glUniformMatrix3fv(minvt_uni, 1, GL_FALSE,
 						   glm::value_ptr(Prim.ModelInvTrans));
@@ -777,7 +779,7 @@ void GenerateInterfaceElements(window_handler_t* WinHND, bool* HelpWindow, bool*
 		WinHND->ShouldExit = true;
 	}
 	ImGui::Spacing();
-	ImGui::Text("Frame time: %.2f ms", WinHND->FrameTimeMS);
+	ImGui::Text("CPU Frame time: %.2f ms", WinHND->FrameTimeMS);
 	ImGui::Spacing();
 	ImGui::Text("Display rate: %.2f ms", WinHND->DeltaTime * 1000.0f);
 

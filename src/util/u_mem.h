@@ -29,10 +29,9 @@ struct linked_block_t
 struct block_free_list_t
 {
 	linked_block_t* root;
-	uint32_t largest_block;
 
 	void Push(uint32_t base_index, uint32_t size);
-	uint32_t Pop(uint32_t req_size, uint32_t position);
+	uint32_t Pop(uint32_t req_size);
 	void Merge(linked_block_t* node);
 };
 

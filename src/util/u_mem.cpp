@@ -20,13 +20,8 @@ void index_free_list_t::Push(uint32_t FreedIndex)
 	NextFreePosition++;
 }
 
-uint32_t block_free_list_t::Pop(uint32_t req_size, uint32_t position)
+uint32_t block_free_list_t::Pop(uint32_t req_size)
 {
-	if(req_size > largest_block)
-	{
-		return position;
-	}
-
 	uint32_t res = root->base_index;
 
 	root->base_index += req_size;
@@ -54,7 +49,6 @@ void block_free_list_t::Push(uint32_t base_index, uint32_t size)
 		root->next = 0x0;
 		root->base_index = base_index;
 		root->size = size;
-		largest_block = size;
 		return;
 	}
 
