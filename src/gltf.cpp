@@ -217,15 +217,16 @@ int UploadTexture_2D(unsigned int Texture, const uint8_t* DataBaseAddr, uint64_t
 			return EXIT_FAILURE;
 	}
 
-	glTextureStorage2D(Texture, 1, internalformat, width, height); 
-	glTextureSubImage2D(Texture, 0,	0, 0, width, height, format, GL_UNSIGNED_BYTE, texdata);
+	glTextureStorage2D(Texture, 1, internalformat, width, height);
+	glTextureSubImage2D(Texture, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, texdata);
 
 	stbi_image_free(texdata);
 
 	return EXIT_SUCCESS;
 }
 
-int TextureToGPU(primitive_create_info_t* CreateInfo, const uint32_t Texture, const cgltf_texture* filetex, const uint8_t* DataBaseAddr)
+int TextureToGPU(primitive_create_info_t* CreateInfo, const uint32_t Texture, const cgltf_texture* filetex,
+		 const uint8_t* DataBaseAddr)
 {
 	int res;
 	uint32_t hash_res;
@@ -344,7 +345,6 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 	node_create_info_t NodeInfo;
 
 	uint32_t mesh_index = 0;
-	uint32_t node_index = 0;
 	for(uint32_t i = 0; i < data->nodes_count; i++)
 	{
 		memset(&NodeInfo, 0, sizeof(NodeInfo));
@@ -355,7 +355,7 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 		glm::mat3 node_inv_trans = glm::mat3(inverse(transpose(node_matrix)));
 
 		cgltf_mesh* mesh = node->mesh;
-		mesh_index = g_test_table->Find(mesh->name, strlen(mesh->name)); 
+		mesh_index = g_test_table->Find(mesh->name, strlen(mesh->name));
 		if(mesh_index == KEY_NOT_FOUND)
 		{
 			mesh_index = WinHND->Scene.AddMesh(mesh->primitives_count);

@@ -4,7 +4,7 @@ hash_table_t* g_test_table = 0x0;
 
 void hash_table_t::Move(robin_node_t res, robin_node_t* frame)
 {
-	if (probes_before_boundary == 0)
+	if(probes_before_boundary == 0)
 	{
 		frame = &table[0];
 		probes_before_boundary = TABLE_SIZE;
@@ -12,17 +12,17 @@ void hash_table_t::Move(robin_node_t res, robin_node_t* frame)
 
 	if(frame->flag == FLAG_AVAILABLE)
 	{
-		frame->key = res.key;	
-		frame->value = res.value;	
-		frame->displacement = res.displacement;	
-		frame->flag = FLAG_POPULATED;	
+		frame->key = res.key;
+		frame->value = res.value;
+		frame->displacement = res.displacement;
+		frame->flag = FLAG_POPULATED;
 		return;
 	}
 
 	frame++;
 	res.displacement++;
 	probes_before_boundary--;
-	if (probes_before_boundary == 0)
+	if(probes_before_boundary == 0)
 	{
 		frame = &table[0];
 		probes_before_boundary = TABLE_SIZE;
@@ -43,10 +43,10 @@ void hash_table_t::Move(robin_node_t res, robin_node_t* frame)
 	if(frame->flag != FLAG_AVAILABLE)
 	{
 		robin_node_t temp = *frame;
-		frame->key = res.key;	
-		frame->value = res.value;	
-		frame->displacement = res.displacement;	
-		frame->flag = FLAG_POPULATED;	
+		frame->key = res.key;
+		frame->value = res.value;
+		frame->displacement = res.displacement;
+		frame->flag = FLAG_POPULATED;
 		probes_before_boundary--;
 		Move(temp, frame++);
 		return;
@@ -80,7 +80,7 @@ uint32_t hash_table_t::Find(void* search_key, int len)
 	{
 		if(frame->key == search_key)
 		{
-			return frame->value; 
+			return frame->value;
 		}
 
 		frame++;

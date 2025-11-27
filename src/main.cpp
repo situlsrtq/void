@@ -350,8 +350,7 @@ int main(void)
 			glUniform1f(pickingindex_uni, float(i + 1));
 			glUniform1f(pickingtype_uni, float(1));
 
-			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE,
-					   glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
+			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
 
 			mesh_info_t Mesh = WinHND->Scene.Mesh[Node.MeshIndex];
 			for(uint32_t t = 0; t < Mesh.size; t++)
@@ -406,10 +405,8 @@ int main(void)
 			{
 				primitive_create_info_t Prim = WinHND->Scene.Prim[Mesh.base_index + t];
 
-				glUniformMatrix3fv(minvt_uni, 1, GL_FALSE,
-						   glm::value_ptr(Prim.ModelInvTrans));
-				glUniform3fv(objcolor_uni, 1,
-					     glm::value_ptr(Prim.Color));
+				glUniformMatrix3fv(minvt_uni, 1, GL_FALSE, glm::value_ptr(Prim.ModelInvTrans));
+				glUniform3fv(objcolor_uni, 1, glm::value_ptr(Prim.Color));
 
 				glBindTextureUnit(0, Prim.TexInfo.TexArray[0]);
 				glBindTextureUnit(1, Prim.TexInfo.TexArray[1]);

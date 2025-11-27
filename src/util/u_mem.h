@@ -7,7 +7,7 @@
 #include "u_util.h"
 
 #define PROGRAM_MAX_OBJECTS 255
-#define BOUNDS_REACHED PROGRAM_MAX_OBJECTS+1
+#define BOUNDS_REACHED PROGRAM_MAX_OBJECTS + 1
 
 struct index_free_list_t
 {

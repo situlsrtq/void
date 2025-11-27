@@ -16,7 +16,7 @@ void mesh_info_t::AddNode(uint32_t index)
 void mesh_info_t::RemoveNode(uint32_t index)
 {
 	linked_node_t* node = node_list;
-	if (node == 0x0)
+	if(node == 0x0)
 	{
 		printf("System: could not remove node - not in mesh list\n");
 		return;
@@ -35,7 +35,15 @@ void mesh_info_t::RemoveNode(uint32_t index)
 		node = node->next;
 	}
 
-	prev->next = node->next;
+	if(node == node_list)
+	{
+		node_list = node->next;
+	}
+	else
+	{
+		prev->next = node->next;
+	}
+
 	UTIL::Free(node);
 	return;
 }
@@ -91,6 +99,11 @@ void scene_info_t::FreeMesh(uint32_t FreedIndex)
 	{
 		printf("System: Out of bounds on free list\n");
 		return;
+	}
+
+	while(Mesh[FreedIndex].node_list != 0x0)
+	{
+		FreeNode(Mesh[FreedIndex].node_list->index);
 	}
 
 	PrimList.Push(Mesh[FreedIndex].base_index, Mesh[FreedIndex].size);
