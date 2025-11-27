@@ -1,5 +1,45 @@
 #include "scene.h"
 
+void mesh_info_t::AddNode(uint32_t index)
+{
+	linked_node_t* node = node_list;
+	while(node != 0x0)
+	{
+		node = node->next;
+	}
+
+	node = (linked_node_t*)UTIL::Malloc(sizeof(linked_node_t));
+	node->index = index;
+	node->next = 0x0;
+}
+
+void mesh_info_t::RemoveNode(uint32_t index)
+{
+	linked_node_t* node = node_list;
+	if (node == 0x0)
+	{
+		printf("System: could not remove node - not in mesh list\n");
+		return;
+	}
+
+	linked_node_t* prev = node_list;
+	while(node->index != index)
+	{
+		if(node == 0x0)
+		{
+			printf("System: could not remove node - not in mesh list\n");
+			return;
+		}
+
+		prev = node;
+		node = node->next;
+	}
+
+	prev->next = node->next;
+	UTIL::Free(node);
+	return;
+}
+
 uint32_t scene_info_t::AddMesh(uint32_t num_primitives)
 {
 	uint32_t index;
@@ -87,6 +127,8 @@ uint32_t scene_info_t::AddNode(const node_create_info_t& CreateInfo, const glm::
 	Node[index] = CreateInfo;
 	ModelMatrix[index] = ModelIn;
 
+	Mesh[Node->MeshIndex].AddNode(index);
+
 	return index;
 }
 
@@ -102,6 +144,8 @@ void scene_info_t::FreeNode(uint32_t FreedIndex)
 		printf("System: Out of bounds on free list\n");
 		return;
 	}
+
+	Mesh[Node[FreedIndex].MeshIndex].RemoveNode(FreedIndex);
 
 	NodeList.Push(FreedIndex);
 	Node[FreedIndex].Visible = VIS_STATUS_FREED;

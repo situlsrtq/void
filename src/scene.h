@@ -15,10 +15,20 @@
 #define VIS_STATUS_INVISIBLE 0
 #define VIS_STATUS_FREED 2
 
+struct linked_node_t
+{
+	linked_node_t* next;
+	uint32_t index;
+};
+
 struct mesh_info_t
 {
+	linked_node_t* node_list;
 	uint32_t base_index;
 	uint32_t size;
+
+	void AddNode(uint32_t index);
+	void RemoveNode(uint32_t index);
 };
 
 struct primitive_create_info_t
