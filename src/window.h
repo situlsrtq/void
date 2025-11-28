@@ -3,7 +3,7 @@
 
 #include <imgui/imgui.h>
 #include <glm/mat4x4.hpp>
-#include "u_mem.h"
+#include "scene.h"
 #include "shader.h"
 #include "renderpass.h"
 #include "camera.h"
@@ -37,8 +37,8 @@ struct window_handler_t
 	mbox_camera_t Camera;
 	glm::mat4 View;
 	glm::mat4 Projection;
-	geometry_create_info_t Active;
-	geometry_state_t GeometryObjects;
+	primitive_create_info_t Active; // for fucking with primitives, later
+	scene_info_t Scene;
 	ImGuiIO ImIO;
 };
 

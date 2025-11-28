@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 
-#include<murmur/MurmurHash3.h>
+#include <murmur/MurmurHash3.h>
 
 #define TABLE_SIZE 512
-#define KEY_NOT_FOUND TABLE_SIZE+1
+#define KEY_NOT_FOUND TABLE_SIZE + 1
 #define TABLE_SEED 42069
 
 #define FLAG_AVAILABLE 0

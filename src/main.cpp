@@ -45,7 +45,7 @@ int main(void)
 	g_test_table = (hash_table_t*)calloc(1, sizeof(hash_table_t));
 
 	// TODO: per-thread string memory system, to be sized based on thread's need. Rendering
-	// thread will be heaviest user
+	// manager will be heaviest user
 
 	void* ResourceStringMem = (char*)malloc(4 * V_MIB);
 	if(!ResourceStringMem)
@@ -89,7 +89,7 @@ int main(void)
 	// Resize in config, not in render code
 	// TODO: use glfwSetWindowAttrib() to allow for one-time resizing operations as menu
 	// selections
-	glfwWindowHint(GLFW_RESIZABLE, false);
+	glfwWindowHint(GLFW_RESIZABLE, true);
 
 	GLFWwindow* Window = glfwCreateWindow(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT, "void", 0, 0);
 	if(!Window)
@@ -292,7 +292,7 @@ int main(void)
 	glm::vec3 LightPosition = {1.2f, 1.0f, 2.0f};
 	glm::vec3 lightScale = {0.2f, 0.2f, 0.2f};
 
-	float CurrFrameTime = 0;
+	float FrameStartTime = 0;
 	float FrameEndTime = 0;
 	exposure_val = 0.5;
 
@@ -307,7 +307,7 @@ int main(void)
 	bool DemoWindow = false;
 	while(!glfwWindowShouldClose(Window))
 	{
-		CurrFrameTime = glfwGetTime();
+		FrameStartTime = glfwGetTime();
 
 		// Handle user input
 
@@ -339,9 +339,10 @@ int main(void)
 		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Projection));
 		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(WinHND->View));
 
-		for(unsigned int i = 0; i < WinHND->GeometryObjects.Position; i++)
+		for(unsigned int i = 0; i < WinHND->Scene.NodePosition; i++)
 		{
-			if(WinHND->GeometryObjects.Visible[i] == VIS_STATUS_FREED)
+			node_create_info_t Node = WinHND->Scene.Node[i];
+			if(Node.Visible == VIS_STATUS_FREED)
 			{
 				continue;
 			}
@@ -349,21 +350,24 @@ int main(void)
 			glUniform1f(pickingindex_uni, float(i + 1));
 			glUniform1f(pickingtype_uni, float(1));
 
-			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE,
-					   glm::value_ptr(WinHND->GeometryObjects.Model[i]));
+			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
 
-			if(WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount)
+			mesh_info_t Mesh = WinHND->Scene.Mesh[Node.MeshIndex];
+			for(uint32_t t = 0; t < Mesh.size; t++)
 			{
-				glDrawElementsBaseVertex(
-					RenderMode, WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount,
-					WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexType,
-					(void*)WinHND->GeometryObjects.Interleaved[i].IndexInfo.ByteOffsetEBO,
-					WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset);
-			}
-			else
-			{
-				glDrawArrays(RenderMode, WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset,
-					     WinHND->GeometryObjects.Interleaved[i].VertexInfo.VAttrCount);
+				primitive_create_info_t Prim = WinHND->Scene.Prim[Mesh.base_index + t];
+				if(Prim.IndexInfo.IndexCount)
+				{
+					glDrawElementsBaseVertex(RenderMode, Prim.IndexInfo.IndexCount,
+								 Prim.IndexInfo.IndexType,
+								 (void*)Prim.IndexInfo.ByteOffsetEBO,
+								 Prim.VertexInfo.VertexOffset);
+				}
+				else
+				{
+					glDrawArrays(RenderMode, Prim.VertexInfo.VertexOffset,
+						     Prim.VertexInfo.VAttrCount);
+				}
 			}
 		}
 #endif
@@ -386,34 +390,40 @@ int main(void)
 		glUniform3f(viewpos_uni, WinHND->Camera.Position.x, WinHND->Camera.Position.y,
 			    WinHND->Camera.Position.z);
 
-		for(unsigned int i = 0; i < WinHND->GeometryObjects.Position; i++)
+		for(unsigned int i = 0; i < WinHND->Scene.NodePosition; i++)
 		{
-			if(WinHND->GeometryObjects.Visible[i] == VIS_STATUS_FREED)
+			node_create_info_t Node = WinHND->Scene.Node[i];
+			if(Node.Visible == VIS_STATUS_FREED)
 			{
 				continue;
 			}
 
-			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->GeometryObjects.Model[i]));
-			glUniformMatrix3fv(minvt_uni, 1, GL_FALSE,
-					   glm::value_ptr(WinHND->GeometryObjects.Interleaved[i].ModelInvTrans));
-			glUniform3fv(objcolor_uni, 1, glm::value_ptr(WinHND->GeometryObjects.Interleaved[i].Color));
+			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
 
-			glBindTextureUnit(0, WinHND->GeometryObjects.Interleaved[i].TexInfo.TexArray[0]);
-			glBindTextureUnit(1, WinHND->GeometryObjects.Interleaved[i].TexInfo.TexArray[1]);
-			glBindTextureUnit(2, WinHND->GeometryObjects.Interleaved[i].TexInfo.TexArray[2]);
+			mesh_info_t Mesh = WinHND->Scene.Mesh[Node.MeshIndex];
+			for(uint32_t t = 0; t < Mesh.size; t++)
+			{
+				primitive_create_info_t Prim = WinHND->Scene.Prim[Mesh.base_index + t];
 
-			if(WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount)
-			{
-				glDrawElementsBaseVertex(
-					RenderMode, WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexCount,
-					WinHND->GeometryObjects.Interleaved[i].IndexInfo.IndexType,
-					(void*)WinHND->GeometryObjects.Interleaved[i].IndexInfo.ByteOffsetEBO,
-					WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset);
-			}
-			else
-			{
-				glDrawArrays(RenderMode, WinHND->GeometryObjects.Interleaved[i].VertexInfo.VertexOffset,
-					     WinHND->GeometryObjects.Interleaved[i].VertexInfo.VAttrCount);
+				glUniformMatrix3fv(minvt_uni, 1, GL_FALSE, glm::value_ptr(Prim.ModelInvTrans));
+				glUniform3fv(objcolor_uni, 1, glm::value_ptr(Prim.Color));
+
+				glBindTextureUnit(0, Prim.TexInfo.TexArray[0]);
+				glBindTextureUnit(1, Prim.TexInfo.TexArray[1]);
+				glBindTextureUnit(2, Prim.TexInfo.TexArray[2]);
+
+				if(Prim.IndexInfo.IndexCount)
+				{
+					glDrawElementsBaseVertex(RenderMode, Prim.IndexInfo.IndexCount,
+								 Prim.IndexInfo.IndexType,
+								 (void*)Prim.IndexInfo.ByteOffsetEBO,
+								 Prim.VertexInfo.VertexOffset);
+				}
+				else
+				{
+					glDrawArrays(RenderMode, Prim.VertexInfo.VertexOffset,
+						     Prim.VertexInfo.VAttrCount);
+				}
 			}
 		}
 
@@ -467,12 +477,12 @@ int main(void)
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		FrameEndTime = glfwGetTime();
-		WinHND->FrameTimeMS = (FrameEndTime - CurrFrameTime) * 1000.0f;
+		WinHND->FrameTimeMS = (FrameEndTime - FrameStartTime) * 1000.0f;
 
 		glfwSwapBuffers(Window);
 
-		WinHND->DeltaTime = CurrFrameTime - WinHND->PrevFrameTime;
-		WinHND->PrevFrameTime = CurrFrameTime;
+		WinHND->DeltaTime = FrameEndTime - WinHND->PrevFrameTime;
+		WinHND->PrevFrameTime = FrameEndTime;
 	}
 
 	// Free resources and exit - not technically necessary when this is the end of the program,
@@ -766,7 +776,7 @@ void GenerateInterfaceElements(window_handler_t* WinHND, bool* HelpWindow, bool*
 		WinHND->ShouldExit = true;
 	}
 	ImGui::Spacing();
-	ImGui::Text("Frame time: %.2f ms", WinHND->FrameTimeMS);
+	ImGui::Text("CPU Frame time: %.2f ms", WinHND->FrameTimeMS);
 	ImGui::Spacing();
 	ImGui::Text("Display rate: %.2f ms", WinHND->DeltaTime * 1000.0f);
 

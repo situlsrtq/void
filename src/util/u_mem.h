@@ -3,18 +3,13 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <glm/vec3.hpp>
-#include <glm/mat4x4.hpp>
-#include "rendertypes.h"
+
+#include "u_util.h"
 
 #define PROGRAM_MAX_OBJECTS 255
-#define OBJECT_ALLOC_ERROR PROGRAM_MAX_OBJECTS+1
-#define VIS_STATUS_VISIBLE 1
-#define VIS_STATUS_INVISIBLE 0
-#define VIS_STATUS_FREED 2
+#define BOUNDS_REACHED PROGRAM_MAX_OBJECTS + 1
 
-// For internal use, never user-accessible
-struct free_list_t
+struct index_free_list_t
 {
 	uint32_t NextFreePosition = 0;
 	uint32_t OpenPositions[PROGRAM_MAX_OBJECTS];
@@ -23,42 +18,21 @@ struct free_list_t
 	uint32_t Pop();
 };
 
-// User accessible
-struct geometry_interleaved_info_t
+struct linked_block_t
 {
-	bool New;
-	bool Deleted;
-	index_info_t IndexInfo;
-	vertex_info_t VertexInfo;
-	texture_info_t TexInfo;
-	glm::vec3 Color;
-	glm::vec3 MinBB;
-	glm::vec3 MaxBB;
-	glm::mat3 ModelInvTrans;
+	linked_block_t* prev;
+	linked_block_t* next;
+	uint32_t base_index;
+	uint32_t size;
 };
 
-struct geometry_create_info_t
+struct block_free_list_t
 {
-	geometry_interleaved_info_t Interleaved;
-	glm::mat4 Model;
-};
+	linked_block_t* root;
 
-// User accessible
-struct geometry_state_t
-{
-	uint32_t Position;
-	uint8_t Visible[PROGRAM_MAX_OBJECTS];
-
-	geometry_interleaved_info_t Interleaved[PROGRAM_MAX_OBJECTS];
-	glm::mat4 Model[PROGRAM_MAX_OBJECTS];
-
-	uint32_t Alloc(const geometry_create_info_t& CreateInfo);
-	void Free(uint32_t FreedIndex);
-
-	private:
-
-	// Prevent Push() or Pop() being called outside of provided Alloc(), Free() functions
-	free_list_t FreeList;
+	void Push(uint32_t base_index, uint32_t size);
+	uint32_t Pop(uint32_t req_size);
+	void Merge(linked_block_t* node);
 };
 
 #endif
