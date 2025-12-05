@@ -55,6 +55,7 @@ int main(void)
 
 	char* CurrStringMem = (char*)ResourceStringMem;
 	const char* ResFile = "res/sponza.glb";
+	const char* Res2 = "res/chess.glb";
 	const char* UIFile = "config/imgui.ini";
 	// Drop the null terminator on OSPath intentionally, since it will be concatenated with
 	// paths. hacky stupid shit, will not last
@@ -71,6 +72,12 @@ int main(void)
 	memcpy(CurrStringMem, g_OSPath_r, pathlen);
 	memcpy(CurrStringMem + pathlen, UIFile, configlen);
 	char* GUIFile = CurrStringMem;
+
+	CurrStringMem += pathlen + configlen;
+
+	memcpy(CurrStringMem, g_OSPath_r, pathlen);
+	memcpy(CurrStringMem + pathlen, Res2, configlen);
+	char* Scene2 = CurrStringMem;
 
 	CurrStringMem += pathlen + configlen;
 
@@ -193,6 +200,18 @@ int main(void)
 	if(res == EXIT_FAILURE)
 	{
 		printf("System: Could not load scene file: %s\n", SceneFile);
+		return EXIT_FAILURE;
+	}
+	res = LoadSceneFromGLB(SceneFile, WinHND, &VAO, &VBufferState, VOID_TEX_COUNT);
+	if(res == EXIT_FAILURE)
+	{
+		printf("System: Could not load scene file: %s\n", SceneFile);
+		return EXIT_FAILURE;
+	}
+	res = LoadSceneFromGLB(SceneFile, WinHND, &VAO, &VBufferState, VOID_TEX_COUNT);
+	if(res == EXIT_FAILURE)
+	{
+		printf("System: Could not load scene file: %s\n", Scene2);
 		return EXIT_FAILURE;
 	}
 

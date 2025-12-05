@@ -2,6 +2,7 @@
 #define VOID_HASHMAP_H
 
 #include <stdint.h>
+#include <string.h>
 
 #include <murmur/MurmurHash3.h>
 

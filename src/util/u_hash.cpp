@@ -78,7 +78,15 @@ uint32_t hash_table_t::Find(void* search_key, int len)
 
 	while(displacement <= frame->displacement)
 	{
-		if(frame->key == search_key)
+		if(frame->key == 0x0)
+		{
+			frame++;
+			displacement++;
+			continue;
+		}
+
+		/* Switch to interned strings 
+		if(!strcmp((char*)frame->key, (char*)search_key))
 		{
 			return frame->value;
 		}
