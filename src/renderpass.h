@@ -2,9 +2,8 @@
 #define VOID_RENDERPASS_H
 
 #include <glad/glad.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
+
+#include "u_types.h"
 
 //-------------------------HDR---------------------------
 

@@ -2,10 +2,8 @@
 #define VOID_SHADERS_H
 
 #include <glad/glad.h>
-#include "PAL.h"
+#include "u_types.h"
 #include "u_util.h"
-#include <stdint.h>
-#include <stdlib.h>
 
 #define SHADER_INFOLOG_SIZE 512
 #define VOID_VERT_OPT 0x1

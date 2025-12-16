@@ -1,13 +1,8 @@
 #ifndef VOID_UMEMORY_H
 #define VOID_UMEMORY_H
 
-#include <stdint.h>
-#include <stdio.h>
-
+#include "u_types.h"
 #include "u_util.h"
-
-#define PROGRAM_MAX_OBJECTS 255
-#define BOUNDS_REACHED PROGRAM_MAX_OBJECTS + 1
 
 struct index_free_list_t
 {

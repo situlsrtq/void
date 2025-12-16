@@ -1,13 +1,12 @@
 #ifndef VOID_HASHMAP_H
 #define VOID_HASHMAP_H
 
-#include <stdint.h>
-#include <string.h>
-
 #include <murmur/MurmurHash3.h>
 
-#define TABLE_SIZE 512
-#define KEY_NOT_FOUND TABLE_SIZE + 1
+#include "u_types.h"
+
+#define TABLE_SIZE PROGRAM_MAX_OBJECTS
+#define KEY_NOT_FOUND OBJECT_ALLOC_ERROR
 #define TABLE_SEED 42069
 
 #define FLAG_AVAILABLE 0
@@ -23,7 +22,7 @@ struct robin_node_t
 
 struct hash_table_t
 {
-	robin_node_t table[TABLE_SIZE];
+	robin_node_t table[PROGRAM_MAX_OBJECTS];
 
 	void Insert(void* key, int len, uint32_t value);
 	void Remove(void* key);

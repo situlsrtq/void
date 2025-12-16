@@ -1,10 +1,9 @@
 #ifndef VOID_RTYPES_H
 #define VOID_RTYPES_H
 
-#include <stdint.h>
+#include "u_types.h"
 
 #define VOID_TEX_COUNT 3
-
 #define VOID_VBUFCOUNT_FMT 5
 #define VOID_TEXCOUNT_FMT 3
 #define INDEX_BUFFER 0

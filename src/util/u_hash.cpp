@@ -85,7 +85,6 @@ uint32_t hash_table_t::Find(void* search_key, int len)
 			continue;
 		}
 
-		/* Switch to interned strings 
 		if(!strcmp((char*)frame->key, (char*)search_key))
 		{
 			return frame->value;

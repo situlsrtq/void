@@ -1,12 +1,7 @@
 #ifndef VOID_UTIL_H
 #define VOID_UTIL_H
 
-#include <cstddef>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-#include <assert.h>
+#include "u_types.h"
 
 namespace UTIL
 {

@@ -797,7 +797,7 @@ void GenerateInterfaceElements(window_handler_t* WinHND, bool* HelpWindow, bool*
 	ImGui::Spacing();
 	ImGui::Text("CPU Frame time: %.2f ms", WinHND->FrameTimeMS);
 	ImGui::Spacing();
-	ImGui::Text("Display rate: %.2f ms", WinHND->DeltaTime * 1000.0f);
+	ImGui::Text("Frame present time: %.2f ms", WinHND->DeltaTime * 1000.0f);
 
 	ImGui::End();
 }

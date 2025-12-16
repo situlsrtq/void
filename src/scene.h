@@ -1,16 +1,13 @@
 #ifndef VOID_SCENE_H
 #define VOID_SCENE_H
 
-#include <stdint.h>
-#include <stdio.h>
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 
 #include "rendertypes.h"
+#include "u_types.h"
 #include "u_mem.h"
 
-#define PROGRAM_MAX_OBJECTS 255
-#define OBJECT_ALLOC_ERROR PROGRAM_MAX_OBJECTS + 1
 #define VIS_STATUS_VISIBLE 1
 #define VIS_STATUS_INVISIBLE 0
 #define VIS_STATUS_FREED 2

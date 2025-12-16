@@ -1,5 +1,5 @@
-#ifndef MBOX_WINDOW_H
-#define MBOX_WINDOW_H
+#ifndef VOID_WINDOW_H
+#define VOID_WINDOW_H
 
 #include <imgui/imgui.h>
 #include <glm/mat4x4.hpp>

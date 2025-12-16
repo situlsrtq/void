@@ -23,12 +23,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #endif
 
-#include <stdint.h>
-
 #include "PAL.h"
 
 #include "window.h"
 #include "u_mem.h"
+#include "u_types.h"
 #include "scene.h"
 #include "gltf.h"
 
