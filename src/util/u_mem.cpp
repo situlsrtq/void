@@ -1,4 +1,66 @@
 #include "u_mem.h"
+#include <cstdlib>
+
+int linear_arena_t::Init(uint32_t size)
+{
+	BaseAddr = malloc(size);
+	if(BaseAddr == 0x0)
+	{
+		printf("System: failed to allocate arena\n");
+		return EXIT_FAILURE;
+	}
+
+	Position = 0;
+	Size = size;
+
+	return EXIT_SUCCESS;
+}
+
+int linear_arena_t::Alloc(uint32_t* Handle, uint32_t len)
+{
+	if(Position + len >= Size)
+	{
+		int res = Resize();
+		if(res == EXIT_FAILURE)
+		{
+			printf("Arena: could not allocate (resize failed)\n");
+			return EXIT_FAILURE;
+		}
+	}
+
+	*Handle = Position;
+	Position += len;
+	return EXIT_SUCCESS;
+}
+
+void linear_arena_t::Reset()
+{
+	Position = 0;
+	return;
+}
+
+void linear_arena_t::Release()
+{
+	UTIL::Free(BaseAddr);
+	Position = 0;
+	Size = 0;
+	return;
+}
+
+// Block allocator will only ever size up
+int linear_arena_t::Resize()
+{
+	void* tmp = realloc(BaseAddr, Size + (1 * V_MIB));
+	if(tmp == 0x0)
+	{
+		printf("System: failed to reallocate arena on resize request\n");
+		return EXIT_FAILURE;
+	}
+
+	BaseAddr = tmp;
+	Size += 1 * V_MIB;
+	return EXIT_SUCCESS;
+}
 
 uint32_t index_free_list_t::Pop()
 {

@@ -4,6 +4,22 @@
 #include "u_types.h"
 #include "u_util.h"
 
+struct linear_arena_t
+{
+	uint32_t Position;
+	uint32_t Size;
+	void* BaseAddr;
+
+	int Init(uint32_t size);
+	int Alloc(uint32_t* Result, uint32_t len);
+	void Reset();
+	void Release();
+
+	private:
+
+	int Resize();
+};
+
 struct index_free_list_t
 {
 	uint32_t NextFreePosition = 0;

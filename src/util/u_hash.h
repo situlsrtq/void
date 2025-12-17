@@ -3,6 +3,7 @@
 
 #include <murmur/MurmurHash3.h>
 
+#include "u_mem.h"
 #include "u_types.h"
 
 #define TABLE_SIZE PROGRAM_MAX_OBJECTS
@@ -22,9 +23,10 @@ struct robin_node_t
 
 struct hash_table_t
 {
+	linear_arena_t StringArena;
 	robin_node_t table[PROGRAM_MAX_OBJECTS];
 
-	void Insert(void* key, int len, uint32_t value);
+	uint32_t Insert(void* key, int len, uint32_t value);
 	void Remove(void* key);
 	uint32_t Find(void* search_key, int len);
 
