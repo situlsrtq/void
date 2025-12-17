@@ -233,7 +233,7 @@ int TextureToGPU(primitive_create_info_t* CreateInfo, const uint32_t Texture, co
 	uint32_t texsize;
 	uint64_t absbufferoffset;
 
-	hash_res = g_test_table->Find(filetex->image->name, strlen(filetex->image->name));
+	hash_res = g_test_table->Find(filetex->image->name, strlen(filetex->image->name)+1);
 	if(hash_res == KEY_NOT_FOUND)
 	{
 		texsize = filetex->image->buffer_view->size;
@@ -245,7 +245,7 @@ int TextureToGPU(primitive_create_info_t* CreateInfo, const uint32_t Texture, co
 			return EXIT_FAILURE;
 		}
 
-		g_test_table->Insert(filetex->image->name, strlen(filetex->image->name),
+		g_test_table->Insert(filetex->image->name, strlen(filetex->image->name)+1,
 				     CreateInfo->TexInfo.TexArray[Texture]);
 	}
 	else
@@ -355,7 +355,7 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 		glm::mat3 node_inv_trans = glm::mat3(inverse(transpose(node_matrix)));
 
 		cgltf_mesh* mesh = node->mesh;
-		mesh_index = g_test_table->Find(mesh->name, strlen(mesh->name));
+		mesh_index = g_test_table->Find(mesh->name, strlen(mesh->name)+1);
 		if(mesh_index == KEY_NOT_FOUND)
 		{
 			mesh_index = WinHND->Scene.AddMesh(mesh->primitives_count);
@@ -400,7 +400,7 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 			NodeInfo.MeshIndex = mesh_index;
 			WinHND->Scene.AddNode(NodeInfo, node_matrix);
 
-			g_test_table->Insert(mesh->name, strlen(mesh->name), mesh_index);
+			g_test_table->Insert(mesh->name, strlen(mesh->name)+1, mesh_index);
 		}
 
 		NodeInfo.Visible = VIS_STATUS_VISIBLE;

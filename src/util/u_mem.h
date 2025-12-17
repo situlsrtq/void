@@ -8,10 +8,11 @@ struct linear_arena_t
 {
 	uint32_t Position;
 	uint32_t Size;
+	uint64_t StepSize;
 	void* BaseAddr;
 
-	int Init(uint32_t size);
-	int Alloc(uint32_t* Result, uint32_t len);
+	int Init(uint32_t size, uint64_t step_size);
+	int Alloc(uint64_t* Handle, uint32_t len);
 	void Reset();
 	void Release();
 

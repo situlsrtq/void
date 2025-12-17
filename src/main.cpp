@@ -43,6 +43,11 @@ int main(void)
 	}
 
 	g_test_table = (hash_table_t*)calloc(1, sizeof(hash_table_t));
+	res = g_test_table->StringArena.Init(4 * V_MIB, 1 * V_MIB);
+	if(res != EXIT_SUCCESS)
+	{
+		printf("System: Failed to initialize resource hash table\n");
+	}
 
 	// TODO: per-thread string memory system, to be sized based on thread's need. Rendering
 	// manager will be heaviest user
@@ -208,7 +213,7 @@ int main(void)
 		printf("System: Could not load scene file: %s\n", SceneFile);
 		return EXIT_FAILURE;
 	}
-	res = LoadSceneFromGLB(SceneFile, WinHND, &VAO, &VBufferState, VOID_TEX_COUNT);
+	res = LoadSceneFromGLB(Scene2, WinHND, &VAO, &VBufferState, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
 	{
 		printf("System: Could not load scene file: %s\n", Scene2);

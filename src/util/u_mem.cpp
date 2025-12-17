@@ -1,7 +1,6 @@
 #include "u_mem.h"
-#include <cstdlib>
 
-int linear_arena_t::Init(uint32_t size)
+int linear_arena_t::Init(uint32_t size, uint64_t step_size)
 {
 	BaseAddr = malloc(size);
 	if(BaseAddr == 0x0)
@@ -12,11 +11,12 @@ int linear_arena_t::Init(uint32_t size)
 
 	Position = 0;
 	Size = size;
+	StepSize = step_size;
 
 	return EXIT_SUCCESS;
 }
 
-int linear_arena_t::Alloc(uint32_t* Handle, uint32_t len)
+int linear_arena_t::Alloc(uint64_t* Handle, uint32_t len)
 {
 	if(Position + len >= Size)
 	{
@@ -50,7 +50,7 @@ void linear_arena_t::Release()
 // Block allocator will only ever size up
 int linear_arena_t::Resize()
 {
-	void* tmp = realloc(BaseAddr, Size + (1 * V_MIB));
+	void* tmp = realloc(BaseAddr, Size + StepSize);
 	if(tmp == 0x0)
 	{
 		printf("System: failed to reallocate arena on resize request\n");
@@ -58,7 +58,7 @@ int linear_arena_t::Resize()
 	}
 
 	BaseAddr = tmp;
-	Size += 1 * V_MIB;
+	Size += StepSize;
 	return EXIT_SUCCESS;
 }
 
