@@ -421,9 +421,6 @@ int main(void)
 			{
 				continue;
 			}
-			float butt = sinf(glfwGetTime());
-			WinHND->Scene.ModelMatrix[i][3][0] += butt;
-			WinHND->Scene.ModelMatrix[i][3][1] += butt;
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
 
