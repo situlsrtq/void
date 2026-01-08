@@ -17,10 +17,36 @@
 #define SCREEN_X_DIM_DEFAULT 1000.0f
 #define SCREEN_Y_DIM_DEFAULT 1000.0f
 
-#define V_KIB (1024ULL)
-#define V_MIB (1024ULL * V_KIB)
-#define V_GIB (1024ULL * V_MIB)
-#define V_TIB (1024ULL * V_GIB)
+#define KIB (1024ULL)
+#define MIB (1024ULL * KIB)
+#define GIB (1024ULL * MIB)
+#define TIB (1024ULL * GIB)
+
+typedef int8_t i8;
+typedef int16_t i16;
+typedef int32_t i32;
+typedef int64_t i64;
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+inline constexpr u64 V_KIB(u32 IN)
+{
+	return (u64)(IN * KIB);
+}
+inline constexpr u64 V_MIB(u32 IN)
+{
+	return (u64)(IN * MIB);
+}
+inline constexpr u64 V_GIB(u32 IN)
+{
+	return (u64)(IN * GIB);
+}
+inline constexpr u64 V_TIB(u32 IN)
+{
+	return (u64)(IN * TIB);
+}
 
 //------- TODO: Move to Core module when such a thing exists ----------
 #ifdef DEBUG

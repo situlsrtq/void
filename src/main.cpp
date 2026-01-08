@@ -43,7 +43,7 @@ int main(void)
 	}
 
 	g_test_table = (hash_table_t*)calloc(1, sizeof(hash_table_t));
-	res = g_test_table->StringArena.Init(4 * V_MIB, 1 * V_MIB);
+	res = g_test_table->StringArena.Init(V_MIB(4), V_MIB(1));
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize resource hash table\n");
@@ -52,7 +52,7 @@ int main(void)
 	// TODO: per-thread string memory system, to be sized based on thread's need. Rendering
 	// manager will be heaviest user
 
-	void* ResourceStringMem = (char*)malloc(4 * V_MIB);
+	void* ResourceStringMem = (char*)malloc(V_MIB(4));
 	if(!ResourceStringMem)
 	{
 		return EXIT_FAILURE;
@@ -170,11 +170,11 @@ int main(void)
 
 	vertex_buffer_info_t VBufferState = {};
 	glCreateBuffers(VOID_VBUFCOUNT_FMT, VBufferState.VBufferArray);
-	glNamedBufferStorage(VBufferState.VBufferArray[INDEX_BUFFER], 100 * V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[POS_BUFFER], 100 * V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[NORM_BUFFER], 100 * V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[TAN_BUFFER], 100 * V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[TEX_BUFFER], 100 * V_MIB, 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[INDEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[POS_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[NORM_BUFFER],V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[TAN_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[TEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
 
 	unsigned int VAO;
 	glCreateVertexArrays(1, &VAO);
@@ -423,6 +423,9 @@ int main(void)
 			{
 				continue;
 			}
+			float butt = sinf(glfwGetTime());
+			WinHND->Scene.ModelMatrix[i][3][0] += butt;
+			WinHND->Scene.ModelMatrix[i][3][1] += butt;
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
 
