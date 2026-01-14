@@ -320,6 +320,8 @@ int main(void)
 	float FrameEndTime = 0;
 	exposure_val = 0.5;
 
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 	glEnable(GL_DEPTH_TEST);
 	int RenderMode = GL_TRIANGLES;
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
