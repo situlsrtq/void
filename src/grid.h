@@ -9,7 +9,7 @@
 #define GRID_DYNAMIC 1
 
 /*
- Loose/Tight dual grid scheme means we can treat every object as an infinitely small point located at the object's
+Loose/Tight dual grid scheme means we can treat every object as an infinitely small point located at the object's
 center, which is inserted into the loose grid (linked list for nodes within a cell). The loose cell expands/shrinks to fit
 its largest member.
  --
@@ -18,26 +18,43 @@ its largest member.
 The camera frustum is checked against the tight grid. In a CPU-only culling scheme, the nodes in the loose cells can
 be checked against the frustum as well. In a GPU-driven scheme, all the nodes in the loose grid cells get added to the command
 buffer for the GPU to more precisely cull
+
+Probably a strong argument for queueing a more narrow cull only if the element density after broad phase exceeds some heuristic
 */
 
-struct loose_grid_element_t
+struct grid_element_t
 {
 	u32 node_id;
 	i32 next_element;
-	float radius;
 };
 
-struct loose_grid_cell_t
+struct loose_cell_t
 {
 	i32 first_element;
-	float radius;
-	glm::vec2 center;
+	float half_height, half_width;
 };
 
-struct loose_grid_t
+struct tight_cell_t
 {
-	loose_grid_cell_t* grid_cells;
-	i32 num_cells;
+	// TODO: figure out loose cell tracking
+	i32 first_loose_cell;
+};
+
+template<typename T>
+struct grid_info_t
+{
+	T* cells;
+	i32 num_columns, num_rows;
+	float inverse_cell_width, inverse_cell_height;
+};
+
+struct dual_grid_t
+{
+	grid_info_t<loose_cell_t> loose_grid;
+	grid_info_t<tight_cell_t> tight_grid;
+	grid_element_t* elements;
+	i32 grid_min_x, grid_max_x;
+	i32 grid_min_y, grid_max_y;
 };
 
 // TODO: Remember to add non-culled nodes to a list, rather than attempting to draw directly using the node_id, which
