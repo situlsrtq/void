@@ -53,7 +53,7 @@ struct grid_info_t
 {
 	T* cells;
 	u32 num_columns, num_rows;
-	float inverse_cell_size; // All grids are composed of perfectly square cells
+	float inverse_cell_size; // All grids are composed of perfectly square cells TODO: default to 8x8 (loose) and 32x32 (tight) for now
 };
 
 struct dual_grid_t
