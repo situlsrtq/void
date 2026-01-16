@@ -2,6 +2,7 @@
 #define VOID_GRID_H
 
 #include <glm/vec2.hpp>
+#include <glm/mat4x4.hpp>
 
 #include "u_types.h"
 
@@ -9,6 +10,7 @@
 #define GRID_DYNAMIC 1
 
 typedef void* (*alloc_func)(u64);
+typedef void (*free_func)(void*);
 
 /*
 Loose/Tight dual grid scheme means we can treat every object as an infinitely small point located at the object's
@@ -46,6 +48,7 @@ struct tight_node_t
 struct tight_cell_t
 {
 	i32 first_node;
+	u32 center;
 };
 
 template<typename T>
@@ -62,17 +65,21 @@ struct dual_grid_t
 	grid_info_t<tight_cell_t> tight_grid;
 	grid_element_t* elements;
 	tight_node_t* nodes;
+	float tcell_effective_radius;
 	i32 grid_min_x; // These values are retained to offset the grids to Quadrant 1
 	i32 grid_min_y;
 
 	int init(glm::ivec2 global_min, glm::ivec2 global_max, u32 loose_cell_size, u32 tight_cell_size,
-		 alloc_func allocator);
+		 alloc_func alloc, free_func free);
 	void release();
 };
 
 void dual_grid_insert(dual_grid_t* grid, glm::vec2 aabb_min, glm::vec2 aabb_max);
+void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
 void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec2 center);
-void dual_grid_t_optimize(int usage_flag);
+void dual_grid_optimize(int usage_flag);
+some_kind_of_command_queue dual_grid_frustum_cull(const dual_grid_t& grid, const glm::mat4& view_matrix, const frustum_info_t& frustum);
+// find frustum center - CameraPosition + (CameraForward * (near_distance + far_distance) / 2), start in that cell. transform cell center to camera space, if center dot plane <= -radius, cull 
 
 // TODO: Remember to add non-culled nodes to a list, rather than attempting to draw directly using the node_id, which
 // will cause cache misses galore
