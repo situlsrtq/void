@@ -6,7 +6,7 @@
 #include <glm/geometric.hpp>
 #include <glm/vec3.hpp>
 
-struct mbox_camera_t
+struct camera_info_t
 {
 	// Fixed values - changed by system code
 	float Sensitivity = 0.1f;
@@ -14,6 +14,11 @@ struct mbox_camera_t
 	float Yaw = -90.0f;
 	float Pitch = 0.0f;
 
+	float h_fov;
+	float focal_length;
+	float aspect_ratio;
+	float near_plane_distance;
+	float far_plane_distance;
 	glm::vec3 Eye = {0.0f, 0.0f, -1.0f};
 	glm::vec3 UpAxis = {0.0f, 1.0f, 0.0f};
 

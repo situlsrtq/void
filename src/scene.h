@@ -15,17 +15,17 @@
 struct linked_node_t
 {
 	linked_node_t* next;
-	uint32_t index;
+	u32 index;
 };
 
 struct mesh_info_t
 {
 	linked_node_t* node_list;
-	uint32_t base_index;
-	uint32_t size;
+	u32 base_index;
+	u32 size;
 
-	void AddNode(uint32_t index);
-	void RemoveNode(uint32_t index);
+	void AddNode(u32 index);
+	void RemoveNode(u32 index);
 };
 
 struct primitive_create_info_t
@@ -41,26 +41,26 @@ struct primitive_create_info_t
 
 struct node_create_info_t
 {
-	uint32_t Visible;
-	uint32_t MeshIndex;
+	u32 node_id;
+	u32 MeshIndex;
 };
 
 struct scene_info_t
 {
-	uint32_t MeshPosition;
-	uint32_t PrimPosition;
-	uint32_t NodePosition;
+	u32 MeshPosition;
+	u32 PrimPosition;
+	u32 NodePosition;
 
 	mesh_info_t Mesh[PROGRAM_MAX_OBJECTS];
 	primitive_create_info_t Prim[PROGRAM_MAX_OBJECTS];
 	node_create_info_t Node[PROGRAM_MAX_OBJECTS];
 	glm::mat4 ModelMatrix[PROGRAM_MAX_OBJECTS];
 
-	uint32_t AddMesh(uint32_t num_primitives);
-	void FreeMesh(uint32_t FreedIndex);
-	void AddPrimitive(const primitive_create_info_t& CreateInfo, uint32_t index);
-	uint32_t AddNode(const node_create_info_t& CreateInfo, const glm::mat4& ModelIn);
-	void FreeNode(uint32_t FreedIndex);
+	u32 AddMesh(u32 num_primitives);
+	void FreeMesh(u32 FreedIndex);
+	void AddPrimitive(const primitive_create_info_t& CreateInfo, u32 index);
+	u32 AddNode(const node_create_info_t& CreateInfo, const glm::mat4& ModelIn);
+	void FreeNode(u32 FreedIndex);
 
 	private:
 

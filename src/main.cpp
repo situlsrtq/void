@@ -1,4 +1,5 @@
 #include "main.h"
+#include "u_types.h"
 
 // TODO: Get rid of runtime path discovery in release builds
 
@@ -27,9 +28,9 @@ unsigned int minvt_uni;
 unsigned int view_uni;
 unsigned int viewpos_uni;
 unsigned int projection_uni;
-unsigned int lightpos_uni;
+unsigned int light_dir_uni;
 unsigned int objcolor_uni;
-unsigned int lightcolor_uni;
+unsigned int light_color_uni;
 unsigned int ambistrgth_uni;
 unsigned int exposure_uni;
 float exposure_val;
@@ -82,7 +83,7 @@ int main(void)
 
 	memcpy(CurrStringMem, g_OSPath_r, pathlen);
 	memcpy(CurrStringMem + pathlen, Res2, configlen);
-	char* Scene2 = CurrStringMem;
+	// char* Scene2 = CurrStringMem;
 
 	CurrStringMem += pathlen + configlen;
 
@@ -172,7 +173,7 @@ int main(void)
 	glCreateBuffers(VOID_VBUFCOUNT_FMT, VBufferState.VBufferArray);
 	glNamedBufferStorage(VBufferState.VBufferArray[INDEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
 	glNamedBufferStorage(VBufferState.VBufferArray[POS_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[NORM_BUFFER],V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.VBufferArray[NORM_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
 	glNamedBufferStorage(VBufferState.VBufferArray[TAN_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
 	glNamedBufferStorage(VBufferState.VBufferArray[TEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
 
@@ -207,6 +208,7 @@ int main(void)
 		printf("System: Could not load scene file: %s\n", SceneFile);
 		return EXIT_FAILURE;
 	}
+	/*
 	res = LoadSceneFromGLB(SceneFile, WinHND, &VAO, &VBufferState, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
 	{
@@ -219,6 +221,7 @@ int main(void)
 		printf("System: Could not load scene file: %s\n", Scene2);
 		return EXIT_FAILURE;
 	}
+	*/
 
 	// TODO: switch to glDrawElementsIndirectCommand
 	// /!\ remember to make changes where the draw calls actually happen too
@@ -255,9 +258,9 @@ int main(void)
 	view_uni = glGetUniformLocation(WinHND->MainShader.ID, "view");
 	viewpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "viewpos");
 	projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
-	lightpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightpos");
+	light_dir_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightdir");
 	objcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "objcolor");
-	lightcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
+	light_color_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
 	ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
 
 	// Post pass
@@ -309,11 +312,16 @@ int main(void)
 
 	// Initialize first-frame data
 
-	WinHND->Projection = glm::perspective(glm::radians(VOID_HFOV_DEFAULT),
-					      SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT, 0.1f, 100.0f);
+	WinHND->Camera.h_fov = glm::radians(VOID_HFOV_DEFAULT);
+	WinHND->Camera.focal_length = SCREEN_Y_DIM_DEFAULT / (2.0f * tanf(WinHND->Camera.h_fov / 2.0f));
+	WinHND->Camera.aspect_ratio = SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT;
+	WinHND->Camera.near_plane_distance = 0.1f;
+	WinHND->Camera.far_plane_distance = 100.0f;
+	WinHND->Projection = glm::perspective(WinHND->Camera.h_fov, WinHND->Camera.aspect_ratio,
+					      WinHND->Camera.near_plane_distance, WinHND->Camera.far_plane_distance);
 
 	glm::mat4 Model = {};
-	glm::vec3 LightPosition = {1.2f, 1.0f, 2.0f};
+	glm::vec3 LightDirection = {1.2f, -10.0f, 2.0f};
 	glm::vec3 lightScale = {0.2f, 0.2f, 0.2f};
 
 	float FrameStartTime = 0;
@@ -367,11 +375,14 @@ int main(void)
 
 		for(unsigned int i = 0; i < WinHND->Scene.NodePosition; i++)
 		{
+			this needs to be fixed once we're drawing out of the grid instead of the node list directly
+      			/*
 			node_create_info_t Node = WinHND->Scene.Node[i];
 			if(Node.Visible == VIS_STATUS_FREED)
 			{
 				continue;
 			}
+			*/
 
 			glUniform1f(pickingindex_uni, float(i + 1));
 			glUniform1f(pickingtype_uni, float(1));
@@ -407,8 +418,8 @@ int main(void)
 		WinHND->MainShader.Use();
 
 		glUniform1f(ambistrgth_uni, 0.1f);
-		glUniform3f(lightcolor_uni, 1.0f, 1.0f, 1.0f);
-		glUniform3f(lightpos_uni, LightPosition.x, LightPosition.y, LightPosition.z);
+		glUniform3f(light_color_uni, 1.0f, 1.0f, 1.0f);
+		glUniform3f(light_dir_uni, LightDirection.x, LightDirection.y, LightDirection.z);
 
 		glUniformMatrix4fv(projection_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Projection));
 
@@ -469,7 +480,6 @@ int main(void)
 		glUniform3f(objcolor_uni, 1.0f, 1.0f, 1.0f);
 		Model = glm::mat4(1.0f);
 		Model = glm::scale(Model, lightScale);
-		Model = glm::translate(Model, LightPosition);
 		glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(Model));
 
 		/*
@@ -533,8 +543,10 @@ void FrameResizeCallback(GLFWwindow* Window, int new_screen_width, int new_scree
 	WinHND->Height = new_screen_height;
 
 	// Also resize camera frustum and all existing framebuffers
-	WinHND->Projection = glm::perspective(glm::radians(VOID_HFOV_DEFAULT),
-					      (float)new_screen_width / (float)new_screen_height, 0.1f, 100.0f);
+	WinHND->Camera.focal_length = new_screen_height / (2.0f * tanf(WinHND->Camera.h_fov / 2.0f));
+	WinHND->Camera.aspect_ratio = (float)new_screen_width / (float)new_screen_height;
+	WinHND->Projection = glm::perspective(WinHND->Camera.h_fov, WinHND->Camera.aspect_ratio,
+					      WinHND->Camera.near_plane_distance, WinHND->Camera.far_plane_distance);
 	WinHND->HDRPass.Release();
 	WinHND->HDRPass.Init(new_screen_width, new_screen_height);
 	WinHND->PickPass.Release();
@@ -586,9 +598,9 @@ void ProcessInput(GLFWwindow* Window)
 			view_uni = glGetUniformLocation(WinHND->MainShader.ID, "view");
 			viewpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "viewpos");
 			projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
-			lightpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightpos");
+			light_dir_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightdir");
 			objcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "objcolor");
-			lightcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
+			light_color_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
 			ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
 
 			PKeyWasDown = 0;

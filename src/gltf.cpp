@@ -396,14 +396,12 @@ int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned 
 				WinHND->Scene.AddPrimitive(PrimInfo, WinHND->Scene.Mesh[mesh_index].base_index + t);
 			}
 
-			NodeInfo.Visible = VIS_STATUS_VISIBLE;
 			NodeInfo.MeshIndex = mesh_index;
 			WinHND->Scene.AddNode(NodeInfo, node_matrix);
 
 			g_test_table->Insert(mesh->name, strlen(mesh->name)+1, mesh_index);
 		}
 
-		NodeInfo.Visible = VIS_STATUS_VISIBLE;
 		NodeInfo.MeshIndex = mesh_index;
 		WinHND->Scene.AddNode(NodeInfo, node_matrix);
 	}

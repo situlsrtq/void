@@ -34,7 +34,7 @@ struct window_handler_t
 	shader_program_t PickShader;
 	fb_hdr_t HDRPass;
 	fb_mpick_t PickPass;
-	mbox_camera_t Camera;
+	camera_info_t Camera;
 	glm::mat4 View;
 	glm::mat4 Projection;
 	primitive_create_info_t Active; // for fucking with primitives, later

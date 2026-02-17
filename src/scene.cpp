@@ -1,6 +1,6 @@
 #include "scene.h"
 
-void mesh_info_t::AddNode(uint32_t index)
+void mesh_info_t::AddNode(u32 index)
 {
 	linked_node_t* node = node_list;
 	while(node != 0x0)
@@ -13,7 +13,7 @@ void mesh_info_t::AddNode(uint32_t index)
 	node->next = 0x0;
 }
 
-void mesh_info_t::RemoveNode(uint32_t index)
+void mesh_info_t::RemoveNode(u32 index)
 {
 	linked_node_t* node = node_list;
 	if(node == 0x0)
@@ -48,19 +48,19 @@ void mesh_info_t::RemoveNode(uint32_t index)
 	return;
 }
 
-uint32_t scene_info_t::AddMesh(uint32_t num_primitives)
+u32 scene_info_t::AddMesh(u32 num_primitives)
 {
-	uint32_t index;
+	u32 mesh_id;
 
 	if(MeshList.NextFreePosition > 0)
 	{
-		index = MeshList.Pop();
+		mesh_id = MeshList.Pop();
 	}
 	else
 	{
-		index = MeshPosition;
+		mesh_id = MeshPosition;
 
-		if(index >= PROGRAM_MAX_OBJECTS)
+		if(mesh_id >= PROGRAM_MAX_OBJECTS)
 		{
 			printf("System: Object Limit Reached\n");
 			return OBJECT_ALLOC_ERROR;
@@ -77,58 +77,58 @@ uint32_t scene_info_t::AddMesh(uint32_t num_primitives)
 			return OBJECT_ALLOC_ERROR;
 		}
 
-		Mesh[index].base_index = PrimPosition;
-		Mesh[index].size = num_primitives;
+		Mesh[mesh_id].base_index = PrimPosition;
+		Mesh[mesh_id].size = num_primitives;
 		PrimPosition += num_primitives;
-		return index;
+		return mesh_id;
 	}
 
-	Mesh[index].base_index = PrimList.Pop(num_primitives);
-	Mesh[index].size = num_primitives;
-	return index;
+	Mesh[mesh_id].base_index = PrimList.Pop(num_primitives);
+	Mesh[mesh_id].size = num_primitives;
+	return mesh_id;
 }
 
-void scene_info_t::FreeMesh(uint32_t FreedIndex)
+void scene_info_t::FreeMesh(u32 mesh_id)
 {
 	if(MeshPosition == 0)
 	{
 		printf("System: Object array empty, nothing to free\n");
 		return;
 	}
-	if(FreedIndex >= MeshPosition || FreedIndex >= PROGRAM_MAX_OBJECTS)
+	if(mesh_id >= MeshPosition || mesh_id >= PROGRAM_MAX_OBJECTS)
 	{
 		printf("System: Out of bounds on free list\n");
 		return;
 	}
 
-	while(Mesh[FreedIndex].node_list != 0x0)
+	while(Mesh[mesh_id].node_list != 0x0)
 	{
-		FreeNode(Mesh[FreedIndex].node_list->index);
+		FreeNode(Mesh[mesh_id].node_list->index);
 	}
 
-	PrimList.Push(Mesh[FreedIndex].base_index, Mesh[FreedIndex].size);
-	MeshList.Push(FreedIndex);
+	PrimList.Push(Mesh[mesh_id].base_index, Mesh[mesh_id].size);
+	MeshList.Push(mesh_id);
 }
 
-void scene_info_t::AddPrimitive(const primitive_create_info_t& CreateInfo, uint32_t index)
+void scene_info_t::AddPrimitive(const primitive_create_info_t& CreateInfo, u32 prim_id)
 {
-	Prim[index] = CreateInfo;
+	Prim[prim_id] = CreateInfo;
 	return;
 }
 
 uint32_t scene_info_t::AddNode(const node_create_info_t& CreateInfo, const glm::mat4& ModelIn)
 {
-	uint32_t index;
+	u32 node_id;
 
 	if(NodeList.NextFreePosition > 0)
 	{
-		index = NodeList.Pop();
+		node_id = NodeList.Pop();
 	}
 	else
 	{
-		index = NodePosition;
+		node_id = NodePosition;
 
-		if(index >= PROGRAM_MAX_OBJECTS)
+		if(node_id >= PROGRAM_MAX_OBJECTS)
 		{
 			printf("System: Object Limit Reached\n");
 			return OBJECT_ALLOC_ERROR;
@@ -137,29 +137,29 @@ uint32_t scene_info_t::AddNode(const node_create_info_t& CreateInfo, const glm::
 		NodePosition++;
 	}
 
-	Node[index] = CreateInfo;
-	ModelMatrix[index] = ModelIn;
+	Node[node_id].MeshIndex = CreateInfo.MeshIndex;
+	Node[node_id].node_id = node_id;
+	ModelMatrix[node_id] = ModelIn;
 
-	Mesh[Node->MeshIndex].AddNode(index);
+	Mesh[Node->MeshIndex].AddNode(node_id);
 
-	return index;
+	return node_id;
 }
 
-void scene_info_t::FreeNode(uint32_t FreedIndex)
+void scene_info_t::FreeNode(u32 node_id)
 {
 	if(NodePosition == 0)
 	{
 		printf("System: Object array empty, nothing to free\n");
 		return;
 	}
-	if(FreedIndex >= NodePosition || FreedIndex >= PROGRAM_MAX_OBJECTS)
+	if(node_id >= NodePosition || node_id >= PROGRAM_MAX_OBJECTS)
 	{
 		printf("System: Out of bounds on free list\n");
 		return;
 	}
 
-	Mesh[Node[FreedIndex].MeshIndex].RemoveNode(FreedIndex);
+	Mesh[Node[node_id].MeshIndex].RemoveNode(node_id);
 
-	NodeList.Push(FreedIndex);
-	Node[FreedIndex].Visible = VIS_STATUS_FREED;
+	NodeList.Push(node_id);
 }
