@@ -41,13 +41,23 @@ void dual_grid_frustum_cull(const dual_grid_t& grid, const camera_info_t& view_f
 
 	for(int i = min_y_tile; i <= max_y_tile; i++)
 	{
-		for(int t = min_x_tile; t = max_x_tile; t++)
+		for(int t = min_x_tile; t <= max_x_tile; t++)
 		{
-      			element = grid[i][t].first_element;
-      			while(element >= 0)
+			i32 node_index = grid.tight_grid.cells[(i * grid.tight_grid.num_columns) + t].first_node;
+      			while(node_index >= 0)
       			{
-				add_to_draw_list(grid_elements[element].node_id);	// Plus other node data as needed. Maybe AABB?
-				element = grid_elements[element].next_index;
+				tight_node_t tight_cell = grid.nodes[node_index];
+
+				i32 element_index = grid.loose_grid.cells[tight_cell.loose_cell_index].first_element;
+				while(element_index >= 0)
+				{
+					grid_element_t element = grid.elements[element_index];
+
+					add_to_draw_list(element.node_id); 
+					element_index = element.next_element;
+				}
+
+				node_index = tight_cell.next_node;
       			}
 		}
 	}

@@ -12,6 +12,7 @@
 
 #define GRID_STATIC 0
 #define GRID_DYNAMIC 1
+#define TRIANGLE_DENSITY_BEFORE_DUAL_CULL 1000000
 
 typedef void* (*alloc_func)(u64);
 typedef void (*free_func)(void*);
@@ -23,9 +24,9 @@ fit its largest member.
  --
  Each cell in the tight grid stores a linked list of the loose cells that currently intersect it.
  --
-The camera frustum is checked against the tight grid. In a CPU-only culling scheme, the nodes in the loose cells can
+The camera frustum is checked against the tight grid. In a CPU-only culling scheme, the nodes in the loose cells may
 be checked against the frustum as well. In a GPU-driven scheme, all the nodes in the loose grid cells get added to the
-command buffer for the GPU to more precisely cull
+command buffer for the GPU to more precisely cull, if desired
 
 Probably a strong argument for queueing a more narrow cull only if the triangle density after broad phase exceeds some
 heuristic
@@ -45,7 +46,7 @@ struct loose_cell_t
 
 struct tight_node_t
 {
-	i32 loose_cell_index;
+	u32 loose_cell_index;
 	i32 next_node;
 };
 
@@ -68,7 +69,6 @@ struct dual_grid_t
 	grid_info_t<tight_cell_t> tight_grid;
 	grid_element_t* elements;
 	tight_node_t* nodes;
-	float tcell_effective_radius;
 	i32 grid_min_x; // These values are retained to offset the grids to Quadrant 1
 	i32 grid_min_y;
 	// TODO: default to 8x8 (loose) and 32x32 (tight) for now
