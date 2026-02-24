@@ -571,6 +571,7 @@ void ProcessInput(GLFWwindow* Window)
 	WinHND->Camera.Move(Window);
 	WinHND->View = glm::lookAt(WinHND->Camera.Position, WinHND->Camera.Position + WinHND->Camera.Eye,
 				   WinHND->Camera.UpAxis);
+	WinHND->InverseVP = glm::inverse(WinHND->Projection * WinHND->View);
 
 	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS || WinHND->ShouldExit)
 	{

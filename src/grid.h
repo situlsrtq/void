@@ -83,7 +83,7 @@ void dual_grid_insert(dual_grid_t* grid, glm::vec2 aabb_min, glm::vec2 aabb_max)
 void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
 void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec2 center);
 void dual_grid_optimize(int usage_flag);
-void dual_grid_frustum_cull(const dual_grid_t& grid, const camera_info_t& view_frustum, glm::mat4* inverse_vp);
+void dual_grid_frustum_cull(const dual_grid_t& grid, const camera_info_t& view_frustum, const glm::mat4& inverse_vp);
 // find frustum center - CameraPosition + (CameraForward * (near_distance + far_distance) / 2), start in that cell.
 // transform cell center to camera space, if center dot plane <= -radius, cull
 

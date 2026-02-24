@@ -1,31 +1,17 @@
 #include "grid.h"
 
-void dual_grid_frustum_cull(const dual_grid_t& grid, const camera_info_t& view_frustum, glm::mat4* inverse_vp)
+void dual_grid_frustum_cull(const dual_grid_t& grid, const camera_info_t& view_frustum, const glm::mat4& inverse_vp)
 {
 	// Get range of grid tiles
 	glm::vec4 ndc_coords[8] = {{-1, -1, -1, 1}, {1, -1, -1, 1}, {1, 1, -1, 1}, {-1, 1, -1, 1},
 				   {-1, -1, 1, 1},  {1, -1, 1, 1},  {1, 1, 1, 1},  {-1, 1, 1, 1}};
-
-	glm::mat4 inv_vp;
-	if(inverse_vp == 0x0)
-	{
-		glm::mat4 v = glm::lookAt(view_frustum.Position, view_frustum.Position + view_frustum.Eye,
-					  view_frustum.UpAxis);
-		glm::mat4 p = glm::perspective(view_frustum.h_fov, view_frustum.aspect_ratio,
-					       view_frustum.near_plane_distance, view_frustum.far_plane_distance);
-		inv_vp = glm::inverse(p * v);
-	}
-	else
-	{
-		inv_vp = *inverse_vp;
-	}
 
 	glm::vec2 xy;
 	glm::vec2 xy_min = {FLT_MAX, FLT_MAX};
 	glm::vec2 xy_max = {FLT_MIN, FLT_MIN};
 	for(int i = 0; i < 8; i++)
 	{
-		glm::vec4 world_pos = inv_vp * ndc_coords[i];
+		glm::vec4 world_pos = inverse_vp * ndc_coords[i];
 		world_pos /= world_pos.w;
 		xy.x = world_pos.x;
 		xy.y = world_pos.y;

@@ -37,6 +37,7 @@ struct window_handler_t
 	camera_info_t Camera;
 	glm::mat4 View;
 	glm::mat4 Projection;
+	glm::mat4 InverseVP;
 	primitive_create_info_t Active; // for fucking with primitives, later
 	scene_info_t Scene;
 	ImGuiIO ImIO;
