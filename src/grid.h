@@ -69,6 +69,7 @@ struct dual_grid_t
 	grid_info_t<tight_cell_t> tight_grid;
 	grid_element_t* elements;
 	tight_node_t* nodes;
+	float inverse_tile_size;
 	i32 grid_min_x; // These values are retained to offset the grids to Quadrant 1
 	i32 grid_min_y;
 	// TODO: default to 8x8 (loose) and 32x32 (tight) for now

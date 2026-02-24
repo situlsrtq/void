@@ -33,11 +33,10 @@ void dual_grid_frustum_cull(const dual_grid_t& grid, const camera_info_t& view_f
 		xy_max = glm::max(xy_max, xy);
 	}
 
-	float tile_size = grid.tcell_effective_radius * 2.0f;
-	int min_x_tile = floor((xy_min.x - grid.grid_min_x) / tile_size);
-	int max_x_tile = floor((xy_max.x - grid.grid_min_x) / tile_size);
-	int min_y_tile = floor((xy_min.y - grid.grid_min_y) / tile_size);
-	int max_y_tile = floor((xy_max.y - grid.grid_min_y) / tile_size);
+	int min_x_tile = floor((xy_min.x - grid.grid_min_x) * grid.inverse_tile_size);
+	int max_x_tile = floor((xy_max.x - grid.grid_min_x) * grid.inverse_tile_size);
+	int min_y_tile = floor((xy_min.y - grid.grid_min_y) * grid.inverse_tile_size);
+	int max_y_tile = floor((xy_max.y - grid.grid_min_y) * grid.inverse_tile_size);
 
 	for(int i = min_y_tile; i <= max_y_tile; i++)
 	{
