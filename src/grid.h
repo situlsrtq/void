@@ -8,6 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "u_types.h"
+#include "u_mem.h"
 #include "camera.h"
 
 #define GRID_STATIC 0
@@ -42,6 +43,7 @@ struct loose_cell_t
 {
 	i32 first_element;
 	float half_height, half_width;
+	glm::vec2 center;
 };
 
 struct tight_node_t
@@ -53,7 +55,6 @@ struct tight_node_t
 struct tight_cell_t
 {
 	i32 first_node;
-	u32 center;
 };
 
 template<typename T>
@@ -67,9 +68,11 @@ struct dual_grid_t
 {
 	grid_info_t<loose_cell_t> loose_grid;
 	grid_info_t<tight_cell_t> tight_grid;
+	index_free_list_t element_freelist;
 	grid_element_t* elements;
 	tight_node_t* nodes;
-	float inverse_tile_size;
+	float inv_tile_size_tight;
+	float inv_tile_size_loose;
 	i32 grid_min_x; // These values are retained to offset the grids to Quadrant 1
 	i32 grid_min_y;
 	// TODO: default to 8x8 (loose) and 32x32 (tight) for now
@@ -79,7 +82,7 @@ struct dual_grid_t
 	void release();
 };
 
-void dual_grid_insert(dual_grid_t* grid, glm::vec2 aabb_min, glm::vec2 aabb_max);
+void dual_grid_insert(dual_grid_t* grid, const glm::mat4& world_transform, glm::vec3 aabb_min, glm::vec3 aabb_max);
 void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
 void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec2 center);
 void dual_grid_optimize(int usage_flag);
