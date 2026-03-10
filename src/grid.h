@@ -36,12 +36,12 @@ heuristic
 struct grid_element_t
 {
 	u32 node_id;
-	i32 next_element;
+	i32 next_element = -1;
 };
 
 struct loose_cell_t
 {
-	i32 first_element;
+	i32 first_element = -1;
 	float half_height, half_width;
 	glm::vec2 center;
 };
@@ -49,12 +49,12 @@ struct loose_cell_t
 struct tight_node_t
 {
 	u32 loose_cell_index;
-	i32 next_node;
+	i32 next_node = -1;
 };
 
 struct tight_cell_t
 {
-	i32 first_node;
+	i32 first_node = -1;
 };
 
 template<typename T>
@@ -69,12 +69,13 @@ struct dual_grid_t
 	grid_info_t<loose_cell_t> loose_grid;
 	grid_info_t<tight_cell_t> tight_grid;
 	index_free_list_t element_freelist;
+	index_free_list_t node_freelist;
 	grid_element_t* elements;
 	tight_node_t* nodes;
 	float inv_tile_size_tight;
 	float inv_tile_size_loose;
-	i32 grid_min_x; // These values are retained to offset the grids to Quadrant 1
-	i32 grid_min_y;
+	float grid_min_x; // These values are retained to offset the grids to Quadrant 1
+	float grid_min_y;
 	// TODO: default to 8x8 (loose) and 32x32 (tight) for now
 
 	int init(glm::ivec2 global_min, glm::ivec2 global_max, u32 loose_cell_size, u32 tight_cell_size,
@@ -82,7 +83,7 @@ struct dual_grid_t
 	void release();
 };
 
-void dual_grid_insert(dual_grid_t* grid, const glm::mat4& world_transform, glm::vec3 aabb_min, glm::vec3 aabb_max);
+int dual_grid_insert(dual_grid_t* grid, const glm::mat4& world_transform, glm::vec3 aabb_min, glm::vec3 aabb_max);
 void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
 void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec2 center);
 void dual_grid_optimize(int usage_flag);

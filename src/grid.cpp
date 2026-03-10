@@ -1,20 +1,81 @@
 #include "grid.h"
 
+void dual_grid_expand_aabb(dual_grid_t* grid, loose_cell_t* loose_cell, u32 loose_cell_index, glm::vec2 loose_aabb_min,
+			   glm::vec2 loose_aabb_max, glm::vec2 grid_aabb_min, glm::vec2 grid_aabb_max)
+{
+	float new_half_height = abs((grid_aabb_max.y - grid_aabb_min.y) * 0.5);
+	float new_half_width = abs((grid_aabb_max.x - grid_aabb_min.x) * 0.5);
+
+	if((new_half_height <= loose_cell->half_height) && (new_half_width <= loose_cell->half_width))
+	{
+		return;
+	}
+
+	u32 old_min_x_tile = floor((loose_aabb_min.x - grid->grid_min_x) * grid->inv_tile_size_tight);
+	u32 old_min_y_tile = floor((loose_aabb_min.y - grid->grid_min_y) * grid->inv_tile_size_tight);
+	u32 old_max_x_tile = floor((loose_aabb_max.x - grid->grid_min_x) * grid->inv_tile_size_tight);
+	u32 old_max_y_tile = floor((loose_aabb_max.y - grid->grid_min_y) * grid->inv_tile_size_tight);
+	u32 new_min_x_tile = floor((grid_aabb_min.x - grid->grid_min_x) * grid->inv_tile_size_tight);
+	u32 new_min_y_tile = floor((grid_aabb_min.y - grid->grid_min_y) * grid->inv_tile_size_tight);
+	u32 new_max_x_tile = floor((grid_aabb_max.x - grid->grid_min_x) * grid->inv_tile_size_tight);
+	u32 new_max_y_tile = floor((grid_aabb_max.y - grid->grid_min_y) * grid->inv_tile_size_tight);
+
+	for(u32 y = new_min_y_tile; y <= new_max_y_tile; y++)
+	{
+		bool y_in_old_bounds = ((old_min_y_tile < y) && (y < old_max_y_tile));
+
+		for(u32 x = new_min_x_tile; x <= new_max_x_tile; x++)
+		{
+			if(y_in_old_bounds && ((old_min_x_tile < x) && (x < old_max_x_tile)))
+			{
+				continue; // Don't add duplicate loose entries into tight cells
+			}
+
+			u32 node_index = grid->node_freelist.Pop();
+
+			tight_cell_t* tight_cell = &grid->tight_grid.cells[(y * grid->tight_grid.num_columns) + x];
+			if(tight_cell->first_node < 0)
+			{
+				tight_cell->first_node = node_index;
+			}
+			else
+			{
+				u32 temp = tight_cell->first_node;
+				grid->nodes[node_index].next_node = temp;
+				tight_cell->first_node = node_index;
+			}
+
+			grid->nodes[node_index].loose_cell_index = loose_cell_index;
+		}
+	}
+
+	loose_cell->half_height = new_half_height;
+	loose_cell->half_width = new_half_width;
+	return;
+}
+
 /** Operates on worldspace bounding boxes, not local space */
-void dual_grid_insert(dual_grid_t* grid, glm::vec4 world_aabb_min, glm::vec4 world_aabb_max, u32 node_id)
+int dual_grid_insert(dual_grid_t* grid, glm::vec4 world_aabb_min, glm::vec4 world_aabb_max, u32 node_id)
 {
 	glm::vec4 world_center = (world_aabb_min + world_aabb_max) * 0.5f;
 
-	int tile_x = floor((world_center.x - grid->grid_min_x) * grid->inv_tile_size_loose);
-	int tile_y = floor((world_center.y - grid->grid_min_y) * grid->inv_tile_size_loose);
+	u32 tile_x = floor((world_center.x - grid->grid_min_x) * grid->inv_tile_size_loose);
+	u32 tile_y = floor((world_center.y - grid->grid_min_y) * grid->inv_tile_size_loose);
+
+	if((tile_x > grid->loose_grid.num_columns) || (tile_y > grid->loose_grid.num_rows))
+	{
+		printf("Grid: element world-space position {%f, %f, %f, %f} out of grid bounds", world_center.x,
+		       world_center.y, world_center.z, world_center.w);
+		return EXIT_FAILURE;
+	}
 
 	u32 element_index = grid->element_freelist.Pop();
 
-	loose_cell_t* loose_cell = &grid->loose_grid.cells[(tile_y * grid->loose_grid.num_columns) + tile_x];
+	u32 loose_cell_index = (tile_y * grid->loose_grid.num_columns) + tile_x;
+	loose_cell_t* loose_cell = &grid->loose_grid.cells[loose_cell_index];
 	if(loose_cell->first_element < 0)
 	{
 		loose_cell->first_element = element_index;
-		grid->elements[element_index].next_element = -1;
 	}
 	else
 	{
@@ -32,30 +93,18 @@ void dual_grid_insert(dual_grid_t* grid, glm::vec4 world_aabb_min, glm::vec4 wor
 	glm::vec2 grid_aabb_min = glm::min(loose_aabb_min, {world_aabb_min.x, world_aabb_min.y});
 	glm::vec2 grid_aabb_max = glm::min(loose_aabb_max, {world_aabb_max.x, world_aabb_max.y});
 
-	float new_half_height = abs((grid_aabb_max.y - grid_aabb_min.y) * 0.5);
-	float new_half_width = abs((grid_aabb_max.x - grid_aabb_min.x) * 0.5);
+	dual_grid_expand_aabb(grid, loose_cell, loose_cell_index, loose_aabb_min, loose_aabb_max, grid_aabb_min,
+			      grid_aabb_max);
 
-	if((new_half_height <= loose_cell->half_height) && (new_half_width <= loose_cell->half_width))
-	{
-		return;
-	}
-
-	// Calculate min/max x and y tiles for both new and old aabbs
-	// double loop through new x and y tiles
-	// if old_min_y_tile < current_y_tile < old_max_y_tile && old_min_x_tile < current_x_tile < old_max_x_tile, skip tile 
-	// add loose cell to tight cell[tile]
-	
-	loose_cell->half_height = new_half_height;
-	loose_cell->half_width = new_half_width;
+	return EXIT_SUCCESS;
 }
 
 void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
 void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec2 center);
 void dual_grid_optimize(int usage_flag);
 
-void dual_grid_frustum_cull(const dual_grid_t& grid, const camera_info_t& view_frustum, const glm::mat4& inverse_vp)
+void dual_grid_frustum_cull(const dual_grid_t& grid, /*const camera_info_t& view_frustum,*/ const glm::mat4& inverse_vp)
 {
-	// Get range of grid tiles
 	glm::vec4 ndc_coords[8] = {{-1, -1, -1, 1}, {1, -1, -1, 1}, {1, 1, -1, 1}, {-1, 1, -1, 1},
 				   {-1, -1, 1, 1},  {1, -1, 1, 1},  {1, 1, 1, 1},  {-1, 1, 1, 1}};
 
@@ -72,16 +121,16 @@ void dual_grid_frustum_cull(const dual_grid_t& grid, const camera_info_t& view_f
 		xy_max = glm::max(xy_max, xy);
 	}
 
-	int min_x_tile = floor((xy_min.x - grid.grid_min_x) * grid.inv_tile_size_tight);
-	int max_x_tile = floor((xy_max.x - grid.grid_min_x) * grid.inv_tile_size_tight);
-	int min_y_tile = floor((xy_min.y - grid.grid_min_y) * grid.inv_tile_size_tight);
-	int max_y_tile = floor((xy_max.y - grid.grid_min_y) * grid.inv_tile_size_tight);
+	u32 min_x_tile = floor((xy_min.x - grid.grid_min_x) * grid.inv_tile_size_tight);
+	u32 max_x_tile = floor((xy_max.x - grid.grid_min_x) * grid.inv_tile_size_tight);
+	u32 min_y_tile = floor((xy_min.y - grid.grid_min_y) * grid.inv_tile_size_tight);
+	u32 max_y_tile = floor((xy_max.y - grid.grid_min_y) * grid.inv_tile_size_tight);
 
-	for(int i = min_y_tile; i <= max_y_tile; i++)
+	for(u32 y = min_y_tile; y <= max_y_tile; y++)
 	{
-		for(int t = min_x_tile; t <= max_x_tile; t++)
+		for(u32 x = min_x_tile; x <= max_x_tile; x++)
 		{
-			i32 node_index = grid.tight_grid.cells[(i * grid.tight_grid.num_columns) + t].first_node;
+			i32 node_index = grid.tight_grid.cells[(y * grid.tight_grid.num_columns) + x].first_node;
 			while(node_index >= 0)
 			{
 				tight_node_t tight_cell = grid.nodes[node_index];
@@ -100,24 +149,26 @@ void dual_grid_frustum_cull(const dual_grid_t& grid, const camera_info_t& view_f
 		}
 	}
 
-	// Calculate frustum planes
-	float e2 = view_frustum.focal_length * view_frustum.focal_length;
-	float a2 = view_frustum.aspect_ratio * view_frustum.aspect_ratio;
-	float x_lr = view_frustum.focal_length / sqrtf(e2 + 1.0f);
-	float z_lr = -(1.0f / sqrtf(e2 + 1.0f));
-	float y_tb = view_frustum.focal_length / sqrtf(e2 + a2);
-	float z_tb = -(view_frustum.aspect_ratio / sqrtf(e2 + a2));
+	/*
+		// Calculate frustum planes
+		float e2 = view_frustum.focal_length * view_frustum.focal_length;
+		float a2 = view_frustum.aspect_ratio * view_frustum.aspect_ratio;
+		float x_lr = view_frustum.focal_length / sqrtf(e2 + 1.0f);
+		float z_lr = -(1.0f / sqrtf(e2 + 1.0f));
+		float y_tb = view_frustum.focal_length / sqrtf(e2 + a2);
+		float z_tb = -(view_frustum.aspect_ratio / sqrtf(e2 + a2));
 
-	glm::vec4 frustum_planes[6];
-	frustum_planes[0] = {0, 0, -1, -view_frustum.near_plane_distance}; // Near
-	frustum_planes[1] = {0, 0, 1, view_frustum.far_plane_distance};	   // Far
-	frustum_planes[2] = {x_lr, 0, z_lr, 0};				   // Left
-	frustum_planes[3] = {-x_lr, 0, z_lr, 0};			   // Right
-	frustum_planes[4] = {0, y_tb, z_tb, 0};				   // Top
-	frustum_planes[5] = {0, -y_tb, z_tb, 0};			   // Bottom
+		glm::vec4 frustum_planes[6];
+		frustum_planes[0] = {0, 0, -1, -view_frustum.near_plane_distance}; // Near
+		frustum_planes[1] = {0, 0, 1, view_frustum.far_plane_distance};	   // Far
+		frustum_planes[2] = {x_lr, 0, z_lr, 0};				   // Left
+		frustum_planes[3] = {-x_lr, 0, z_lr, 0};			   // Right
+		frustum_planes[4] = {0, y_tb, z_tb, 0};				   // Top
+		frustum_planes[5] = {0, -y_tb, z_tb, 0};			   // Bottom
 
-	// Transform grid tile center to view space
+		// Transform grid tile center to view space
 
-	// Compare tile center to frustum planes
-	// Cull/Write cell contents
+		// Compare tile center to frustum planes
+		// Cull/Write cell contents
+	*/
 }
