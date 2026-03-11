@@ -30,30 +30,28 @@ void mbox_camera_t::LookAtMouse(double XOffset, double YOffset)
 
 
 // Wrapper for Camera-specific input handling
-void mbox_camera_t::Move(GLFWwindow *Window)
+void mbox_camera_t::Move(float dTime)
 {
-	if(glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS)
-	{
+	Speed = 2.5f * dTime;
+	RelativeXAxis = glm::normalize(glm::cross(Eye, UpAxis));
+	RelativeYAxis = glm::normalize(glm::cross(RelativeXAxis, Eye));
+
+	if (instructions.forward) {
 		Position += Eye * Speed;
 	}
-	if(glfwGetKey(Window, GLFW_KEY_S) == GLFW_PRESS)
-	{
+	if (instructions.backward) {
 		Position -= Eye * Speed;
 	}
-	if(glfwGetKey(Window, GLFW_KEY_A) == GLFW_PRESS)
-	{
+	if (instructions.left) {
 		Position -= RelativeXAxis * Speed;
 	}
-	if(glfwGetKey(Window, GLFW_KEY_D) == GLFW_PRESS)
-	{
+	if (instructions.right) {
 		Position += RelativeXAxis * Speed;
 	}
-	if(glfwGetKey(Window, GLFW_KEY_SPACE) == GLFW_PRESS)
-	{
+	if (instructions.up) {
 		Position += RelativeYAxis * Speed;
 	}
-	if(glfwGetKey(Window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-	{
+	if (instructions.down) {
 		Position -= RelativeYAxis * Speed;
 	}
 }

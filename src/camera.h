@@ -6,7 +6,16 @@
 #include <glm/trigonometric.hpp>
 #include <glm/geometric.hpp>
 #include <glm/vec3.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
+struct camera_move {
+	bool forward = false;
+	bool backward = false;
+	bool left = false;
+	bool right = false;
+	bool up = false;
+	bool down = false;
+};
 
 struct mbox_camera_t
 {
@@ -24,8 +33,10 @@ struct mbox_camera_t
 	glm::vec3 RelativeXAxis = {};
 	glm::vec3 RelativeYAxis = {};
 
+	camera_move instructions;
+
 	void LookAtMouse(double XOffset, double YOffset);
-	void Move(GLFWwindow *Window);
+	void Move(float dTime);
 };
 
 

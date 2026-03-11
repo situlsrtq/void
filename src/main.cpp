@@ -20,13 +20,6 @@ MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei 
 }
 #endif
 
-
-uint8_t NKeyWasDown;
-uint8_t RKeyWasDown;
-uint8_t PKeyWasDown;  
-uint8_t LMouseWasDown;
-uint8_t RMouseWasDown;
-
 unsigned int model_uni;
 unsigned int view_uni;
 unsigned int viewpos_uni;
@@ -153,6 +146,7 @@ int main(void)
 
 	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetCursorPosCallback(Window, MousePosCallback);
+	glfwSetKeyCallback(Window, KeyInputCallback);
 
 	// Initialize ImGui Context
 
@@ -446,6 +440,8 @@ int main(void)
 	int RenderMode = GL_TRIANGLES;
 	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 
+	WinHND->View = glm::lookAt(WinHND->Camera.Position, WinHND->Camera.Position + WinHND->Camera.Eye, WinHND->Camera.UpAxis);
+
 	// Frame loop
 
 	bool HelpWindow = false;
@@ -459,7 +455,10 @@ int main(void)
 
 		glfwPollEvents();
 		WinHND->ImIO = ImGui::GetIO();
-		ProcessInput(Window);
+
+		WinHND->Camera.Move(WinHND->DeltaTime);
+		WinHND->View = glm::lookAt(WinHND->Camera.Position, WinHND->Camera.Position + WinHND->Camera.Eye, WinHND->Camera.UpAxis);
+
 
 		// UI framegen
 
@@ -639,163 +638,6 @@ void FrameResizeCallback(GLFWwindow *Window, int width, int height)
 
 	glViewport(0,0,width,height);
 }
-
-
-void ProcessInput(GLFWwindow *Window)
-{
-	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
-
-	// Check if the UI should be pulling focus
-	if (WinHND->ImIO.WantCaptureKeyboard)
-	{
-		return;
-	}
-
-	WinHND->Camera.Speed = 2.5f * WinHND->DeltaTime;
-	WinHND->Camera.RelativeXAxis = glm::normalize(glm::cross(WinHND->Camera.Eye, WinHND->Camera.UpAxis));
-	WinHND->Camera.RelativeYAxis = glm::normalize(glm::cross(WinHND->Camera.RelativeXAxis, WinHND->Camera.Eye));
-	WinHND->Camera.Move(Window);
-	WinHND->View = glm::lookAt(WinHND->Camera.Position, WinHND->Camera.Position + WinHND->Camera.Eye, WinHND->Camera.UpAxis);
-
-	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS || WinHND->ShouldExit)
-	{
-		glfwSetWindowShouldClose(Window, true);
-	}
-	if(glfwGetKey(Window, GLFW_KEY_Q) == GLFW_PRESS)
-	{
-		glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-	}
-	if(glfwGetKey(Window, GLFW_KEY_E) == GLFW_PRESS)
-	{
-		glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-	}
-	if (glfwGetKey(Window, GLFW_KEY_P) == GLFW_PRESS)
-	{
-		PKeyWasDown = 1;
-	}
-	if(glfwGetKey(Window, GLFW_KEY_P) == GLFW_RELEASE)
-	{
-		if (PKeyWasDown || WinHND->ReloadShaders)
-		{
-			WinHND->MainShader.Rebuild();
-			model_uni = glGetUniformLocation(WinHND->MainShader.ID, "model");
-			view_uni = glGetUniformLocation(WinHND->MainShader.ID, "view");
-			viewpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "viewpos");
-			projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
-			lightpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightpos");
-			objcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "objcolor");
-			lightcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
-			ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
-
-			PKeyWasDown = 0;
-			WinHND->ReloadShaders = false;
-		}
-	}
-	if (glfwGetKey(Window, GLFW_KEY_N) == GLFW_PRESS)
-	{
-		NKeyWasDown = 1;
-	}
-	if (glfwGetKey(Window, GLFW_KEY_N) == GLFW_RELEASE)
-	{
-		if (NKeyWasDown || WinHND->Active.New == true)
-		{
-			/*
-			uMATH::vec3f_t p = { 0.0f,0.0f,4.5f };
-			WinHND->Active.Model = WinHND->View;
-			uMATH::Translate(&WinHND->Active.Model, p);
-			WinHND->Active.Model = uMATH::InverseM4(WinHND->Active.Model);
-			WinHND->Active.DecomposeModelM4();
-			WinHND->Active.New = false;
-			WinHND->ActiveSelection = true;
-			*/
-		}
-		NKeyWasDown = 0;
-	}
-
-	// Have to separately check if the UI should be pulling mouse button inputs, as they aren't tracked by WantCaptureKeyboard
-	if (WinHND->ImIO.WantCaptureMouse)
-	{
-		return;
-	}
-
-	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-	{
-		LMouseWasDown = 1;
-	}
-	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
-	{
-		if(LMouseWasDown)
-		{
-			/*
-			texel_info_t res = WinHND->PickPass.GetInfo((uint32_t)WinHND->PrevMouseX, (uint32_t)(WinHND->Height - WinHND->PrevMouseY));
-			if (WinHND->ActiveSelection && WinHND->Active.Deleted != true)
-			{
-				WinHND->Active.ComposeModelM4();
-				WinHND->GeometryObjects.Alloc(WinHND->Active);
-				WinHND->ActiveSelection = false;
-			}
-			if (res.ID > 0)
-			{
-				WinHND->Active.Model = WinHND->GeometryObjects.Model[(int)res.ID - 1];
-				WinHND->Active.Color = WinHND->GeometryObjects.Color[(int)res.ID - 1];
-				WinHND->Active.DecomposeModelM4();
-				WinHND->GeometryObjects.Free((int)res.ID - 1);
-				WinHND->ActiveSelection = true;
-			}
-			*/
-		}
-		LMouseWasDown = 0;
-		WinHND->Active.Deleted = false;
-	}
-	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-	{
-		if (!RMouseWasDown)
-		{
-			glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		}
-		RMouseWasDown = 1;
-	}
-	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE)
-	{
-		if (RMouseWasDown)
-		{
-			glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		}
-
-		RMouseWasDown = 0;
-	}
-}
-
-
-void MousePosCallback(GLFWwindow *Window, double mx, double my)
-{
-	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
-
-	// Check if the UI should be pulling focus
-	if (WinHND->ImIO.WantCaptureMouse)
-	{
-		return;
-	}
-
-	if(WinHND->FirstCameraMove)
-	{
-		WinHND->PrevMouseX = mx;
-		WinHND->PrevMouseY = my;
-		WinHND->FirstCameraMove = 0;
-	}
-
-	float xoffset = mx - WinHND->PrevMouseX;
-	float yoffset = WinHND->PrevMouseY - my;
-
-	WinHND->PrevMouseX = mx;
-	WinHND->PrevMouseY = my;
-
-	if (RMouseWasDown)
-	{
-		WinHND->Camera.LookAtMouse(xoffset, yoffset);
-	}
-}
-
 
 void GenerateInterfaceElements(window_handler_t *WinHND, bool *HelpWindow, bool *PostWindow, bool *DemoWindow)
 {

@@ -25,6 +25,7 @@
 
 #include "window.h"
 #include "u_mem.h"
+#include "input.h"
 
 
 #define VOID_HFOV_DEFAULT 45.0f
@@ -39,11 +40,6 @@
 // TODO: Split out into Core/PAL module
 
 void FrameResizeCallback(GLFWwindow* Window, int width, int height);
-
-// TODO: Split out into Input Handling module
-
-void MousePosCallback(GLFWwindow* Window, double mx, double my);
-void ProcessInput(GLFWwindow* Window);
 
 // TODO: Split out into UI module
 
