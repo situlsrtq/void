@@ -1,49 +1,62 @@
 #ifndef VOID_UMEMORY_H
 #define VOID_UMEMORY_H
 
+#include <math.h>
+
 #include "u_types.h"
 #include "u_util.h"
 
 struct linear_arena_t
 {
-	uint32_t Position;
-	uint32_t Size;
-	uint64_t StepSize;
-	void* BaseAddr;
+	u64 position;
+	u64 size;
+	u64 step_size;
+	void* base_addr;
 
-	int Init(uint32_t size, uint64_t step_size);
-	int Alloc(uint64_t* Handle, uint32_t len);
-	void Reset();
-	void Release();
-
-	private:
-
-	int Resize();
+	int init(u64 size, u64 step_size);
+	void reset();
+	void release();
 };
+
+struct alloc_params_t
+{
+	u64* handle;
+	u64 len;
+};
+
+typedef int (*alloc_func)(linear_arena_t*, u64*, u64);
+
+struct lin_arena_info_t
+{
+	linear_arena_t* arena;
+};
+
+int arena_alloc(linear_arena_t* arena, u64* handle, u64 len);
+void add_to_arena(linear_arena_t* arena, lin_arena_info_t* info);
 
 struct index_free_list_t
 {
-	uint32_t NextFreePosition = 0;
-	uint32_t OpenPositions[PROGRAM_MAX_OBJECTS];
+	u32 NextFreePosition = 0;
+	u32 OpenPositions[PROGRAM_MAX_OBJECTS];
 
-	void Push(uint32_t Index);
-	uint32_t Pop();
+	void Push(u32 Index);
+	u32 Pop();
 };
 
 struct linked_block_t
 {
 	linked_block_t* prev;
 	linked_block_t* next;
-	uint32_t base_index;
-	uint32_t size;
+	u32 base_index;
+	u32 size;
 };
 
 struct block_free_list_t
 {
 	linked_block_t* root;
 
-	void Push(uint32_t base_index, uint32_t size);
-	uint32_t Pop(uint32_t req_size);
+	void Push(u32 base_index, u32 size);
+	u32 Pop(u32 req_size);
 	void Merge(linked_block_t* node);
 };
 

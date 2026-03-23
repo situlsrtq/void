@@ -1,26 +1,57 @@
 #include "u_mem.h"
 
-int linear_arena_t::Init(uint32_t size, uint64_t step_size)
+int linear_arena_t::init(u64 size, u64 step_size)
 {
-	BaseAddr = malloc(size);
-	if(BaseAddr == 0x0)
+	base_addr = malloc(size);
+	if(base_addr == 0x0)
 	{
 		printf("System: failed to allocate arena\n");
 		return EXIT_FAILURE;
 	}
 
-	Position = 0;
-	Size = size;
-	StepSize = step_size;
+	position = 0;
+	this->size = size;
+	this->step_size = step_size;
 
 	return EXIT_SUCCESS;
 }
 
-int linear_arena_t::Alloc(uint64_t* Handle, uint32_t len)
+void linear_arena_t::reset()
 {
-	if(Position + len >= Size)
+	position = 0;
+	return;
+}
+
+void linear_arena_t::release()
+{
+	UTIL::Free(base_addr);
+	position = 0;
+	size = 0;
+	return;
+}
+
+// Block allocator will only ever size up
+int resize_arena(linear_arena_t* arena, u64 overflow)
+{
+	u32 num_steps = ceil(overflow / arena->step_size);
+
+	void* tmp = realloc(arena->base_addr, arena->size + (arena->step_size * num_steps));
+	if(tmp == 0x0)
 	{
-		int res = Resize();
+		printf("System: failed to reallocate arena on resize request\n");
+		return EXIT_FAILURE;
+	}
+
+	arena->base_addr = tmp;
+	arena->size += arena->step_size;
+	return EXIT_SUCCESS;
+}
+
+int arena_alloc(linear_arena_t* arena, u64* handle, u64 len)
+{
+	if(arena->position + len > arena->size)
+	{
+		int res = resize_arena(arena, arena->position + len - arena->size);
 		if(res == EXIT_FAILURE)
 		{
 			printf("Arena: could not allocate (resize failed)\n");
@@ -28,49 +59,25 @@ int linear_arena_t::Alloc(uint64_t* Handle, uint32_t len)
 		}
 	}
 
-	*Handle = Position;
-	Position += len;
+	*handle = arena->position;
+	arena->position += len;
 	return EXIT_SUCCESS;
 }
 
-void linear_arena_t::Reset()
+void add_to_arena(linear_arena_t *arena, lin_arena_info_t *info)
 {
-	Position = 0;
-	return;
+	info->arena = arena;
 }
 
-void linear_arena_t::Release()
-{
-	UTIL::Free(BaseAddr);
-	Position = 0;
-	Size = 0;
-	return;
-}
-
-// Block allocator will only ever size up
-int linear_arena_t::Resize()
-{
-	void* tmp = realloc(BaseAddr, Size + StepSize);
-	if(tmp == 0x0)
-	{
-		printf("System: failed to reallocate arena on resize request\n");
-		return EXIT_FAILURE;
-	}
-
-	BaseAddr = tmp;
-	Size += StepSize;
-	return EXIT_SUCCESS;
-}
-
-uint32_t index_free_list_t::Pop()
+u32 index_free_list_t::Pop()
 {
 	NextFreePosition--;
 
-	uint32_t res = OpenPositions[NextFreePosition];
+	u32 res = OpenPositions[NextFreePosition];
 	return res;
 }
 
-void index_free_list_t::Push(uint32_t FreedIndex)
+void index_free_list_t::Push(u32 FreedIndex)
 {
 	if(NextFreePosition == PROGRAM_MAX_OBJECTS)
 	{
@@ -82,9 +89,9 @@ void index_free_list_t::Push(uint32_t FreedIndex)
 	NextFreePosition++;
 }
 
-uint32_t block_free_list_t::Pop(uint32_t req_size)
+u32 block_free_list_t::Pop(u32 req_size)
 {
-	uint32_t res = root->base_index;
+	u32 res = root->base_index;
 
 	root->base_index += req_size;
 	root->size -= req_size;
@@ -102,7 +109,7 @@ uint32_t block_free_list_t::Pop(uint32_t req_size)
 	return res;
 }
 
-void block_free_list_t::Push(uint32_t base_index, uint32_t size)
+void block_free_list_t::Push(u32 base_index, u32 size)
 {
 	if(root == 0x0)
 	{

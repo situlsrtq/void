@@ -54,7 +54,7 @@ void dual_grid_expand_aabb(dual_grid_t* grid, loose_cell_t* loose_cell, u32 loos
 	return;
 }
 
-/** Operates on worldspace bounding boxes, not local space */
+/** Operates on worldspace bounding boxes */
 int dual_grid_insert(dual_grid_t* grid, glm::vec4 world_aabb_min, glm::vec4 world_aabb_max, u32 node_id)
 {
 	glm::vec4 world_center = (world_aabb_min + world_aabb_max) * 0.5f;
@@ -99,8 +99,8 @@ int dual_grid_insert(dual_grid_t* grid, glm::vec4 world_aabb_min, glm::vec4 worl
 	return EXIT_SUCCESS;
 }
 
-void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
 void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec2 center);
+void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
 void dual_grid_optimize(int usage_flag);
 
 void dual_grid_frustum_cull(const dual_grid_t& grid, /*const camera_info_t& view_frustum,*/ const glm::mat4& inverse_vp)
