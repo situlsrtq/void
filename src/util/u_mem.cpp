@@ -30,7 +30,6 @@ void linear_arena_t::release()
 	return;
 }
 
-// Block allocator will only ever size up
 int resize_arena(linear_arena_t* arena, u64 overflow)
 {
 	u32 num_steps = ceil(overflow / arena->step_size);
@@ -69,27 +68,41 @@ void add_to_arena(linear_arena_t *arena, lin_arena_info_t *info)
 	info->arena = arena;
 }
 
-u32 index_free_list_t::Pop()
+void* pointer_from_arena(const lin_arena_info_t& info, u64 offset)
 {
-	NextFreePosition--;
-
-	u32 res = OpenPositions[NextFreePosition];
+	void* res = (u8*)info.arena->base_addr + offset;
 	return res;
 }
 
-void index_free_list_t::Push(u32 FreedIndex)
+u32 index_free_list_t::pop()
 {
-	if(NextFreePosition == PROGRAM_MAX_OBJECTS)
+	next_free_pos--;
+
+	u32 res = open_positions[next_free_pos];
+	return res;
+}
+
+void index_free_list_t::push(u32 FreedIndex)
+{
+	if(next_free_pos == PROGRAM_MAX_OBJECTS)
 	{
 		printf("FreeList: Object Limit Reached\n");
 		return;
 	}
 
-	OpenPositions[NextFreePosition] = FreedIndex;
-	NextFreePosition++;
+	open_positions[next_free_pos] = FreedIndex;
+	next_free_pos++;
 }
 
-u32 block_free_list_t::Pop(u32 req_size)
+struct linked_block_t
+{
+	linked_block_t* prev;
+	linked_block_t* next;
+	u32 base_index;
+	u32 size;
+};
+
+u32 block_free_list_t::pop(u32 req_size)
 {
 	u32 res = root->base_index;
 
@@ -109,7 +122,7 @@ u32 block_free_list_t::Pop(u32 req_size)
 	return res;
 }
 
-void block_free_list_t::Push(u32 base_index, u32 size)
+void block_free_list_t::push(u32 base_index, u32 size)
 {
 	if(root == 0x0)
 	{
@@ -133,7 +146,7 @@ void block_free_list_t::Push(u32 base_index, u32 size)
 			node->next = 0x0;
 			node->base_index = base_index;
 			node->size = size;
-			Merge(node);
+			merge(node);
 			return;
 		}
 	}
@@ -144,11 +157,11 @@ void block_free_list_t::Push(u32 base_index, u32 size)
 	node->prev = new_node;
 	new_node->base_index = base_index;
 	new_node->size = size;
-	Merge(new_node);
+	merge(new_node);
 	return;
 }
 
-void block_free_list_t::Merge(linked_block_t* node)
+void block_free_list_t::merge(linked_block_t* node)
 {
 	if((node->next != 0x0) && (node->next->base_index == (node->base_index + node->size)))
 	{
