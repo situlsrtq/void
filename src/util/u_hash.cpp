@@ -4,9 +4,15 @@ hash_table_t* g_test_table = 0x0;
 
 int hash_table_t::init(linear_arena_t* arena)
 {
+	if(arena == 0x0)
+	{
+		printf("Hash Table: invalid memory arena provided\n");
+		return EXIT_FAILURE;
+	}
 	string_arena = arena;
 	probes_before_boundary = 0;
 	occupancy = 0;
+	return EXIT_SUCCESS;
 }
 
 void rh_hash_insert(hash_table_t* table, void* key, int len, u32 value)

@@ -14,31 +14,31 @@
 
 struct vertex_buffer_info_t
 {
-	u32 VBufferArray[VOID_VBUFCOUNT_FMT];
-	u64 CurrIndexByteOffset;
-	u64 CurrPosOffset;
-	u64 CurrNormOffset;
-	u64 CurrTanOffset;
-	u64 CurrTexOffset;
+	u32 vbuffer_array[VOID_VBUFCOUNT_FMT];
+	u64 index_byte_offset;
+	u64 pos_offset;
+	u64 norm_offset;
+	u64 tan_offset;
+	u64 tex_offset;
 };
 
 struct index_info_t
 {
-	u64 IndexCount;
-	u64 ByteOffsetEBO;
-	u32 IndexType;
+	u64 index_count;
+	u64 ebo_byte_offset;
+	u32 index_type;
 };
 
 struct vertex_info_t
 {
-	u64 VAttrCount;
-	u64 VertexOffset;
+	u64 vattr_count;
+	u64 vertex_offset;
 };
 
 struct texture_info_t
 {
-	u32 TexCount;
-	u32 TexArray[VOID_TEXCOUNT_FMT];
+	u32 tex_count;
+	u32 tex_array[VOID_TEXCOUNT_FMT];
 };
 
 #endif

@@ -24,7 +24,9 @@ int arena_alloc(linear_arena_t* arena, u64* handle, u64 len);
 void* pointer_from_arena(linear_arena_t* arena, u64 offset);
 
 /// <summary>
-/// Fixed-size freelist allocator
+/// Fixed-size freelist allocator.
+/// This structure is used to manage a data array,
+/// it does not provide one
 /// </summary>
 struct index_free_list_t
 {
@@ -44,7 +46,9 @@ struct linked_block_t
 };
 
 /// <summary>
-/// Dynamically sized freelist block allocator
+/// Dynamically sized freelist block allocator.
+/// This structure is used to manage a data array,
+/// it does not provide one
 /// </summary>
 struct block_free_list_t
 {

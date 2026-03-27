@@ -170,21 +170,21 @@ int main(void)
 	// TODO: collision hull at mesh level
 
 	vertex_buffer_info_t VBufferState = {};
-	glCreateBuffers(VOID_VBUFCOUNT_FMT, VBufferState.VBufferArray);
-	glNamedBufferStorage(VBufferState.VBufferArray[INDEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[POS_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[NORM_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[TAN_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.VBufferArray[TEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glCreateBuffers(VOID_VBUFCOUNT_FMT, VBufferState.vbuffer_array);
+	glNamedBufferStorage(VBufferState.vbuffer_array[INDEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.vbuffer_array[POS_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.vbuffer_array[NORM_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.vbuffer_array[TAN_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(VBufferState.vbuffer_array[TEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
 
 	unsigned int VAO;
 	glCreateVertexArrays(1, &VAO);
 
-	glVertexArrayElementBuffer(VAO, VBufferState.VBufferArray[INDEX_BUFFER]);	  // sizeof(vec3)
-	glVertexArrayVertexBuffer(VAO, 0, VBufferState.VBufferArray[POS_BUFFER], 0, 12);  // sizeof(vec3)
-	glVertexArrayVertexBuffer(VAO, 1, VBufferState.VBufferArray[NORM_BUFFER], 0, 12); // sizeof(vec3)
-	glVertexArrayVertexBuffer(VAO, 2, VBufferState.VBufferArray[TAN_BUFFER], 0, 16);  // sizeof(vec3)
-	glVertexArrayVertexBuffer(VAO, 3, VBufferState.VBufferArray[TEX_BUFFER], 0, 8);	  // sizeof(vec3)
+	glVertexArrayElementBuffer(VAO, VBufferState.vbuffer_array[INDEX_BUFFER]);	  // sizeof(vec3)
+	glVertexArrayVertexBuffer(VAO, 0, VBufferState.vbuffer_array[POS_BUFFER], 0, 12);  // sizeof(vec3)
+	glVertexArrayVertexBuffer(VAO, 1, VBufferState.vbuffer_array[NORM_BUFFER], 0, 12); // sizeof(vec3)
+	glVertexArrayVertexBuffer(VAO, 2, VBufferState.vbuffer_array[TAN_BUFFER], 0, 16);  // sizeof(vec3)
+	glVertexArrayVertexBuffer(VAO, 3, VBufferState.vbuffer_array[TEX_BUFFER], 0, 8);	  // sizeof(vec3)
 
 	glEnableVertexArrayAttrib(VAO, 0);
 	glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
@@ -373,7 +373,7 @@ int main(void)
 		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Projection));
 		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(WinHND->View));
 
-		for(unsigned int i = 0; i < WinHND->Scene.NodePosition; i++)
+		for(unsigned int i = 0; i < WinHND->Scene.node_position; i++)
 		{
 			this needs to be fixed once we're drawing out of the grid instead of the node list directly
       			/*
@@ -387,23 +387,23 @@ int main(void)
 			glUniform1f(pickingindex_uni, float(i + 1));
 			glUniform1f(pickingtype_uni, float(1));
 
-			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
+			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.model_matrix[i]));
 
-			mesh_info_t Mesh = WinHND->Scene.Mesh[Node.MeshIndex];
-			for(uint32_t t = 0; t < Mesh.size; t++)
+			mesh_info_t mesh = WinHND->Scene.mesh[node.mesh_index];
+			for(uint32_t t = 0; t < mesh.size; t++)
 			{
-				primitive_create_info_t Prim = WinHND->Scene.Prim[Mesh.base_index + t];
-				if(Prim.IndexInfo.IndexCount)
+				primitive_create_info_t prim = WinHND->Scene.prim[mesh.base_index + t];
+				if(prim.index_info.index_count)
 				{
-					glDrawElementsBaseVertex(RenderMode, Prim.IndexInfo.IndexCount,
-								 Prim.IndexInfo.IndexType,
-								 (void*)Prim.IndexInfo.ByteOffsetEBO,
-								 Prim.VertexInfo.VertexOffset);
+					glDrawElementsBaseVertex(RenderMode, prim.index_info.index_count,
+								 prim.index_info.index_type,
+								 (void*)prim.index_info.ebo_byte_offset,
+								 prim.vertex_info.vertex_offset);
 				}
 				else
 				{
-					glDrawArrays(RenderMode, Prim.VertexInfo.VertexOffset,
-						     Prim.VertexInfo.VAttrCount);
+					glDrawArrays(RenderMode, prim.vertex_info.vertex_offset,
+						     prim.vertex_info.vattr_count);
 				}
 			}
 		}
@@ -427,39 +427,42 @@ int main(void)
 		glUniform3f(viewpos_uni, WinHND->Camera.Position.x, WinHND->Camera.Position.y,
 			    WinHND->Camera.Position.z);
 
-		for(unsigned int i = 0; i < WinHND->Scene.NodePosition; i++)
+		for(unsigned int i = 0; i < WinHND->Scene.node_position; i++)
 		{
-			node_create_info_t Node = WinHND->Scene.Node[i];
-			if(Node.Visible == VIS_STATUS_FREED)
+			node will come from draw list, not scene as a whole
+			/*
+			node_create_info_t node = WinHND->Scene.node[i];
+			if(node.Visible == VIS_STATUS_FREED)
 			{
 				continue;
 			}
+			*/
 
-			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.ModelMatrix[i]));
+			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.model_matrix[i]));
 
-			mesh_info_t Mesh = WinHND->Scene.Mesh[Node.MeshIndex];
-			for(uint32_t t = 0; t < Mesh.size; t++)
+			mesh_info_t mesh = WinHND->Scene.mesh[node.mesh_index];
+			for(uint32_t t = 0; t < mesh.size; t++)
 			{
-				primitive_create_info_t Prim = WinHND->Scene.Prim[Mesh.base_index + t];
+				primitive_create_info_t prim = WinHND->Scene.prim[mesh.base_index + t];
 
-				glUniformMatrix3fv(minvt_uni, 1, GL_FALSE, glm::value_ptr(Prim.ModelInvTrans));
-				glUniform3fv(objcolor_uni, 1, glm::value_ptr(Prim.Color));
+				glUniformMatrix3fv(minvt_uni, 1, GL_FALSE, glm::value_ptr(prim.model_inv_trans));
+				glUniform3fv(objcolor_uni, 1, glm::value_ptr(prim.color));
 
-				glBindTextureUnit(0, Prim.TexInfo.TexArray[0]);
-				glBindTextureUnit(1, Prim.TexInfo.TexArray[1]);
-				glBindTextureUnit(2, Prim.TexInfo.TexArray[2]);
+				glBindTextureUnit(0, prim.texture_info.tex_array[0]);
+				glBindTextureUnit(1, prim.texture_info.tex_array[1]);
+				glBindTextureUnit(2, prim.texture_info.tex_array[2]);
 
-				if(Prim.IndexInfo.IndexCount)
+				if(prim.index_info.index_count)
 				{
-					glDrawElementsBaseVertex(RenderMode, Prim.IndexInfo.IndexCount,
-								 Prim.IndexInfo.IndexType,
-								 (void*)Prim.IndexInfo.ByteOffsetEBO,
-								 Prim.VertexInfo.VertexOffset);
+					glDrawElementsBaseVertex(RenderMode, prim.index_info.index_count,
+								 prim.index_info.index_type,
+								 (void*)prim.index_info.ebo_byte_offset,
+								 prim.vertex_info.vertex_offset);
 				}
 				else
 				{
-					glDrawArrays(RenderMode, Prim.VertexInfo.VertexOffset,
-						     Prim.VertexInfo.VAttrCount);
+					glDrawArrays(RenderMode, prim.vertex_info.vertex_offset,
+						     prim.vertex_info.vattr_count);
 				}
 			}
 		}
