@@ -1,6 +1,6 @@
 #include "window.h"
 
-window_handler_t* InitWindowHandler(float ScreenX, float ScreenY)
+window_handler_t* init_window_handler(float ScreenX, float ScreenY, linear_arena_t* string_arena)
 {
 	window_handler_t* res = (window_handler_t*)calloc(1, sizeof(window_handler_t));
 	if(!res)
@@ -9,23 +9,31 @@ window_handler_t* InitWindowHandler(float ScreenX, float ScreenY)
 		return 0x0;
 	}
 
-	res->Width = ScreenX;
-	res->Height = ScreenY;
-	res->FirstCameraMove = 1;
-	res->EditorMode = EMODE_VIEW;
-	res->ActiveSelection = false;
-	res->ReloadShaders = false;
-	res->ShouldExit = false;
-	res->PrevMouseX = ScreenX / 2.0f;
-	res->PrevMouseY = ScreenY / 2.0f;
+	res->width = ScreenX;
+	res->height = ScreenY;
+	res->first_camera_move = 1;
+	res->editor_mode = EMODE_VIEW;
+	res->active_selection = false;
+	res->reload_shaders = false;
+	res->should_exit = false;
+	res->prev_mouse_x = ScreenX / 2.0f;
+	res->prev_mouse_y = ScreenY / 2.0f;
 
-	res->Camera.Sensitivity = 0.1f;
-	res->Camera.Yaw = -90.0f;
-	res->Camera.Position = {0.0f, 0.0f, 3.0f};
-	res->Camera.Eye = {0.0f, 0.0f, -1.0f};
-	res->Camera.UpAxis = {0.0f, 1.0f, 0.0f};
+	res->camera.Sensitivity = 0.1f;
+	res->camera.Yaw = -90.0f;
+	res->camera.Position = {0.0f, 0.0f, 3.0f};
+	res->camera.Eye = {0.0f, 0.0f, -1.0f};
+	res->camera.UpAxis = {0.0f, 1.0f, 0.0f};
 
-	res->Active.color = {1.0f, 0.5f, 0.31f};
+	res->active.color = {1.0f, 0.5f, 0.31f};
+
+	int success = res->hash_table.init(string_arena);
+	if(success == EXIT_FAILURE)
+	{
+		printf("System: hash table failed to allocate\n");
+		UTIL::Free(res);
+		return res;
+	}
 
 	return res;
 }

@@ -75,16 +75,15 @@ struct dual_grid_t
 	float grid_min_y;
 	// TODO: default to 8x8 (loose) and 32x32 (tight) for now
 
-	int init(glm::ivec2 global_min, glm::ivec2 global_max, u32 loose_cell_size, u32 tight_cell_size,
-		 alloc_func alloc);
+	int init(glm::ivec2 global_min, glm::ivec2 global_max, u32 loose_cell_size, u32 tight_cell_size);
 	void release();
 };
 
-int dual_grid_insert(dual_grid_t* grid, const glm::mat4& world_transform, glm::vec3 aabb_min, glm::vec3 aabb_max);
+int dual_grid_insert(dual_grid_t* grid, glm::vec4 world_aabb_min, glm::vec4 world_aabb_max, u32 node_id);
 void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec2 center);
 void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
 void dual_grid_optimize(int usage_flag);
-void dual_grid_frustum_cull(const dual_grid_t& grid, const camera_info_t& view_frustum, const glm::mat4& inverse_vp);
+void dual_grid_frustum_cull(const dual_grid_t& grid, const glm::mat4& inverse_vp);
 
 // TODO: Add non-culled nodes to a list, rather than drawing directly using the node_id, which
 // will cause cache misses galore

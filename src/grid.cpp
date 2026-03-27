@@ -31,7 +31,7 @@ void dual_grid_expand_aabb(dual_grid_t* grid, loose_cell_t* loose_cell, u32 loos
 				continue; // Don't add duplicate loose entries into tight cells
 			}
 
-			u32 node_index = grid->node_freelist.Pop();
+			u32 node_index = grid->node_freelist.pop();
 
 			tight_cell_t* tight_cell = &grid->tight_grid.cells[(y * grid->tight_grid.num_columns) + x];
 			if(tight_cell->first_node < 0)
@@ -69,7 +69,7 @@ int dual_grid_insert(dual_grid_t* grid, glm::vec4 world_aabb_min, glm::vec4 worl
 		return EXIT_FAILURE;
 	}
 
-	u32 element_index = grid->element_freelist.Pop();
+	u32 element_index = grid->element_freelist.pop();
 
 	u32 loose_cell_index = (tile_y * grid->loose_grid.num_columns) + tile_x;
 	loose_cell_t* loose_cell = &grid->loose_grid.cells[loose_cell_index];
@@ -103,7 +103,7 @@ void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec2 center);
 void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
 void dual_grid_optimize(int usage_flag);
 
-void dual_grid_frustum_cull(const dual_grid_t& grid, /*const camera_info_t& view_frustum,*/ const glm::mat4& inverse_vp)
+void dual_grid_frustum_cull(const dual_grid_t& grid, const glm::mat4& inverse_vp)
 {
 	glm::vec4 ndc_coords[8] = {{-1, -1, -1, 1}, {1, -1, -1, 1}, {1, 1, -1, 1}, {-1, 1, -1, 1},
 				   {-1, -1, 1, 1},  {1, -1, 1, 1},  {1, 1, 1, 1},  {-1, 1, 1, 1}};
@@ -148,27 +148,27 @@ void dual_grid_frustum_cull(const dual_grid_t& grid, /*const camera_info_t& view
 			}
 		}
 	}
-
-	/*
-		// Calculate frustum planes
-		float e2 = view_frustum.focal_length * view_frustum.focal_length;
-		float a2 = view_frustum.aspect_ratio * view_frustum.aspect_ratio;
-		float x_lr = view_frustum.focal_length / sqrtf(e2 + 1.0f);
-		float z_lr = -(1.0f / sqrtf(e2 + 1.0f));
-		float y_tb = view_frustum.focal_length / sqrtf(e2 + a2);
-		float z_tb = -(view_frustum.aspect_ratio / sqrtf(e2 + a2));
-
-		glm::vec4 frustum_planes[6];
-		frustum_planes[0] = {0, 0, -1, -view_frustum.near_plane_distance}; // Near
-		frustum_planes[1] = {0, 0, 1, view_frustum.far_plane_distance};	   // Far
-		frustum_planes[2] = {x_lr, 0, z_lr, 0};				   // Left
-		frustum_planes[3] = {-x_lr, 0, z_lr, 0};			   // Right
-		frustum_planes[4] = {0, y_tb, z_tb, 0};				   // Top
-		frustum_planes[5] = {0, -y_tb, z_tb, 0};			   // Bottom
-
-		// Transform grid tile center to view space
-
-		// Compare tile center to frustum planes
-		// Cull/Write cell contents
-	*/
 }
+
+/*
+	// Calculate frustum planes
+	float e2 = view_frustum.focal_length * view_frustum.focal_length;
+	float a2 = view_frustum.aspect_ratio * view_frustum.aspect_ratio;
+	float x_lr = view_frustum.focal_length / sqrtf(e2 + 1.0f);
+	float z_lr = -(1.0f / sqrtf(e2 + 1.0f));
+	float y_tb = view_frustum.focal_length / sqrtf(e2 + a2);
+	float z_tb = -(view_frustum.aspect_ratio / sqrtf(e2 + a2));
+
+	glm::vec4 frustum_planes[6];
+	frustum_planes[0] = {0, 0, -1, -view_frustum.near_plane_distance}; // Near
+	frustum_planes[1] = {0, 0, 1, view_frustum.far_plane_distance};	   // Far
+	frustum_planes[2] = {x_lr, 0, z_lr, 0};				   // Left
+	frustum_planes[3] = {-x_lr, 0, z_lr, 0};			   // Right
+	frustum_planes[4] = {0, y_tb, z_tb, 0};				   // Top
+	frustum_planes[5] = {0, -y_tb, z_tb, 0};			   // Bottom
+
+	// Transform grid tile center to view space
+
+	// Compare tile center to frustum planes
+	// Cull/Write cell contents
+*/

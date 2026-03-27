@@ -35,6 +35,4 @@ void rh_hash_insert(hash_table_t* table, void* key, int len, u32 value);
 void rh_hash_remove(hash_table_t* table, void* key);
 u32 rh_hash_find(hash_table_t* table, void* search_key, int len);
 
-extern hash_table_t* g_test_table;
-
 #endif

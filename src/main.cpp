@@ -43,49 +43,59 @@ int main(void)
 		printf("PAL: Failed to initialize file path\n");
 	}
 
-	g_test_table = (hash_table_t*)calloc(1, sizeof(hash_table_t));
-	res = g_test_table->StringArena.Init(V_MIB(4), V_MIB(1));
+	// Persistent, string specific storage
+	linear_arena_t* string_arena;
+	res = string_arena->init(V_MIB(8));
 	if(res != EXIT_SUCCESS)
 	{
-		printf("System: Failed to initialize resource hash table\n");
+		printf("System: Failed to initialize main thread string memory\n");
 	}
 
-	// TODO: per-thread string memory system, to be sized based on thread's need. Rendering
-	// manager will be heaviest user
-
-	void* ResourceStringMem = (char*)malloc(V_MIB(4));
-	if(!ResourceStringMem)
+	// Storage for data that persists between frames. Never cleared by default 
+	linear_arena_t* persistent_arena;
+	res = persistent_arena->init(V_MIB(8));
+	if(res != EXIT_SUCCESS)
 	{
+		printf("System: Failed to initialize main thread persistent memory\n");
+	}
+
+	// Storage for per-frame data. Cleared at the end of every frame
+	linear_arena_t* scratch_arena;
+	res = scratch_arena->init(V_MIB(4));
+	if(res != EXIT_SUCCESS)
+	{
+		printf("System: Failed to initialize main thread scratch space memory\n");
+	}
+
+	const char* res1 = "res/sponza.glb";
+	const char* res2 = "res/chess.glb";
+	// Drop the null terminator on OSPath intentionally, since it will always be concatenated with
+	// paths. hacky stupid shit, will disappear when a real file picker is implemented
+	size_t pathlen = strlen(g_OSPath_r);
+	size_t filelen = strlen(res1) + 1;
+	size_t f2len = strlen(res2) + 1;
+
+	u64 f1_handle;
+	res = arena_alloc(string_arena, &f1_handle, pathlen+filelen);
+	if(res == EXIT_FAILURE)
+	{
+		printf("Scene: file 1 alloc failed\n");
 		return EXIT_FAILURE;
 	}
+	char* scene_file1 = (char*)pointer_from_arena(string_arena, f1_handle);
+	memcpy(scene_file1, g_OSPath_r, pathlen);
+	memcpy(scene_file1 + pathlen, res1, filelen);
 
-	char* CurrStringMem = (char*)ResourceStringMem;
-	const char* ResFile = "res/sponza.glb";
-	const char* Res2 = "res/chess.glb";
-	const char* UIFile = "config/imgui.ini";
-	// Drop the null terminator on OSPath intentionally, since it will be concatenated with
-	// paths. hacky stupid shit, will not last
-	size_t pathlen = strlen(g_OSPath_r);
-	size_t filelen = strlen(ResFile) + 1;
-	size_t configlen = strlen(UIFile) + 1;
-
-	memcpy(CurrStringMem, g_OSPath_r, pathlen);
-	memcpy(CurrStringMem + pathlen, ResFile, filelen);
-	char* SceneFile = CurrStringMem;
-
-	CurrStringMem += pathlen + filelen;
-
-	memcpy(CurrStringMem, g_OSPath_r, pathlen);
-	memcpy(CurrStringMem + pathlen, UIFile, configlen);
-	char* GUIFile = CurrStringMem;
-
-	CurrStringMem += pathlen + configlen;
-
-	memcpy(CurrStringMem, g_OSPath_r, pathlen);
-	memcpy(CurrStringMem + pathlen, Res2, configlen);
-	// char* Scene2 = CurrStringMem;
-
-	CurrStringMem += pathlen + configlen;
+	u64 f2_handle;
+	res = arena_alloc(string_arena, &f2_handle, pathlen+f2len);
+	if(res == EXIT_FAILURE)
+	{
+		printf("Scene: file 2 alloc failed\n");
+		return EXIT_FAILURE;
+	}
+	char* scene_file2 = (char*)pointer_from_arena(string_arena, f2_handle);
+	memcpy(scene_file2, g_OSPath_r, pathlen);
+	memcpy(scene_file2 + pathlen, res2, f2len);
 
 	// Initialize Core Systems
 
@@ -104,16 +114,16 @@ int main(void)
 	// selections
 	glfwWindowHint(GLFW_RESIZABLE, true);
 
-	GLFWwindow* Window = glfwCreateWindow(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT, "void", 0, 0);
-	if(!Window)
+	GLFWwindow* window = glfwCreateWindow(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT, "void", 0, 0);
+	if(!window)
 	{
 		printf("GLFW: Failed to create window\n");
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
 
-	glfwMakeContextCurrent(Window);
-	glfwSetFramebufferSizeCallback(Window, FrameResizeCallback);
+	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, FrameResizeCallback);
 
 	// /!\ gladLoadGLLoader() overwrites all gl functions, can only be called after successfully
 	// setting a current context
@@ -130,30 +140,27 @@ int main(void)
 	glDebugMessageCallback(MessageCallback, 0);
 #endif
 
-	window_handler_t* WinHND = InitWindowHandler(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT);
-	if(!WinHND)
+	window_handler_t* win_hnd = init_window_handler(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT, string_arena);
+	if(!win_hnd)
 	{
 		printf("System: Could not allocate core window handler\n");
 		return EXIT_FAILURE;
 	}
-	glfwSetWindowUserPointer(Window, (void*)WinHND);
+	glfwSetWindowUserPointer(window, (void*)win_hnd);
 
-	glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-	glfwSetCursorPosCallback(Window, MousePosCallback);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	glfwSetCursorPosCallback(window, MousePosCallback);
 
 	// Initialize ImGui Context
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	WinHND->ImIO = ImGui::GetIO();
-	//(void)WinHND->ImIO;
-	WinHND->ImIO.IniFilename = GUIFile;
+	win_hnd->im_io = ImGui::GetIO();
 	ImGui::StyleColorsDark();
-	// ImGuiStyle& UIStyle = ImGui::GetStyle();
 
 	bool b_res = false;
-	b_res = ImGui_ImplGlfw_InitForOpenGL(Window, true);
+	b_res = ImGui_ImplGlfw_InitForOpenGL(window, true);
 	if(!b_res)
 	{
 		printf("System: Could not initialize imgui context for GLFW\n");
@@ -166,56 +173,55 @@ int main(void)
 		return EXIT_FAILURE;
 	}
 
-	// TODO: bounding box construction from min/max params at node level
-	// TODO: collision hull at mesh level
+	// Initialize Render Data Structures
 
-	vertex_buffer_info_t VBufferState = {};
-	glCreateBuffers(VOID_VBUFCOUNT_FMT, VBufferState.vbuffer_array);
-	glNamedBufferStorage(VBufferState.vbuffer_array[INDEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.vbuffer_array[POS_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.vbuffer_array[NORM_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.vbuffer_array[TAN_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(VBufferState.vbuffer_array[TEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	vertex_buffer_info_t vbuffer_state = {};
+	glCreateBuffers(VOID_VBUFCOUNT_FMT, vbuffer_state.vbuffer_array);
+	glNamedBufferStorage(vbuffer_state.vbuffer_array[INDEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(vbuffer_state.vbuffer_array[POS_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(vbuffer_state.vbuffer_array[NORM_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(vbuffer_state.vbuffer_array[TAN_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(vbuffer_state.vbuffer_array[TEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
 
-	unsigned int VAO;
-	glCreateVertexArrays(1, &VAO);
+	unsigned int vao;
+	glCreateVertexArrays(1, &vao);
 
-	glVertexArrayElementBuffer(VAO, VBufferState.vbuffer_array[INDEX_BUFFER]);	  // sizeof(vec3)
-	glVertexArrayVertexBuffer(VAO, 0, VBufferState.vbuffer_array[POS_BUFFER], 0, 12);  // sizeof(vec3)
-	glVertexArrayVertexBuffer(VAO, 1, VBufferState.vbuffer_array[NORM_BUFFER], 0, 12); // sizeof(vec3)
-	glVertexArrayVertexBuffer(VAO, 2, VBufferState.vbuffer_array[TAN_BUFFER], 0, 16);  // sizeof(vec3)
-	glVertexArrayVertexBuffer(VAO, 3, VBufferState.vbuffer_array[TEX_BUFFER], 0, 8);	  // sizeof(vec3)
+	glVertexArrayElementBuffer(vao, vbuffer_state.vbuffer_array[INDEX_BUFFER]);	  // sizeof(vec3)
+	glVertexArrayVertexBuffer(vao, 0, vbuffer_state.vbuffer_array[POS_BUFFER], 0, 12);  // sizeof(vec3)
+	glVertexArrayVertexBuffer(vao, 1, vbuffer_state.vbuffer_array[NORM_BUFFER], 0, 12); // sizeof(vec3)
+	glVertexArrayVertexBuffer(vao, 2, vbuffer_state.vbuffer_array[TAN_BUFFER], 0, 16);  // sizeof(vec3)
+	glVertexArrayVertexBuffer(vao, 3, vbuffer_state.vbuffer_array[TEX_BUFFER], 0, 8);	  // sizeof(vec3)
 
-	glEnableVertexArrayAttrib(VAO, 0);
-	glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
-	glVertexArrayAttribBinding(VAO, 0, 0);
+	glEnableVertexArrayAttrib(vao, 0);
+	glVertexArrayAttribFormat(vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(vao, 0, 0);
 
-	glEnableVertexArrayAttrib(VAO, 1);
-	glVertexArrayAttribFormat(VAO, 1, 3, GL_FLOAT, GL_FALSE, 0);
-	glVertexArrayAttribBinding(VAO, 1, 1);
+	glEnableVertexArrayAttrib(vao, 1);
+	glVertexArrayAttribFormat(vao, 1, 3, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(vao, 1, 1);
 
-	glEnableVertexArrayAttrib(VAO, 2);
-	glVertexArrayAttribFormat(VAO, 2, 4, GL_FLOAT, GL_FALSE, 0);
-	glVertexArrayAttribBinding(VAO, 2, 2);
+	glEnableVertexArrayAttrib(vao, 2);
+	glVertexArrayAttribFormat(vao, 2, 4, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(vao, 2, 2);
 
-	glEnableVertexArrayAttrib(VAO, 3);
-	glVertexArrayAttribFormat(VAO, 3, 2, GL_FLOAT, GL_FALSE, 0);
-	glVertexArrayAttribBinding(VAO, 3, 3);
+	glEnableVertexArrayAttrib(vao, 3);
+	glVertexArrayAttribFormat(vao, 3, 2, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(vao, 3, 3);
 
-	res = LoadSceneFromGLB(SceneFile, WinHND, &VAO, &VBufferState, VOID_TEX_COUNT);
+	res = LoadSceneFromGLB(scene_file1, win_hnd, &vao, &vbuffer_state, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
 	{
-		printf("System: Could not load scene file: %s\n", SceneFile);
+		printf("System: Could not load scene file: %s\n", scene_file1);
 		return EXIT_FAILURE;
 	}
 	/*
-	res = LoadSceneFromGLB(SceneFile, WinHND, &VAO, &VBufferState, VOID_TEX_COUNT);
+	res = LoadSceneFromGLB(SceneFile, win_hnd, &VAO, &VBufferState, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
 	{
 		printf("System: Could not load scene file: %s\n", SceneFile);
 		return EXIT_FAILURE;
 	}
-	res = LoadSceneFromGLB(Scene2, WinHND, &VAO, &VBufferState, VOID_TEX_COUNT);
+	res = LoadSceneFromGLB(Scene2, win_hnd, &VAO, &VBufferState, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
 	{
 		printf("System: Could not load scene file: %s\n", Scene2);
@@ -232,122 +238,123 @@ int main(void)
 
 	// Main pass
 
-	res = WinHND->HDRPass.Init(WinHND->Width, WinHND->Height);
+	res = win_hnd->hdr_pass_fb.Init(win_hnd->width, win_hnd->height);
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize main (HDR) pass framebuffer\n");
 		return EXIT_FAILURE;
 	}
 
-	shader_info_t MainPassParams = {};
-	res = MainPassParams.Init("shaders/main.vert", 0, 0, 0, "shaders/main.frag", 0);
+	shader_info_t main_pass_params = {};
+	res = main_pass_params.Init("shaders/main.vert", 0, 0, 0, "shaders/main.frag", 0);
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize main pass shader parameters\n");
 		return EXIT_FAILURE;
 	}
-	res = WinHND->MainShader.Create(MainPassParams);
+	res = win_hnd->main_shader.Create(main_pass_params);
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize main pass shaders\n");
 		return EXIT_FAILURE;
 	}
 
-	model_uni = glGetUniformLocation(WinHND->MainShader.ID, "model");
-	minvt_uni = glGetUniformLocation(WinHND->MainShader.ID, "minvt");
-	view_uni = glGetUniformLocation(WinHND->MainShader.ID, "view");
-	viewpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "viewpos");
-	projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
-	light_dir_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightdir");
-	objcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "objcolor");
-	light_color_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
-	ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
+	model_uni = glGetUniformLocation(win_hnd->main_shader.ID, "model");
+	minvt_uni = glGetUniformLocation(win_hnd->main_shader.ID, "minvt");
+	view_uni = glGetUniformLocation(win_hnd->main_shader.ID, "view");
+	viewpos_uni = glGetUniformLocation(win_hnd->main_shader.ID, "viewpos");
+	projection_uni = glGetUniformLocation(win_hnd->main_shader.ID, "projection");
+	light_dir_uni = glGetUniformLocation(win_hnd->main_shader.ID, "lightdir");
+	objcolor_uni = glGetUniformLocation(win_hnd->main_shader.ID, "objcolor");
+	light_color_uni = glGetUniformLocation(win_hnd->main_shader.ID, "lightcolor");
+	ambistrgth_uni = glGetUniformLocation(win_hnd->main_shader.ID, "ambientstrength");
 
 	// Post pass
 
-	shader_info_t PostPassParams = {};
-	res = PostPassParams.Init("shaders/post.vert", 0, 0, 0, "shaders/post.frag", 0);
+	shader_info_t post_pass_params = {};
+	res = post_pass_params.Init("shaders/post.vert", 0, 0, 0, "shaders/post.frag", 0);
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize post pass shader parameters\n");
 		return EXIT_FAILURE;
 	}
-	res = WinHND->PostShader.Create(PostPassParams);
+	res = win_hnd->post_shader.Create(post_pass_params);
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize post pass shaders\n");
 		return EXIT_FAILURE;
 	}
 
-	exposure_uni = glGetUniformLocation(WinHND->PostShader.ID, "exposure");
+	exposure_uni = glGetUniformLocation(win_hnd->post_shader.ID, "exposure");
 
 	// Pick pass
+	// Will become visbuffer pass, with picking as an added benefit
 
-	res = WinHND->PickPass.Init(WinHND->Width, WinHND->Height);
+	res = win_hnd->pick_pass_fb.Init(win_hnd->width, win_hnd->height);
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize pick pass framebuffer\n");
 		return EXIT_FAILURE;
 	}
 
-	shader_info_t PickPassParams = {};
-	res = PickPassParams.Init("shaders/pick.vert", 0, 0, 0, "shaders/pick.frag", 0);
+	shader_info_t pick_pass_params = {};
+	res = pick_pass_params.Init("shaders/pick.vert", 0, 0, 0, "shaders/pick.frag", 0);
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize pick shader parameters\n");
 		return EXIT_FAILURE;
 	}
-	res = WinHND->PickShader.Create(PickPassParams);
+	res = win_hnd->pick_shader.Create(pick_pass_params);
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize pick pass shaders\n");
 		return EXIT_FAILURE;
 	}
 
-	unsigned int pickingmodel_uni = glGetUniformLocation(WinHND->PickShader.ID, "model");
-	unsigned int pickingview_uni = glGetUniformLocation(WinHND->PickShader.ID, "view");
-	unsigned int pickingprojection_uni = glGetUniformLocation(WinHND->PickShader.ID, "projection");
-	unsigned int pickingindex_uni = glGetUniformLocation(WinHND->PickShader.ID, "index");
-	unsigned int pickingtype_uni = glGetUniformLocation(WinHND->PickShader.ID, "type");
+	unsigned int pickingmodel_uni = glGetUniformLocation(win_hnd->pick_shader.ID, "model");
+	unsigned int pickingview_uni = glGetUniformLocation(win_hnd->pick_shader.ID, "view");
+	unsigned int pickingprojection_uni = glGetUniformLocation(win_hnd->pick_shader.ID, "projection");
+	unsigned int pickingindex_uni = glGetUniformLocation(win_hnd->pick_shader.ID, "index");
+	unsigned int pickingtype_uni = glGetUniformLocation(win_hnd->pick_shader.ID, "type");
 
 	// Initialize first-frame data
 
-	WinHND->Camera.h_fov = glm::radians(VOID_HFOV_DEFAULT);
-	WinHND->Camera.focal_length = SCREEN_Y_DIM_DEFAULT / (2.0f * tanf(WinHND->Camera.h_fov / 2.0f));
-	WinHND->Camera.aspect_ratio = SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT;
-	WinHND->Camera.near_plane_distance = 0.1f;
-	WinHND->Camera.far_plane_distance = 100.0f;
-	WinHND->Projection = glm::perspective(WinHND->Camera.h_fov, WinHND->Camera.aspect_ratio,
-					      WinHND->Camera.near_plane_distance, WinHND->Camera.far_plane_distance);
+	win_hnd->camera.h_fov = glm::radians(VOID_HFOV_DEFAULT);
+	win_hnd->camera.focal_length = SCREEN_Y_DIM_DEFAULT / (2.0f * tanf(win_hnd->camera.h_fov / 2.0f));
+	win_hnd->camera.aspect_ratio = SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT;
+	win_hnd->camera.near_plane_distance = 0.1f;
+	win_hnd->camera.far_plane_distance = 100.0f;
+	win_hnd->projection = glm::perspective(win_hnd->camera.h_fov, win_hnd->camera.aspect_ratio,
+					      win_hnd->camera.near_plane_distance, win_hnd->camera.far_plane_distance);
 
-	glm::mat4 Model = {};
-	glm::vec3 LightDirection = {1.2f, -10.0f, 2.0f};
-	glm::vec3 lightScale = {0.2f, 0.2f, 0.2f};
+	glm::mat4 model = {};
+	glm::vec3 light_dir = {1.2f, -10.0f, 2.0f};
+	glm::vec3 light_scale = {0.2f, 0.2f, 0.2f};
 
-	float FrameStartTime = 0;
-	float FrameEndTime = 0;
+	float frame_start_time = 0;
+	float frame_end_time = 0;
 	exposure_val = 0.5;
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glEnable(GL_DEPTH_TEST);
-	int RenderMode = GL_TRIANGLES;
+	int render_mode = GL_TRIANGLES;
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	// Frame loop
 
-	bool HelpWindow = false;
-	bool PostWindow = false;
-	bool DemoWindow = false;
-	while(!glfwWindowShouldClose(Window))
+	bool help_window = false;
+	bool post_window = false;
+	bool demo_window = false;
+	while(!glfwWindowShouldClose(window))
 	{
-		FrameStartTime = glfwGetTime();
+		frame_start_time = glfwGetTime();
 
 		// Handle user input
 
 		glfwPollEvents();
-		WinHND->ImIO = ImGui::GetIO();
-		ProcessInput(Window);
+		win_hnd->im_io = ImGui::GetIO();
+		ProcessInput(window);
 
 		// UI framegen
 
@@ -355,29 +362,29 @@ int main(void)
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		GenerateInterfaceElements(WinHND, &HelpWindow, &PostWindow, &DemoWindow);
+		GenerateInterfaceElements(win_hnd, &help_window, &post_window, &demo_window);
 
 		// Render passes
 
-		glBindVertexArray(VAO);
+		glBindVertexArray(vao);
 
 #ifdef DEBUG
 		// Mouse Picking Pass for Scene Editor
 
-		WinHND->PickPass.Bind();
+		win_hnd->pick_pass_fb.Bind();
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		WinHND->PickShader.Use();
+		win_hnd->pick_shader.Use();
 
-		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Projection));
-		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(WinHND->View));
+		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->projection));
+		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
 
-		for(unsigned int i = 0; i < WinHND->Scene.node_position; i++)
+		for(unsigned int i = 0; i < win_hnd->scene.node_position; i++)
 		{
 			this needs to be fixed once we're drawing out of the grid instead of the node list directly
       			/*
-			node_create_info_t Node = WinHND->Scene.Node[i];
+			node_create_info_t Node = win_hnd->Scene.Node[i];
 			if(Node.Visible == VIS_STATUS_FREED)
 			{
 				continue;
@@ -387,22 +394,22 @@ int main(void)
 			glUniform1f(pickingindex_uni, float(i + 1));
 			glUniform1f(pickingtype_uni, float(1));
 
-			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.model_matrix[i]));
+			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->scene.model_matrix[i]));
 
-			mesh_info_t mesh = WinHND->Scene.mesh[node.mesh_index];
+			mesh_info_t mesh = win_hnd->scene.mesh[node.mesh_index];
 			for(uint32_t t = 0; t < mesh.size; t++)
 			{
-				primitive_create_info_t prim = WinHND->Scene.prim[mesh.base_index + t];
+				primitive_create_info_t prim = win_hnd->scene.prim[mesh.base_index + t];
 				if(prim.index_info.index_count)
 				{
-					glDrawElementsBaseVertex(RenderMode, prim.index_info.index_count,
+					glDrawElementsBaseVertex(render_mode, prim.index_info.index_count,
 								 prim.index_info.index_type,
 								 (void*)prim.index_info.ebo_byte_offset,
 								 prim.vertex_info.vertex_offset);
 				}
 				else
 				{
-					glDrawArrays(RenderMode, prim.vertex_info.vertex_offset,
+					glDrawArrays(render_mode, prim.vertex_info.vertex_offset,
 						     prim.vertex_info.vattr_count);
 				}
 			}
@@ -411,39 +418,39 @@ int main(void)
 
 		// Object Geometry Pass
 
-		WinHND->HDRPass.Bind();
+		win_hnd->hdr_pass_fb.Bind();
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		WinHND->MainShader.Use();
+		win_hnd->main_shader.Use();
 
 		glUniform1f(ambistrgth_uni, 0.1f);
 		glUniform3f(light_color_uni, 1.0f, 1.0f, 1.0f);
-		glUniform3f(light_dir_uni, LightDirection.x, LightDirection.y, LightDirection.z);
+		glUniform3f(light_dir_uni, light_dir.x, light_dir.y, light_dir.z);
 
-		glUniformMatrix4fv(projection_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Projection));
+		glUniformMatrix4fv(projection_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->projection));
 
-		glUniformMatrix4fv(view_uni, 1, GL_FALSE, glm::value_ptr(WinHND->View));
-		glUniform3f(viewpos_uni, WinHND->Camera.Position.x, WinHND->Camera.Position.y,
-			    WinHND->Camera.Position.z);
+		glUniformMatrix4fv(view_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
+		glUniform3f(viewpos_uni, win_hnd->camera.Position.x, win_hnd->camera.Position.y,
+			    win_hnd->camera.Position.z);
 
-		for(unsigned int i = 0; i < WinHND->Scene.node_position; i++)
+		for(unsigned int i = 0; i < win_hnd->scene.node_position; i++)
 		{
 			node will come from draw list, not scene as a whole
 			/*
-			node_create_info_t node = WinHND->Scene.node[i];
+			node_create_info_t node = win_hnd->Scene.node[i];
 			if(node.Visible == VIS_STATUS_FREED)
 			{
 				continue;
 			}
 			*/
 
-			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(WinHND->Scene.model_matrix[i]));
+			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->Scene.model_matrix[i]));
 
-			mesh_info_t mesh = WinHND->Scene.mesh[node.mesh_index];
+			mesh_info_t mesh = win_hnd->scene.mesh[node.mesh_index];
 			for(uint32_t t = 0; t < mesh.size; t++)
 			{
-				primitive_create_info_t prim = WinHND->Scene.prim[mesh.base_index + t];
+				primitive_create_info_t prim = win_hnd->scene.prim[mesh.base_index + t];
 
 				glUniformMatrix3fv(minvt_uni, 1, GL_FALSE, glm::value_ptr(prim.model_inv_trans));
 				glUniform3fv(objcolor_uni, 1, glm::value_ptr(prim.color));
@@ -454,25 +461,25 @@ int main(void)
 
 				if(prim.index_info.index_count)
 				{
-					glDrawElementsBaseVertex(RenderMode, prim.index_info.index_count,
+					glDrawElementsBaseVertex(render_mode, prim.index_info.index_count,
 								 prim.index_info.index_type,
 								 (void*)prim.index_info.ebo_byte_offset,
 								 prim.vertex_info.vertex_offset);
 				}
 				else
 				{
-					glDrawArrays(RenderMode, prim.vertex_info.vertex_offset,
+					glDrawArrays(render_mode, prim.vertex_info.vertex_offset,
 						     prim.vertex_info.vattr_count);
 				}
 			}
 		}
 
-		if(WinHND->ActiveSelection)
+		if(win_hnd->active_selection)
 		{
 			/*
-			WinHND->Active.ComposeModelM4();
-			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &WinHND->Active.Model.m[0][0]);
-			glUniform3fv(objcolor_uni, 1, &WinHND->Active.Color.x);
+			win_hnd->Active.ComposeModelM4();
+			glUniformMatrix4fv(model_uni, 1, GL_FALSE, &win_hnd->Active.Model.m[0][0]);
+			glUniform3fv(objcolor_uni, 1, &win_hnd->Active.Color.x);
 			glDrawElements(RenderMode, indexcount, indextype, (void*)0);
 			*/
 		}
@@ -481,22 +488,22 @@ int main(void)
 
 		glUniform1f(ambistrgth_uni, 1.0f);
 		glUniform3f(objcolor_uni, 1.0f, 1.0f, 1.0f);
-		Model = glm::mat4(1.0f);
-		Model = glm::scale(Model, lightScale);
-		glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(Model));
+		model = glm::mat4(1.0f);
+		model = glm::scale(model, light_scale);
+		glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(model));
 
 		/*
-		if(WinHND->GeometryObjects.IndexCount[0])
+		if(win_hnd->GeometryObjects.IndexCount[0])
 		{
-			glDrawElementsBaseVertex(RenderMode, WinHND->GeometryObjects.IndexCount[0],
-			    WinHND->GeometryObjects.IndexType[0],
-			    (void*)WinHND->GeometryObjects.ByteOffsetEBO[0],
-			    WinHND->GeometryObjects.OffsetVBO[0]);
+			glDrawElementsBaseVertex(RenderMode, win_hnd->GeometryObjects.IndexCount[0],
+			    win_hnd->GeometryObjects.IndexType[0],
+			    (void*)win_hnd->GeometryObjects.ByteOffsetEBO[0],
+			    win_hnd->GeometryObjects.OffsetVBO[0]);
 		}
 		else
 		{
-			glDrawArrays(RenderMode, WinHND->GeometryObjects.OffsetVBO[0],
-		WinHND->GeometryObjects.VAttrCount[0]);
+			glDrawArrays(RenderMode, win_hnd->GeometryObjects.OffsetVBO[0],
+		win_hnd->GeometryObjects.VAttrCount[0]);
 		}
 		*/
 
@@ -506,22 +513,22 @@ int main(void)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, WinHND->HDRPass.ColorBuffer);
+		glBindTexture(GL_TEXTURE_2D, win_hnd->hdr_pass_fb.ColorBuffer);
 
-		WinHND->PostShader.Use();
+		win_hnd->post_shader.Use();
 		glUniform1f(exposure_uni, float(exposure_val));
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); // Attributes hard coded in vertex shader
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-		FrameEndTime = glfwGetTime();
-		WinHND->FrameTimeMS = (FrameEndTime - FrameStartTime) * 1000.0f;
+		frame_end_time = glfwGetTime();
+		win_hnd->frame_time_ms = (frame_end_time - frame_start_time) * 1000.0f;
 
-		glfwSwapBuffers(Window);
+		glfwSwapBuffers(window);
 
-		WinHND->DeltaTime = FrameEndTime - WinHND->PrevFrameTime;
-		WinHND->PrevFrameTime = FrameEndTime;
+		win_hnd->delta_time = frame_end_time - win_hnd->prev_frame_time;
+		win_hnd->prev_frame_time = frame_end_time;
 	}
 
 	// Free resources and exit - not technically necessary when this is the end of the program,
@@ -532,51 +539,53 @@ int main(void)
 	ImGui::DestroyContext();
 
 	glfwTerminate();
-	free(WinHND);
-	WinHND = 0x0;
+	free(win_hnd);
+	win_hnd = 0x0;
 
 	return EXIT_SUCCESS;
 }
 
+switch this to not be a callback anymore but to run at the start of each render loop if size changes
 void FrameResizeCallback(GLFWwindow* Window, int new_screen_width, int new_screen_height)
 {
-	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
+	window_handler_t* win_hnd = (window_handler_t*)glfwGetWindowUserPointer(Window);
 
-	WinHND->Width = new_screen_width;
-	WinHND->Height = new_screen_height;
+	win_hnd->width = new_screen_width;
+	win_hnd->height = new_screen_height;
 
 	// Also resize camera frustum and all existing framebuffers
-	WinHND->Camera.focal_length = new_screen_height / (2.0f * tanf(WinHND->Camera.h_fov / 2.0f));
-	WinHND->Camera.aspect_ratio = (float)new_screen_width / (float)new_screen_height;
-	WinHND->Projection = glm::perspective(WinHND->Camera.h_fov, WinHND->Camera.aspect_ratio,
-					      WinHND->Camera.near_plane_distance, WinHND->Camera.far_plane_distance);
-	WinHND->HDRPass.Release();
-	WinHND->HDRPass.Init(new_screen_width, new_screen_height);
-	WinHND->PickPass.Release();
-	WinHND->PickPass.Init(new_screen_width, new_screen_height);
+	win_hnd->camera.focal_length = new_screen_height / (2.0f * tanf(win_hnd->camera.h_fov / 2.0f));
+	win_hnd->camera.aspect_ratio = (float)new_screen_width / (float)new_screen_height;
+	win_hnd->projection = glm::perspective(win_hnd->camera.h_fov, win_hnd->camera.aspect_ratio,
+					      win_hnd->camera.near_plane_distance, win_hnd->camera.far_plane_distance);
+	win_hnd->hdr_pass_fb.Release();
+	win_hnd->hdr_pass_fb.Init(new_screen_width, new_screen_height);
+	win_hnd->pick_pass_fb.Release();
+	win_hnd->pick_pass_fb.Init(new_screen_width, new_screen_height);
 
 	glViewport(0, 0, new_screen_width, new_screen_height);
 }
 
+switch this to not be a callback anymore and to be polled at the start of the render loop
 void ProcessInput(GLFWwindow* Window)
 {
-	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
+	window_handler_t* win_hnd = (window_handler_t*)glfwGetWindowUserPointer(Window);
 
 	// Check if the UI should be pulling focus
-	if(WinHND->ImIO.WantCaptureKeyboard)
+	if(win_hnd->im_io.WantCaptureKeyboard)
 	{
 		return;
 	}
 
-	WinHND->Camera.Speed = 2.5f * WinHND->DeltaTime;
-	WinHND->Camera.RelativeXAxis = glm::normalize(glm::cross(WinHND->Camera.Eye, WinHND->Camera.UpAxis));
-	WinHND->Camera.RelativeYAxis = glm::normalize(glm::cross(WinHND->Camera.RelativeXAxis, WinHND->Camera.Eye));
-	WinHND->Camera.Move(Window);
-	WinHND->View = glm::lookAt(WinHND->Camera.Position, WinHND->Camera.Position + WinHND->Camera.Eye,
-				   WinHND->Camera.UpAxis);
-	WinHND->InverseVP = glm::inverse(WinHND->Projection * WinHND->View);
+	win_hnd->camera.Speed = 2.5f * win_hnd->delta_time;
+	win_hnd->camera.RelativeXAxis = glm::normalize(glm::cross(win_hnd->camera.Eye, win_hnd->camera.UpAxis));
+	win_hnd->camera.RelativeYAxis = glm::normalize(glm::cross(win_hnd->camera.RelativeXAxis, win_hnd->camera.Eye));
+	win_hnd->camera.Move(Window);
+	win_hnd->view = glm::lookAt(win_hnd->camera.Position, win_hnd->camera.Position + win_hnd->camera.Eye,
+				   win_hnd->camera.UpAxis);
+	win_hnd->inverse_vp = glm::inverse(win_hnd->projection * win_hnd->view);
 
-	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS || WinHND->ShouldExit)
+	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS || win_hnd->should_exit)
 	{
 		glfwSetWindowShouldClose(Window, true);
 	}
@@ -594,21 +603,21 @@ void ProcessInput(GLFWwindow* Window)
 	}
 	if(glfwGetKey(Window, GLFW_KEY_P) == GLFW_RELEASE)
 	{
-		if(PKeyWasDown || WinHND->ReloadShaders)
+		if(PKeyWasDown || win_hnd->reload_shaders)
 		{
-			WinHND->MainShader.Rebuild();
-			model_uni = glGetUniformLocation(WinHND->MainShader.ID, "model");
-			minvt_uni = glGetUniformLocation(WinHND->MainShader.ID, "minvt");
-			view_uni = glGetUniformLocation(WinHND->MainShader.ID, "view");
-			viewpos_uni = glGetUniformLocation(WinHND->MainShader.ID, "viewpos");
-			projection_uni = glGetUniformLocation(WinHND->MainShader.ID, "projection");
-			light_dir_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightdir");
-			objcolor_uni = glGetUniformLocation(WinHND->MainShader.ID, "objcolor");
-			light_color_uni = glGetUniformLocation(WinHND->MainShader.ID, "lightcolor");
-			ambistrgth_uni = glGetUniformLocation(WinHND->MainShader.ID, "ambientstrength");
+			win_hnd->main_shader.Rebuild();
+			model_uni = glGetUniformLocation(win_hnd->main_shader.ID, "model");
+			minvt_uni = glGetUniformLocation(win_hnd->main_shader.ID, "minvt");
+			view_uni = glGetUniformLocation(win_hnd->main_shader.ID, "view");
+			viewpos_uni = glGetUniformLocation(win_hnd->main_shader.ID, "viewpos");
+			projection_uni = glGetUniformLocation(win_hnd->main_shader.ID, "projection");
+			light_dir_uni = glGetUniformLocation(win_hnd->main_shader.ID, "lightdir");
+			objcolor_uni = glGetUniformLocation(win_hnd->main_shader.ID, "objcolor");
+			light_color_uni = glGetUniformLocation(win_hnd->main_shader.ID, "lightcolor");
+			ambistrgth_uni = glGetUniformLocation(win_hnd->main_shader.ID, "ambientstrength");
 
 			PKeyWasDown = 0;
-			WinHND->ReloadShaders = false;
+			win_hnd->reload_shaders = false;
 		}
 	}
 	if(glfwGetKey(Window, GLFW_KEY_N) == GLFW_PRESS)
@@ -621,12 +630,12 @@ void ProcessInput(GLFWwindow* Window)
 		{
 			/*
 			uMATH::vec3f_t p = { 0.0f,0.0f,4.5f };
-			WinHND->Active.Model = WinHND->View;
-			uMATH::Translate(&WinHND->Active.Model, p);
-			WinHND->Active.Model = uMATH::InverseM4(WinHND->Active.Model);
-			WinHND->Active.DecomposeModelM4();
-			WinHND->Active.New = false;
-			WinHND->ActiveSelection = true;
+			win_hnd->Active.Model = win_hnd->View;
+			uMATH::Translate(&win_hnd->Active.Model, p);
+			win_hnd->Active.Model = uMATH::InverseM4(win_hnd->Active.Model);
+			win_hnd->Active.DecomposeModelM4();
+			win_hnd->Active.New = false;
+			win_hnd->ActiveSelection = true;
 			*/
 		}
 		NKeyWasDown = 0;
@@ -634,7 +643,7 @@ void ProcessInput(GLFWwindow* Window)
 
 	// Have to separately check if the UI should be pulling mouse button inputs, as they aren't
 	// tracked by WantCaptureKeyboard
-	if(WinHND->ImIO.WantCaptureMouse)
+	if(win_hnd->im_io.WantCaptureMouse)
 	{
 		return;
 	}
@@ -648,21 +657,21 @@ void ProcessInput(GLFWwindow* Window)
 		if(LMouseWasDown)
 		{
 			/*
-			texel_info_t res = WinHND->PickPass.GetInfo((uint32_t)WinHND->PrevMouseX,
-								    (uint32_t)(WinHND->Height - WinHND->PrevMouseY));
-			if(WinHND->ActiveSelection && WinHND->Active.Deleted != true)
+			texel_info_t res = win_hnd->PickPass.GetInfo((uint32_t)win_hnd->PrevMouseX,
+								    (uint32_t)(win_hnd->Height - win_hnd->PrevMouseY));
+			if(win_hnd->ActiveSelection && win_hnd->Active.Deleted != true)
 			{
-				WinHND->Active.ComposeModelM4();
-				WinHND->GeometryObjects.Alloc(WinHND->Active);
-				WinHND->ActiveSelection = false;
+				win_hnd->Active.ComposeModelM4();
+				win_hnd->GeometryObjects.Alloc(win_hnd->Active);
+				win_hnd->ActiveSelection = false;
 			}
 			if (res.ID > 0)
 			{
-				WinHND->Active.Model = WinHND->GeometryObjects.Model[(int)res.ID -
-			1]; WinHND->Active.Color = WinHND->GeometryObjects.Color[(int)res.ID - 1];
-				WinHND->Active.DecomposeModelM4();
-				WinHND->GeometryObjects.Free((int)res.ID - 1);
-				WinHND->ActiveSelection = true;
+				win_hnd->Active.Model = win_hnd->GeometryObjects.Model[(int)res.ID -
+			1]; win_hnd->Active.Color = win_hnd->GeometryObjects.Color[(int)res.ID - 1];
+				win_hnd->Active.DecomposeModelM4();
+				win_hnd->GeometryObjects.Free((int)res.ID - 1);
+				win_hnd->ActiveSelection = true;
 			}
 			*/
 		}
@@ -689,60 +698,60 @@ void ProcessInput(GLFWwindow* Window)
 
 void MousePosCallback(GLFWwindow* Window, double mx, double my)
 {
-	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
+	window_handler_t* win_hnd = (window_handler_t*)glfwGetWindowUserPointer(Window);
 
 	// Check if the UI should be pulling focus
-	if(WinHND->ImIO.WantCaptureMouse)
+	if(win_hnd->im_io.WantCaptureMouse)
 	{
 		return;
 	}
 
-	if(WinHND->FirstCameraMove)
+	if(win_hnd->first_camera_move)
 	{
-		WinHND->PrevMouseX = mx;
-		WinHND->PrevMouseY = my;
-		WinHND->FirstCameraMove = 0;
+		win_hnd->prev_mouse_x = mx;
+		win_hnd->prev_mouse_y = my;
+		win_hnd->first_camera_move = 0;
 	}
 
-	float xoffset = mx - WinHND->PrevMouseX;
-	float yoffset = WinHND->PrevMouseY - my;
+	float xoffset = mx - win_hnd->prev_mouse_x;
+	float yoffset = win_hnd->prev_mouse_y - my;
 
-	WinHND->PrevMouseX = mx;
-	WinHND->PrevMouseY = my;
+	win_hnd->prev_mouse_x = mx;
+	win_hnd->prev_mouse_y = my;
 
 	if(RMouseWasDown)
 	{
-		WinHND->Camera.LookAtMouse(xoffset, yoffset);
+		win_hnd->camera.LookAtMouse(xoffset, yoffset);
 	}
 }
 
-void GenerateInterfaceElements(window_handler_t* WinHND, bool* HelpWindow, bool* PostWindow, bool* DemoWindow)
+void GenerateInterfaceElements(window_handler_t* win_hnd, bool* HelpWindow, bool* PostWindow, bool* DemoWindow)
 {
-	if(WinHND->ActiveSelection)
+	if(win_hnd->active_selection)
 	{
 		ImGui::Begin("Object Parameters");
 
 		/*
 		ImGui::Spacing();
-		ImGui::SliderFloat("Scale", &WinHND->Active.Scale, 0.1f, 2.5f);
+		ImGui::SliderFloat("Scale", &win_hnd->Active.Scale, 0.1f, 2.5f);
 		ImGui::Spacing();
 		ImGui::Text("Rotation");
-		ImGui::SliderFloat("Angle", &WinHND->Active.RotationAngle, 0.0f, 180.0f);
-		ImGui::SliderFloat("rX", &WinHND->Active.RotationAxis.x, 0.0f, 1.0f);
-		ImGui::SliderFloat("rY", &WinHND->Active.RotationAxis.y, 0.0f, 1.0f);
-		ImGui::SliderFloat("rZ", &WinHND->Active.RotationAxis.z, 0.0f, 1.0f);
+		ImGui::SliderFloat("Angle", &win_hnd->Active.RotationAngle, 0.0f, 180.0f);
+		ImGui::SliderFloat("rX", &win_hnd->Active.RotationAxis.x, 0.0f, 1.0f);
+		ImGui::SliderFloat("rY", &win_hnd->Active.RotationAxis.y, 0.0f, 1.0f);
+		ImGui::SliderFloat("rZ", &win_hnd->Active.RotationAxis.z, 0.0f, 1.0f);
 		ImGui::Spacing();
 		ImGui::Text("Position");
-		ImGui::SliderFloat("X", &WinHND->Active.Position.x, -15.0f, 15.0f);
-		ImGui::SliderFloat("Y", &WinHND->Active.Position.y, -15.0f, 15.0f);
-		ImGui::SliderFloat("Z", &WinHND->Active.Position.z, -15.0f, 15.0f);
+		ImGui::SliderFloat("X", &win_hnd->Active.Position.x, -15.0f, 15.0f);
+		ImGui::SliderFloat("Y", &win_hnd->Active.Position.y, -15.0f, 15.0f);
+		ImGui::SliderFloat("Z", &win_hnd->Active.Position.z, -15.0f, 15.0f);
 		ImGui::Spacing();
-		ImGui::ColorEdit3("Color", (float*)&WinHND->Active.Color);
+		ImGui::ColorEdit3("Color", (float*)&win_hnd->Active.Color);
 		ImGui::Spacing();
 		if (ImGui::Button("Delete Object"))
 		{
-			WinHND->Active.Deleted = true;
-			WinHND->ActiveSelection = false;
+			win_hnd->Active.Deleted = true;
+			win_hnd->ActiveSelection = false;
 		}
 		*/
 
@@ -798,7 +807,7 @@ void GenerateInterfaceElements(window_handler_t* WinHND, bool* HelpWindow, bool*
 	ImGui::Spacing();
 	if(ImGui::Button("Reload Shaders (p)"))
 	{
-		WinHND->ReloadShaders = true;
+		win_hnd->reload_shaders = true;
 	}
 	ImGui::Spacing();
 	if(ImGui::Button("Help"))
@@ -815,12 +824,12 @@ void GenerateInterfaceElements(window_handler_t* WinHND, bool* HelpWindow, bool*
 	ImGui::Spacing();
 	if(ImGui::Button("Exit (esc)"))
 	{
-		WinHND->ShouldExit = true;
+		win_hnd->should_exit = true;
 	}
 	ImGui::Spacing();
-	ImGui::Text("CPU Frame time: %.2f ms", WinHND->FrameTimeMS);
+	ImGui::Text("CPU Frame time: %.2f ms", win_hnd->frame_time_ms);
 	ImGui::Spacing();
-	ImGui::Text("Frame present time: %.2f ms", WinHND->DeltaTime * 1000.0f);
+	ImGui::Text("Frame present time: %.2f ms", win_hnd->delta_time * 1000.0f);
 
 	ImGui::End();
 }

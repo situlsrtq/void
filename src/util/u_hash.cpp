@@ -1,7 +1,5 @@
 #include "u_hash.h"
 
-hash_table_t* g_test_table = 0x0;
-
 int hash_table_t::init(linear_arena_t* arena)
 {
 	if(arena == 0x0)
