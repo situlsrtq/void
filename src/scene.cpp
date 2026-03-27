@@ -1,6 +1,6 @@
 #include "scene.h"
 
-void mesh_info_t::AddNode(u32 index)
+void mesh_info_t::add_node(u32 index)
 {
 	linked_node_t* node = node_list;
 	while(node != 0x0)
@@ -13,7 +13,7 @@ void mesh_info_t::AddNode(u32 index)
 	node->next = 0x0;
 }
 
-void mesh_info_t::RemoveNode(u32 index)
+void mesh_info_t::remove_node(u32 index)
 {
 	linked_node_t* node = node_list;
 	if(node == 0x0)
@@ -48,17 +48,17 @@ void mesh_info_t::RemoveNode(u32 index)
 	return;
 }
 
-u32 scene_info_t::AddMesh(u32 num_primitives)
+u32 scene_info_t::add_mesh(u32 num_primitives)
 {
 	u32 mesh_id;
 
-	if(MeshList.NextFreePosition > 0)
+	if(mesh_list.next_free_pos > 0)
 	{
-		mesh_id = MeshList.Pop();
+		mesh_id = mesh_list.pop();
 	}
 	else
 	{
-		mesh_id = MeshPosition;
+		mesh_id = mesh_position;
 
 		if(mesh_id >= PROGRAM_MAX_OBJECTS)
 		{
@@ -66,67 +66,67 @@ u32 scene_info_t::AddMesh(u32 num_primitives)
 			return OBJECT_ALLOC_ERROR;
 		}
 
-		MeshPosition++;
+		mesh_position++;
 	}
 
-	if(PrimList.root == 0x0 || (PrimList.root->size < num_primitives))
+	if(prim_list.root == 0x0 || (prim_list.root->size < num_primitives))
 	{
-		if((PrimPosition + num_primitives) > PROGRAM_MAX_OBJECTS)
+		if((prim_position + num_primitives) > PROGRAM_MAX_OBJECTS)
 		{
 			printf("System: Object Limit Reached\n");
 			return OBJECT_ALLOC_ERROR;
 		}
 
-		Mesh[mesh_id].base_index = PrimPosition;
-		Mesh[mesh_id].size = num_primitives;
-		PrimPosition += num_primitives;
+		mesh[mesh_id].base_index = prim_position;
+		mesh[mesh_id].size = num_primitives;
+		prim_position += num_primitives;
 		return mesh_id;
 	}
 
-	Mesh[mesh_id].base_index = PrimList.Pop(num_primitives);
-	Mesh[mesh_id].size = num_primitives;
+	mesh[mesh_id].base_index = prim_list.pop(num_primitives);
+	mesh[mesh_id].size = num_primitives;
 	return mesh_id;
 }
 
-void scene_info_t::FreeMesh(u32 mesh_id)
+void scene_info_t::free_mesh(u32 mesh_id)
 {
-	if(MeshPosition == 0)
+	if(mesh_position == 0)
 	{
 		printf("System: Object array empty, nothing to free\n");
 		return;
 	}
-	if(mesh_id >= MeshPosition || mesh_id >= PROGRAM_MAX_OBJECTS)
+	if(mesh_id >= mesh_position || mesh_id >= PROGRAM_MAX_OBJECTS)
 	{
 		printf("System: Out of bounds on free list\n");
 		return;
 	}
 
-	while(Mesh[mesh_id].node_list != 0x0)
+	while(mesh[mesh_id].node_list != 0x0)
 	{
-		FreeNode(Mesh[mesh_id].node_list->index);
+		free_node(mesh[mesh_id].node_list->index);
 	}
 
-	PrimList.Push(Mesh[mesh_id].base_index, Mesh[mesh_id].size);
-	MeshList.Push(mesh_id);
+	prim_list.push(mesh[mesh_id].base_index, mesh[mesh_id].size);
+	mesh_list.push(mesh_id);
 }
 
-void scene_info_t::AddPrimitive(const primitive_create_info_t& CreateInfo, u32 prim_id)
+void scene_info_t::add_primitive(const primitive_create_info_t& create_info, u32 prim_id)
 {
-	Prim[prim_id] = CreateInfo;
+	prim[prim_id] = create_info;
 	return;
 }
 
-uint32_t scene_info_t::AddNode(const node_create_info_t& CreateInfo, const glm::mat4& ModelIn)
+uint32_t scene_info_t::add_node(const node_create_info_t& create_info, const glm::mat4& model_in)
 {
 	u32 node_id;
 
-	if(NodeList.NextFreePosition > 0)
+	if(node_list.next_free_pos > 0)
 	{
-		node_id = NodeList.Pop();
+		node_id = node_list.pop();
 	}
 	else
 	{
-		node_id = NodePosition;
+		node_id = node_position;
 
 		if(node_id >= PROGRAM_MAX_OBJECTS)
 		{
@@ -134,32 +134,32 @@ uint32_t scene_info_t::AddNode(const node_create_info_t& CreateInfo, const glm::
 			return OBJECT_ALLOC_ERROR;
 		}
 
-		NodePosition++;
+		node_position++;
 	}
 
-	Node[node_id].MeshIndex = CreateInfo.MeshIndex;
-	Node[node_id].node_id = node_id;
-	ModelMatrix[node_id] = ModelIn;
+	node[node_id].mesh_index = create_info.mesh_index;
+	node[node_id].node_id = node_id;
+	model_matrix[node_id] = model_in;
 
-	Mesh[Node->MeshIndex].AddNode(node_id);
+	mesh[node->mesh_index].add_node(node_id);
 
 	return node_id;
 }
 
-void scene_info_t::FreeNode(u32 node_id)
+void scene_info_t::free_node(u32 node_id)
 {
-	if(NodePosition == 0)
+	if(node_position == 0)
 	{
 		printf("System: Object array empty, nothing to free\n");
 		return;
 	}
-	if(node_id >= NodePosition || node_id >= PROGRAM_MAX_OBJECTS)
+	if(node_id >= node_position || node_id >= PROGRAM_MAX_OBJECTS)
 	{
 		printf("System: Out of bounds on free list\n");
 		return;
 	}
 
-	Mesh[Node[node_id].MeshIndex].RemoveNode(node_id);
+	mesh[node[node_id].mesh_index].remove_node(node_id);
 
-	NodeList.Push(node_id);
+	node_list.push(node_id);
 }

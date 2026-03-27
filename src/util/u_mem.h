@@ -35,8 +35,16 @@ struct index_free_list_t
 	u32 pop();
 };
 
+struct linked_block_t
+{
+	linked_block_t* prev;
+	linked_block_t* next;
+	u32 base_index;
+	u32 size;
+};
+
 /// <summary>
-/// Dynamically sized block allocator
+/// Dynamically sized freelist block allocator
 /// </summary>
 struct block_free_list_t
 {

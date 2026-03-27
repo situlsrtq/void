@@ -68,14 +68,6 @@ void index_free_list_t::push(u32 FreedIndex)
 	next_free_pos++;
 }
 
-struct linked_block_t
-{
-	linked_block_t* prev;
-	linked_block_t* next;
-	u32 base_index;
-	u32 size;
-};
-
 u32 block_free_list_t::pop(u32 req_size)
 {
 	u32 res = root->base_index;
@@ -83,20 +75,30 @@ u32 block_free_list_t::pop(u32 req_size)
 	root->base_index += req_size;
 	root->size -= req_size;
 
+	bool node_was_root = true;
 	linked_block_t* node = root;
-	linked_block_t* temp = root;
 	while((node->next != 0x0) && (node->size < node->next->size))
 	{
-		temp = node->next;
+		linked_block_t* temp = node->next;
 		node->next = temp->next;
-		node->next->prev = node;
+		if(node->prev)
+		{
+			node->prev->next = temp;
+		}
 		temp->prev = node->prev;
-		temp->prev->next = temp;
 		node->prev = temp;
+		if(temp->next)
+		{
+			temp->next->prev = node;
+		}
 		temp->next = node;
-	}
 
-	root = temp;
+		if(node_was_root)
+		{
+			root = temp;
+			node_was_root = false;
+		}
+	}
 
 	return res;
 }
@@ -113,32 +115,43 @@ void block_free_list_t::push(u32 base_index, u32 size)
 		return;
 	}
 
+	bool node_was_root = true;
 	linked_block_t* node = root;
 	while(node->size > size)
 	{
-		linked_block_t* temp = node;
-		node = node->next;
-		if(node == 0x0)
+		linked_block_t* temp = node->next;
+		if(temp == 0x0)
 		{
-			node = (linked_block_t*)UTIL::Malloc(sizeof(linked_block_t));
-			temp->next = node;
-			node->prev = temp;
-			node->next = 0x0;
-			node->base_index = base_index;
-			node->size = size;
-			merge(node);
+			temp = (linked_block_t*)UTIL::Malloc(sizeof(linked_block_t));
+			node->next = temp;
+			temp->prev = node;
+			temp->next = 0x0;
+			temp->base_index = base_index;
+			temp->size = size;
+			merge(temp);
 			return;
 		}
+
+		node = temp;
+		node_was_root = false;
 	}
 
 	linked_block_t* new_node = (linked_block_t*)UTIL::Malloc(sizeof(linked_block_t));
 	new_node->next = node;
 	new_node->prev = node->prev;
-	node->prev->next = new_node;
+	if(node->prev)
+	{
+		node->prev->next = new_node;
+	}
 	node->prev = new_node;
 	new_node->base_index = base_index;
 	new_node->size = size;
 	merge(new_node);
+	if(node_was_root)
+	{
+		root = new_node;
+	}
+
 	return;
 }
 
@@ -157,6 +170,7 @@ void block_free_list_t::merge(linked_block_t* node)
 		else
 		{
 			UTIL::Free(node->next);
+			node->next = 0x0;
 		}
 	}
 
@@ -166,6 +180,10 @@ void block_free_list_t::merge(linked_block_t* node)
 		node = node->prev;
 		node->size += temp->size;
 		node->next = temp->next;
+		if(temp->next)
+		{
+			temp->next->prev = node;
+		}
 		UTIL::Free(temp);
 	}
 
@@ -173,7 +191,15 @@ void block_free_list_t::merge(linked_block_t* node)
 	{
 		linked_block_t* temp = node->prev;
 		node->prev = temp->prev;
+		if(temp->prev)
+		{
+			temp->prev->next = node;
+		}
 		temp->next = node->next;
+		if(node->next)
+		{
+			node->next->prev = temp;
+		}
 		node->next = temp;
 		temp->prev = node;
 	}
