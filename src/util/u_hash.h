@@ -15,26 +15,25 @@
 
 struct robin_node_t
 {
-	uint64_t offset;
-	uint32_t value;
-	uint32_t displacement;
-	uint8_t flag;
+	u64 handle;
+	u32 value;
+	u32 displacement;
+	u8 flag;
 };
 
 struct hash_table_t
 {
-	linear_arena_t StringArena;
+	linear_arena_t* string_arena;
 	robin_node_t table[PROGRAM_MAX_OBJECTS];
+	u32 probes_before_boundary;
+	u32 occupancy;
 
-	void Insert(void* key, int len, uint32_t value);
-	void Remove(void* key);
-	uint32_t Find(void* search_key, int len);
-
-	private:
-
-	uint32_t probes_before_boundary;
-	uint32_t occupancy;
+	int init(linear_arena_t* string_arena);
 };
+
+void rh_hash_insert(hash_table_t* table, void* key, int len, u32 value);
+void rh_hash_remove(hash_table_t* table, void* key);
+u32 rh_hash_find(hash_table_t* table, void* search_key, int len);
 
 extern hash_table_t* g_test_table;
 

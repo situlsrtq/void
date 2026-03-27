@@ -2,29 +2,37 @@
 
 hash_table_t* g_test_table = 0x0;
 
-void hash_table_t::Insert(void* key, int len, uint32_t value)
+int hash_table_t::init(linear_arena_t* arena)
 {
-	if(occupancy == TABLE_SIZE)
+	string_arena = arena;
+	probes_before_boundary = 0;
+	occupancy = 0;
+}
+
+void rh_hash_insert(hash_table_t* table, void* key, int len, u32 value)
+{
+	if(table->occupancy == TABLE_SIZE)
 	{
 		printf("System: could not insert (hash table full)\n");
 		return;
 	}
 
-	robin_node_t res = {0, value, 0, 0};
-	int string_res = StringArena.Alloc(&res.offset, len);
-	if(string_res == EXIT_FAILURE)
+	robin_node_t res = {0x0, value, 0, 0};
+	int success = arena_alloc(table->string_arena, &res.handle, len);
+	if(success == EXIT_FAILURE)
 	{
 		printf("System: could not insert (string alloc failure)\n");
 		return;
 	}
-	memcpy((uint8_t*)StringArena.BaseAddr + res.offset, key, len);
+	void* res_address = pointer_from_arena(table->string_arena, res.handle);
+	memcpy(res_address, key, len);
 
-	uint32_t hash_key;
+	u32 hash_key;
 	MurmurHash3_x86_32(key, len, TABLE_SEED, &hash_key);
 	hash_key %= TABLE_SIZE;
 
-	robin_node_t* frame = &table[hash_key];
-	probes_before_boundary = TABLE_SIZE - hash_key;
+	robin_node_t* frame = &table->table[hash_key];
+	table->probes_before_boundary = TABLE_SIZE - hash_key;
 
 	bool frame_needs_placing = true;
 	while(frame_needs_placing)
@@ -33,17 +41,17 @@ void hash_table_t::Insert(void* key, int len, uint32_t value)
 		{
 			frame++;
 			res.displacement++;
-			probes_before_boundary--;
-			if(probes_before_boundary == 0)
+			table->probes_before_boundary--;
+			if(table->probes_before_boundary == 0)
 			{
-				frame = &table[0];
-				probes_before_boundary = TABLE_SIZE;
+				frame = &table->table[0];
+				table->probes_before_boundary = TABLE_SIZE;
 			}
 		}
 
 		if(frame->flag == FLAG_AVAILABLE)
 		{
-			frame->offset = res.offset;
+			frame->handle = res.handle;
 			frame->value = res.value;
 			frame->displacement = res.displacement;
 			frame->flag = FLAG_POPULATED;
@@ -52,7 +60,7 @@ void hash_table_t::Insert(void* key, int len, uint32_t value)
 		else
 		{
 			robin_node_t temp = *frame;
-			frame->offset = res.offset;
+			frame->handle = res.handle;
 			frame->value = res.value;
 			frame->displacement = res.displacement;
 			frame->flag = FLAG_POPULATED;
@@ -62,43 +70,44 @@ void hash_table_t::Insert(void* key, int len, uint32_t value)
 			// bumping the frame that was just placed (in the case where the displacements are equal)
 			frame++;
 			res.displacement++;
-			probes_before_boundary--;
-			if(probes_before_boundary == 0)
+			table->probes_before_boundary--;
+			if(table->probes_before_boundary == 0)
 			{
-				frame = &table[0];
-				probes_before_boundary = TABLE_SIZE;
+				frame = &table->table[0];
+				table->probes_before_boundary = TABLE_SIZE;
 			}
 		}
 	}
 
-	occupancy++;
+	table->occupancy++;
 	return;
 }
 
-uint32_t hash_table_t::Find(void* search_key, int len)
+u32 rh_hash_find(hash_table_t* table, void* search_key, int len)
 {
-	uint32_t hashed_key;
+	u32 hashed_key;
 	MurmurHash3_x86_32(search_key, len, TABLE_SEED, &hashed_key);
 	hashed_key %= TABLE_SIZE;
 
-	probes_before_boundary = TABLE_SIZE - hashed_key;
-	uint32_t displacement = 0;
-	robin_node_t* frame = &table[hashed_key];
+	table->probes_before_boundary = TABLE_SIZE - hashed_key;
+	u32 displacement = 0;
+	robin_node_t* frame = &table->table[hashed_key];
 
 	while(displacement <= frame->displacement)
 	{
-		if(!strcmp((char*)StringArena.BaseAddr + frame->offset, (char*)search_key))
+		char *frame_string = (char*)pointer_from_arena(table->string_arena, frame->handle);
+		if(!strcmp(frame_string, (char*)search_key))
 		{
 			return frame->value;
 		}
 
 		frame++;
 		displacement++;
-		probes_before_boundary--;
-		if(probes_before_boundary == 0)
+		table->probes_before_boundary--;
+		if(table->probes_before_boundary == 0)
 		{
-			frame = &table[0];
-			probes_before_boundary = TABLE_SIZE;
+			frame = &table->table[0];
+			table->probes_before_boundary = TABLE_SIZE;
 		}
 	}
 

@@ -7,36 +7,21 @@
 #include "u_util.h"
 
 /// <summary>
-/// Dynamically sized linear arena. Grows only, does not shrink
+/// Fixed-size linear arena. Grows only, does not shrink
 /// </summary>
 struct linear_arena_t
 {
 	u64 position;
 	u64 size;
-	u64 step_size;
 	void* base_addr;
 
-	int init(u64 size, u64 step_size);
+	int init(u64 size);
 	void reset();
 	void release();
 };
 
-struct lin_arena_info_t
-{
-	linear_arena_t* arena;
-};
-
 int arena_alloc(linear_arena_t* arena, u64* handle, u64 len);
-void add_to_arena(linear_arena_t* arena, lin_arena_info_t* info);
-
-/// <summary>
-/// Takes an offset-based handle and returns a pointer to memory in a linear arena.
-/// WARN: These arenas are resizable, do not store the returned pointers.
-/// </summary>
-/// <param name="info"></param>
-/// <param name="offset"></param>
-/// <returns></returns>
-void* pointer_from_arena(lin_arena_info_t* info, u64 offset);
+void* pointer_from_arena(linear_arena_t* arena, u64 offset);
 
 /// <summary>
 /// Fixed-size freelist allocator

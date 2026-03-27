@@ -1,6 +1,6 @@
 #include "u_mem.h"
 
-int linear_arena_t::init(u64 size, u64 step_size)
+int linear_arena_t::init(u64 size)
 {
 	base_addr = malloc(size);
 	if(base_addr == 0x0)
@@ -11,7 +11,6 @@ int linear_arena_t::init(u64 size, u64 step_size)
 
 	position = 0;
 	this->size = size;
-	this->step_size = step_size;
 
 	return EXIT_SUCCESS;
 }
@@ -30,32 +29,12 @@ void linear_arena_t::release()
 	return;
 }
 
-int resize_arena(linear_arena_t* arena, u64 overflow)
-{
-	u32 num_steps = ceil(overflow / arena->step_size);
-
-	void* tmp = realloc(arena->base_addr, arena->size + (arena->step_size * num_steps));
-	if(tmp == 0x0)
-	{
-		printf("System: failed to reallocate arena on resize request\n");
-		return EXIT_FAILURE;
-	}
-
-	arena->base_addr = tmp;
-	arena->size += arena->step_size;
-	return EXIT_SUCCESS;
-}
-
 int arena_alloc(linear_arena_t* arena, u64* handle, u64 len)
 {
 	if(arena->position + len > arena->size)
 	{
-		int res = resize_arena(arena, arena->position + len - arena->size);
-		if(res == EXIT_FAILURE)
-		{
-			printf("Arena: could not allocate (resize failed)\n");
-			return EXIT_FAILURE;
-		}
+		printf("Arena: could not allocate (resize failed)\n");
+		return EXIT_FAILURE;
 	}
 
 	*handle = arena->position;
@@ -63,14 +42,9 @@ int arena_alloc(linear_arena_t* arena, u64* handle, u64 len)
 	return EXIT_SUCCESS;
 }
 
-void add_to_arena(linear_arena_t *arena, lin_arena_info_t *info)
+void* pointer_from_arena(linear_arena_t* arena, u64 offset)
 {
-	info->arena = arena;
-}
-
-void* pointer_from_arena(const lin_arena_info_t& info, u64 offset)
-{
-	void* res = (u8*)info.arena->base_addr + offset;
+	void* res = (u8*)arena->base_addr + offset;
 	return res;
 }
 
@@ -110,14 +84,19 @@ u32 block_free_list_t::pop(u32 req_size)
 	root->size -= req_size;
 
 	linked_block_t* node = root;
-	while(node->size < node->next->size)
+	linked_block_t* temp = root;
+	while((node->next != 0x0) && (node->size < node->next->size))
 	{
-		linked_block_t* temp = node->next;
+		temp = node->next;
 		node->next = temp->next;
+		node->next->prev = node;
 		temp->prev = node->prev;
+		temp->prev->next = temp;
 		node->prev = temp;
 		temp->next = node;
 	}
+
+	root = temp;
 
 	return res;
 }
@@ -142,6 +121,7 @@ void block_free_list_t::push(u32 base_index, u32 size)
 		if(node == 0x0)
 		{
 			node = (linked_block_t*)UTIL::Malloc(sizeof(linked_block_t));
+			temp->next = node;
 			node->prev = temp;
 			node->next = 0x0;
 			node->base_index = base_index;
@@ -154,6 +134,7 @@ void block_free_list_t::push(u32 base_index, u32 size)
 	linked_block_t* new_node = (linked_block_t*)UTIL::Malloc(sizeof(linked_block_t));
 	new_node->next = node;
 	new_node->prev = node->prev;
+	node->prev->next = new_node;
 	node->prev = new_node;
 	new_node->base_index = base_index;
 	new_node->size = size;
