@@ -1,9 +1,15 @@
 #include "input.h"
 
-//KeyInputCallback is GLFW key callback for essential window functions.
-//For now, it processes "ESC" to close program and WASD for camera positioning
+void input::axis3D::Refresh() {
+	//TODO
+}
+	
+
+//Callbacks for essential window functions
+//For now Key Input processes "ESC" to close program and WASD for camera positioning
 void KeyInputCallback(GLFWwindow* Window, int key, int scancode, int action, int mods) {
 
+	
 	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
 
 	// Check if the UI should be pulling focus
@@ -11,6 +17,7 @@ void KeyInputCallback(GLFWwindow* Window, int key, int scancode, int action, int
 	{
 		return;
 	}
+	
 
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 	{
@@ -87,10 +94,10 @@ void KeyInputCallback(GLFWwindow* Window, int key, int scancode, int action, int
 	}
 }
 
-
-//This position callback will point the camera when right mouse is held down
+//Mouse position callback will point the camera when right mouse is held down
 void MousePosCallback(GLFWwindow* Window, double mx, double my)
 {
+	
 	window_handler_t* WinHND = (window_handler_t*)glfwGetWindowUserPointer(Window);
 
 	// Check if the UI should be pulling focus
@@ -98,6 +105,7 @@ void MousePosCallback(GLFWwindow* Window, double mx, double my)
 	{
 		return;
 	}
+	
 
 	if (WinHND->FirstCameraMove)
 	{
@@ -117,6 +125,11 @@ void MousePosCallback(GLFWwindow* Window, double mx, double my)
 	{
 		glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		WinHND->Camera.LookAtMouse(xoffset, yoffset);
+	}
+
+	if (glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE)
+	{
+		glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 	
 }
