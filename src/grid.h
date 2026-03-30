@@ -59,20 +59,18 @@ struct tight_cell_t
 template<typename T>
 struct grid_info_t
 {
-	u64 cell_handle;
+	T* cells;
 	u32 num_columns, num_rows;
 };
 
 struct dual_grid_t
 {
-	linear_arena_t* arena;
-
 	grid_info_t<loose_cell_t> loose_grid;
 	grid_info_t<tight_cell_t> tight_grid;
 	index_free_list_t element_freelist;
 	index_free_list_t node_freelist;
-	u64 element_handle;
-	u64 node_handle;
+	grid_element_t* elements;
+	tight_node_t* nodes;
 	float inv_tile_size_tight;
 	float inv_tile_size_loose;
 	float grid_min_x;
