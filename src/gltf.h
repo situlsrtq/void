@@ -15,10 +15,11 @@
 #include "window.h"
 #include "rendertypes.h"
 #include "scene.h"
+#include "grid.h"
 #include "u_hash.h"
 #include "u_types.h"
 
-int LoadSceneFromGLB(const char* SceneFile, window_handler_t*& WinHND, unsigned int* VAO,
-		     vertex_buffer_info_t* VBufferState, unsigned int TexCount);
+int load_scene_from_glb(const char* scene_file, window_handler_t*& win_hnd, unsigned int* vao,
+		     vertex_buffer_info_t* vbuffer_state, unsigned int tex_count);
 
 #endif

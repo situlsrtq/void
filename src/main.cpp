@@ -1,4 +1,6 @@
 #include "main.h"
+#include "grid.h"
+#include "rendertypes.h"
 #include "u_types.h"
 
 // TODO: Get rid of runtime path discovery in release builds
@@ -208,7 +210,7 @@ int main(void)
 	glVertexArrayAttribFormat(vao, 3, 2, GL_FLOAT, GL_FALSE, 0);
 	glVertexArrayAttribBinding(vao, 3, 3);
 
-	res = LoadSceneFromGLB(scene_file1, win_hnd, &vao, &vbuffer_state, VOID_TEX_COUNT);
+	res = load_scene_from_glb(scene_file1, win_hnd, &vao, &vbuffer_state, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
 	{
 		printf("System: Could not load scene file: %s\n", scene_file1);
@@ -346,6 +348,8 @@ int main(void)
 	bool help_window = false;
 	bool post_window = false;
 	bool demo_window = false;
+	command_buffer_t command_buffer = {};
+
 	while(!glfwWindowShouldClose(window))
 	{
 		frame_start_time = glfwGetTime();
@@ -361,8 +365,13 @@ int main(void)
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-
 		GenerateInterfaceElements(win_hnd, &help_window, &post_window, &demo_window);
+
+		// Command buffers and culling
+
+		command_buffer_frame_start(scratch_arena, &command_buffer, PROGRAM_MAX_OBJECTS);
+
+		dual_grid_frustum_cull(const dual_grid_t &grid, &command_buffer, win_hnd->inverse_vp);
 
 		// Render passes
 
@@ -380,16 +389,9 @@ int main(void)
 		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->projection));
 		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
 
-		for(unsigned int i = 0; i < win_hnd->scene.node_position; i++)
+		for(unsigned int i = 0; i < command_buffer.max_command_count; i++)
 		{
-			this needs to be fixed once we're drawing out of the grid instead of the node list directly
-      			/*
-			node_create_info_t Node = win_hnd->Scene.Node[i];
-			if(Node.Visible == VIS_STATUS_FREED)
-			{
-				continue;
-			}
-			*/
+			node_create_info_t node = win_hnd->scene.node[command_buffer.command_list[i].node_id];
 
 			glUniform1f(pickingindex_uni, float(i + 1));
 			glUniform1f(pickingtype_uni, float(1));
@@ -445,7 +447,7 @@ int main(void)
 			}
 			*/
 
-			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->Scene.model_matrix[i]));
+			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->scene.model_matrix[i]));
 
 			mesh_info_t mesh = win_hnd->scene.mesh[node.mesh_index];
 			for(uint32_t t = 0; t < mesh.size; t++)
@@ -526,6 +528,8 @@ int main(void)
 		win_hnd->frame_time_ms = (frame_end_time - frame_start_time) * 1000.0f;
 
 		glfwSwapBuffers(window);
+
+		scratch_arena->reset();
 
 		win_hnd->delta_time = frame_end_time - win_hnd->prev_frame_time;
 		win_hnd->prev_frame_time = frame_end_time;

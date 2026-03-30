@@ -1,5 +1,54 @@
 #include "grid.h"
 
+int dual_grid_t::init(linear_arena_t* arena_in, glm::ivec2 global_min, glm::ivec2 global_max, u32 loose_cell_size,
+		      u32 tight_cell_size)
+{
+	arena = arena_in;
+
+	grid_min_x = global_min.x;
+	grid_min_y = global_min.y;
+	inv_tile_size_loose = 1.0f / (float)loose_cell_size;
+	inv_tile_size_tight = 1.0f / (float)tight_cell_size;
+
+	u32 columns = ceil((global_max.x - global_min.x) * inv_tile_size_loose);
+	u32 rows = ceil((global_max.y - global_min.y) * inv_tile_size_loose);
+	loose_grid.num_columns = columns;
+	loose_grid.num_rows = rows;
+	int res = arena_alloc(arena, &loose_grid.cell_handle, sizeof(loose_cell_t) * columns * rows);
+	if(res == EXIT_FAILURE)
+	{
+		printf("Grid: could not allocate loose cells\n");
+		return EXIT_FAILURE;
+	}
+
+	columns = ceil((global_max.x - global_min.x) * inv_tile_size_tight);
+	rows = ceil((global_max.y - global_min.y) * inv_tile_size_tight);
+	tight_grid.num_columns = columns;
+	tight_grid.num_rows = rows;
+	res = arena_alloc(arena, &tight_grid.cell_handle, sizeof(tight_cell_t) * columns * rows);
+	if(res == EXIT_FAILURE)
+	{
+		printf("Grid: could not allocate tight cells\n");
+		return EXIT_FAILURE;
+	}
+
+	res = arena_alloc(arena, &element_handle, sizeof(grid_element_t) * PROGRAM_MAX_OBJECTS);
+	if(res == EXIT_FAILURE)
+	{
+		printf("Grid: could not allocate element array\n");
+		return EXIT_FAILURE;
+	}
+
+	res = arena_alloc(arena, &node_handle, sizeof(tight_node_t) * PROGRAM_MAX_OBJECTS);
+	if(res == EXIT_FAILURE)
+	{
+		printf("Grid: could not allocate tight node array\n");
+		return EXIT_FAILURE;
+	}
+
+	return EXIT_SUCCESS;
+}
+
 void dual_grid_expand_aabb(dual_grid_t* grid, loose_cell_t* loose_cell, u32 loose_cell_index, glm::vec2 loose_aabb_min,
 			   glm::vec2 loose_aabb_max, glm::vec2 grid_aabb_min, glm::vec2 grid_aabb_max)
 {
@@ -20,6 +69,9 @@ void dual_grid_expand_aabb(dual_grid_t* grid, loose_cell_t* loose_cell, u32 loos
 	u32 new_max_x_tile = floor((grid_aabb_max.x - grid->grid_min_x) * grid->inv_tile_size_tight);
 	u32 new_max_y_tile = floor((grid_aabb_max.y - grid->grid_min_y) * grid->inv_tile_size_tight);
 
+	tight_cell_t* tight_cells = (tight_cell_t*)pointer_from_arena(grid->arena, grid->tight_grid.cell_handle);
+	tight_node_t* nodes = (tight_node_t*)pointer_from_arena(grid->arena, grid->node_handle);
+
 	for(u32 y = new_min_y_tile; y <= new_max_y_tile; y++)
 	{
 		bool y_in_old_bounds = ((old_min_y_tile < y) && (y < old_max_y_tile));
@@ -33,7 +85,7 @@ void dual_grid_expand_aabb(dual_grid_t* grid, loose_cell_t* loose_cell, u32 loos
 
 			u32 node_index = grid->node_freelist.pop();
 
-			tight_cell_t* tight_cell = &grid->tight_grid.cells[(y * grid->tight_grid.num_columns) + x];
+			tight_cell_t* tight_cell = &tight_cells[(y * grid->tight_grid.num_columns) + x];
 			if(tight_cell->first_node < 0)
 			{
 				tight_cell->first_node = node_index;
@@ -41,11 +93,11 @@ void dual_grid_expand_aabb(dual_grid_t* grid, loose_cell_t* loose_cell, u32 loos
 			else
 			{
 				u32 temp = tight_cell->first_node;
-				grid->nodes[node_index].next_node = temp;
+				nodes[node_index].next_node = temp;
 				tight_cell->first_node = node_index;
 			}
 
-			grid->nodes[node_index].loose_cell_index = loose_cell_index;
+			nodes[node_index].loose_cell_index = loose_cell_index;
 		}
 	}
 
@@ -69,10 +121,13 @@ int dual_grid_insert(dual_grid_t* grid, glm::vec4 world_aabb_min, glm::vec4 worl
 		return EXIT_FAILURE;
 	}
 
+	loose_cell_t* cells = (loose_cell_t*)pointer_from_arena(grid->arena, grid->loose_grid.cell_handle);
+	grid_element_t* elements = (grid_element_t*)pointer_from_arena(grid->arena, grid->element_handle);
+
 	u32 element_index = grid->element_freelist.pop();
 
 	u32 loose_cell_index = (tile_y * grid->loose_grid.num_columns) + tile_x;
-	loose_cell_t* loose_cell = &grid->loose_grid.cells[loose_cell_index];
+	loose_cell_t* loose_cell = &cells[loose_cell_index];
 	if(loose_cell->first_element < 0)
 	{
 		loose_cell->first_element = element_index;
@@ -81,10 +136,10 @@ int dual_grid_insert(dual_grid_t* grid, glm::vec4 world_aabb_min, glm::vec4 worl
 	{
 		u32 temp = loose_cell->first_element;
 		loose_cell->first_element = element_index;
-		grid->elements[element_index].next_element = temp;
+		elements[element_index].next_element = temp;
 	}
 
-	grid->elements[element_index].node_id = node_id;
+	elements[element_index].node_id = node_id;
 
 	glm::vec2 loose_aabb_min = {loose_cell->center.x - loose_cell->half_width,
 				    loose_cell->center.y - loose_cell->half_height};
@@ -103,7 +158,7 @@ void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec2 center);
 void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
 void dual_grid_optimize(int usage_flag);
 
-void dual_grid_frustum_cull(const dual_grid_t& grid, const glm::mat4& inverse_vp)
+void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_buffer, const glm::mat4& inverse_vp)
 {
 	glm::vec4 ndc_coords[8] = {{-1, -1, -1, 1}, {1, -1, -1, 1}, {1, 1, -1, 1}, {-1, 1, -1, 1},
 				   {-1, -1, 1, 1},  {1, -1, 1, 1},  {1, 1, 1, 1},  {-1, 1, 1, 1}};
@@ -126,21 +181,28 @@ void dual_grid_frustum_cull(const dual_grid_t& grid, const glm::mat4& inverse_vp
 	u32 min_y_tile = floor((xy_min.y - grid.grid_min_y) * grid.inv_tile_size_tight);
 	u32 max_y_tile = floor((xy_max.y - grid.grid_min_y) * grid.inv_tile_size_tight);
 
+	tight_cell_t* tight_cells = (tight_cell_t*)pointer_from_arena(grid.arena, grid.tight_grid.cell_handle);
+	tight_node_t* nodes = (tight_node_t*)pointer_from_arena(grid.arena, grid.node_handle);
+	loose_cell_t* loose_cells = (loose_cell_t*)pointer_from_arena(grid.arena, grid.loose_grid.cell_handle);
+	grid_element_t* elements = (grid_element_t*)pointer_from_arena(grid.arena, grid.element_handle);
+
+	draw_command_info_t draw_info;
 	for(u32 y = min_y_tile; y <= max_y_tile; y++)
 	{
 		for(u32 x = min_x_tile; x <= max_x_tile; x++)
 		{
-			i32 node_index = grid.tight_grid.cells[(y * grid.tight_grid.num_columns) + x].first_node;
+			i32 node_index = tight_cells[(y * grid.tight_grid.num_columns) + x].first_node;
 			while(node_index >= 0)
 			{
-				tight_node_t tight_cell = grid.nodes[node_index];
+				tight_node_t tight_cell = nodes[node_index];
 
-				i32 element_index = grid.loose_grid.cells[tight_cell.loose_cell_index].first_element;
+				i32 element_index = loose_cells[tight_cell.loose_cell_index].first_element;
 				while(element_index >= 0)
 				{
-					grid_element_t element = grid.elements[element_index];
+					grid_element_t element = elements[element_index];
 
-					add_to_draw_list(element.node_id);
+					draw_info.node_id = element.node_id;
+					command_buffer_add_command(command_buffer, draw_info);
 					element_index = element.next_element;
 				}
 

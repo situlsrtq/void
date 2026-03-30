@@ -5,6 +5,7 @@
 #include <glm/mat4x4.hpp>
 #include "scene.h"
 #include "shader.h"
+#include "grid.h"
 #include "u_hash.h"
 #include "renderpass.h"
 #include "camera.h"
@@ -42,6 +43,7 @@ struct window_handler_t
 	primitive_create_info_t active; // for fucking with primitives, later
 	scene_info_t scene;
 	hash_table_t hash_table;
+	dual_grid_t dual_grid;
 	ImGuiIO im_io;
 };
 
