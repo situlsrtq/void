@@ -1,5 +1,4 @@
 #include "main.h"
-#include "GLFW/glfw3.h"
 
 // TODO: Get rid of runtime path discovery in release builds
 
@@ -17,16 +16,7 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 }
 #endif
 
-struct key_state_t
-{
-	u8 keys[GLFW_KEY_LAST];
-};
-
-key_state_t curr_key_inputs;
-key_state_t past_key_inputs;
-
-uint8_t LMouseWasDown;
-uint8_t RMouseWasDown;
+// Uniform globals. Garbage doodoo trash, will go when renderer transitions to visbuffer and indirect/bindless
 
 unsigned int model_uni;
 unsigned int minvt_uni;
@@ -39,6 +29,23 @@ unsigned int light_color_uni;
 unsigned int ambistrgth_uni;
 unsigned int exposure_uni;
 float exposure_val;
+
+// Input globals
+
+struct key_state_t
+{
+	int keys[GLFW_KEY_LAST];
+};
+
+struct mouse_state_t
+{
+	int buttons[GLFW_MOUSE_BUTTON_LAST];
+};
+
+key_state_t curr_key_inputs;
+key_state_t past_key_inputs;
+mouse_state_t curr_mbutton_inputs;
+mouse_state_t past_mbutton_inputs;
 
 linear_arena_t* string_arena;
 linear_arena_t* persistent_arena;
@@ -59,7 +66,7 @@ int main(void)
 		printf("System: Failed to initialize main thread string memory\n");
 	}
 
-	// Storage for data that persists between frames. Never cleared by default 
+	// Storage for data that persists between frames. Never cleared by default
 	res = persistent_arena->init(V_MIB(8));
 	if(res != EXIT_SUCCESS)
 	{
@@ -82,7 +89,7 @@ int main(void)
 	size_t f2len = strlen(res2) + 1;
 
 	u64 f1_handle;
-	res = arena_alloc(string_arena, &f1_handle, pathlen+filelen);
+	res = arena_alloc(string_arena, &f1_handle, pathlen + filelen);
 	if(res == EXIT_FAILURE)
 	{
 		printf("Scene: file 1 alloc failed\n");
@@ -93,7 +100,7 @@ int main(void)
 	memcpy(scene_file1 + pathlen, res1, filelen);
 
 	u64 f2_handle;
-	res = arena_alloc(string_arena, &f2_handle, pathlen+f2len);
+	res = arena_alloc(string_arena, &f2_handle, pathlen + f2len);
 	if(res == EXIT_FAILURE)
 	{
 		printf("Scene: file 2 alloc failed\n");
@@ -129,8 +136,6 @@ int main(void)
 	}
 
 	glfwMakeContextCurrent(window);
-	glfwSetKeyCallback(window, key_callback);
-	glfwSetFramebufferSizeCallback(window, FrameResizeCallback);
 
 	// /!\ gladLoadGLLoader() overwrites all gl functions, can only be called after successfully
 	// setting a current context
@@ -156,7 +161,10 @@ int main(void)
 	glfwSetWindowUserPointer(window, (void*)win_hnd);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-	glfwSetCursorPosCallback(window, MousePosCallback);
+	glfwSetCursorPosCallback(window, mouse_pos_callback);
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	glfwSetFramebufferSizeCallback(window, frame_resize_callback);
 
 	// Initialize ImGui Context
 
@@ -193,11 +201,11 @@ int main(void)
 	unsigned int vao;
 	glCreateVertexArrays(1, &vao);
 
-	glVertexArrayElementBuffer(vao, vbuffer_state.vbuffer_array[INDEX_BUFFER]);	  // sizeof(vec3)
+	glVertexArrayElementBuffer(vao, vbuffer_state.vbuffer_array[INDEX_BUFFER]);	    // sizeof(vec3)
 	glVertexArrayVertexBuffer(vao, 0, vbuffer_state.vbuffer_array[POS_BUFFER], 0, 12);  // sizeof(vec3)
 	glVertexArrayVertexBuffer(vao, 1, vbuffer_state.vbuffer_array[NORM_BUFFER], 0, 12); // sizeof(vec3)
 	glVertexArrayVertexBuffer(vao, 2, vbuffer_state.vbuffer_array[TAN_BUFFER], 0, 16);  // sizeof(vec3)
-	glVertexArrayVertexBuffer(vao, 3, vbuffer_state.vbuffer_array[TEX_BUFFER], 0, 8);	  // sizeof(vec3)
+	glVertexArrayVertexBuffer(vao, 3, vbuffer_state.vbuffer_array[TEX_BUFFER], 0, 8);   // sizeof(vec3)
 
 	glEnableVertexArrayAttrib(vao, 0);
 	glVertexArrayAttribFormat(vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
@@ -332,7 +340,7 @@ int main(void)
 	win_hnd->camera.near_plane_distance = 0.1f;
 	win_hnd->camera.far_plane_distance = 100.0f;
 	win_hnd->projection = glm::perspective(win_hnd->camera.h_fov, win_hnd->camera.aspect_ratio,
-					      win_hnd->camera.near_plane_distance, win_hnd->camera.far_plane_distance);
+					       win_hnd->camera.near_plane_distance, win_hnd->camera.far_plane_distance);
 
 	glm::mat4 model = {};
 	glm::vec3 light_dir = {1.2f, -10.0f, 2.0f};
@@ -362,21 +370,19 @@ int main(void)
 		// Handle user input
 
 		glfwPollEvents();
-		win_hnd->im_io = ImGui::GetIO();
-		ProcessInput(window);
+		win_hnd->im_io = ImGui::GetIO(); // sometimes imgui will want to capture the mouse or keyboard, so check
+						 // before processing input
+		process_input(win_hnd, window);
 
 		// UI framegen
 
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-		GenerateInterfaceElements(win_hnd, &help_window, &post_window, &demo_window);
+		gen_interface_elements(win_hnd, &help_window, &post_window, &demo_window);
 
 		// Command buffers and culling
 
 		command_buffer_frame_start(scratch_arena, &command_buffer, PROGRAM_MAX_OBJECTS);
 
-		dual_grid_frustum_cull(const dual_grid_t &grid, &command_buffer, win_hnd->inverse_vp);
+		dual_grid_frustum_cull(const dual_grid_t& grid, &command_buffer, win_hnd->inverse_vp);
 
 		// Render passes
 
@@ -400,7 +406,8 @@ int main(void)
 			glUniform1f(pickingindex_uni, float(node.node_id));
 			glUniform1f(pickingtype_uni, float(1));
 
-			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->scene.model_matrix[i]));
+			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE,
+					   glm::value_ptr(win_hnd->scene.model_matrix[i]));
 
 			mesh_info_t mesh = win_hnd->scene.mesh[node.mesh_index];
 			for(uint32_t t = 0; t < mesh.size; t++)
@@ -436,8 +443,8 @@ int main(void)
 		glUniformMatrix4fv(projection_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->projection));
 
 		glUniformMatrix4fv(view_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
-		glUniform3f(viewpos_uni, win_hnd->camera.Position.x, win_hnd->camera.Position.y,
-			    win_hnd->camera.Position.z);
+		glUniform3f(viewpos_uni, win_hnd->camera.position.x, win_hnd->camera.position.y,
+			    win_hnd->camera.position.z);
 
 		for(unsigned int i = 0; i < command_buffer.max_command_count; i++)
 		{
@@ -549,7 +556,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 {
 	(void)window, (void)mods, (void)scancode;
 
-	if((key == GLFW_KEY_UNKNOWN) || (action == GLFW_REPEAT)) return;
+	if((key == GLFW_KEY_UNKNOWN) || (action == GLFW_REPEAT))
+	{
+		return;
+	}
 	past_key_inputs.keys[key] = curr_key_inputs.keys[key];
 	curr_key_inputs.keys[key] = action;
 }
@@ -564,8 +574,25 @@ int was_key(int key)
 	return past_key_inputs.keys[key];
 }
 
-switch this to not be a callback anymore but to run at the start of each render loop if size changes
-void FrameResizeCallback(GLFWwindow* Window, int new_screen_width, int new_screen_height)
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+	(void)window, (void)mods;
+
+	past_mbutton_inputs.buttons[button] = curr_mbutton_inputs.buttons[button];
+	curr_mbutton_inputs.buttons[button] = action;
+}
+
+int is_mbutton(int button)
+{
+	return curr_mbutton_inputs.buttons[button];
+}
+
+int was_mbutton(int button)
+{
+	return past_mbutton_inputs.buttons[button];
+}
+
+void frame_resize_callback(GLFWwindow* Window, int new_screen_width, int new_screen_height)
 {
 	window_handler_t* win_hnd = (window_handler_t*)glfwGetWindowUserPointer(Window);
 
@@ -576,7 +603,7 @@ void FrameResizeCallback(GLFWwindow* Window, int new_screen_width, int new_scree
 	win_hnd->camera.focal_length = new_screen_height / (2.0f * tanf(win_hnd->camera.h_fov / 2.0f));
 	win_hnd->camera.aspect_ratio = (float)new_screen_width / (float)new_screen_height;
 	win_hnd->projection = glm::perspective(win_hnd->camera.h_fov, win_hnd->camera.aspect_ratio,
-					      win_hnd->camera.near_plane_distance, win_hnd->camera.far_plane_distance);
+					       win_hnd->camera.near_plane_distance, win_hnd->camera.far_plane_distance);
 	win_hnd->hdr_pass_fb.Release();
 	win_hnd->hdr_pass_fb.Init(new_screen_width, new_screen_height);
 	win_hnd->pick_pass_fb.Release();
@@ -585,29 +612,54 @@ void FrameResizeCallback(GLFWwindow* Window, int new_screen_width, int new_scree
 	glViewport(0, 0, new_screen_width, new_screen_height);
 }
 
-switch this to not be a callback anymore and to be polled at the start of the render loop
-also make it so that when input is polled a full array of keystate is stored instead of using glfwGetKey
-void ProcessInput(GLFWwindow* Window)
+void mouse_pos_callback(GLFWwindow* Window, double mx, double my)
 {
 	window_handler_t* win_hnd = (window_handler_t*)glfwGetWindowUserPointer(Window);
 
+	// Check if the UI should be pulling focus
+	if(win_hnd->im_io.WantCaptureMouse)
+	{
+		return;
+	}
+
+	if(win_hnd->first_camera_move)
+	{
+		win_hnd->prev_mouse_x = mx;
+		win_hnd->prev_mouse_y = my;
+		win_hnd->first_camera_move = 0;
+	}
+
+	float xoffset = mx - win_hnd->prev_mouse_x;
+	float yoffset = win_hnd->prev_mouse_y - my;
+
+	win_hnd->prev_mouse_x = mx;
+	win_hnd->prev_mouse_y = my;
+
+	if(was_mbutton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	{
+		win_hnd->camera.look_at_mouse(xoffset, yoffset);
+	}
+}
+
+void process_input(window_handler_t* win_hnd, GLFWwindow* window)
+{
 	// Check if the UI should be pulling focus
 	if(win_hnd->im_io.WantCaptureKeyboard)
 	{
 		return;
 	}
 
-	win_hnd->camera.Speed = 2.5f * win_hnd->delta_time;
-	win_hnd->camera.RelativeXAxis = glm::normalize(glm::cross(win_hnd->camera.Eye, win_hnd->camera.UpAxis));
-	win_hnd->camera.RelativeYAxis = glm::normalize(glm::cross(win_hnd->camera.RelativeXAxis, win_hnd->camera.Eye));
-	win_hnd->camera.Move(Window);
-	win_hnd->view = glm::lookAt(win_hnd->camera.Position, win_hnd->camera.Position + win_hnd->camera.Eye,
-				   win_hnd->camera.UpAxis);
+	win_hnd->camera.speed = 2.5f * win_hnd->delta_time;
+	win_hnd->camera.rel_x_axis = glm::normalize(glm::cross(win_hnd->camera.eye, win_hnd->camera.up_axis));
+	win_hnd->camera.rel_y_axis = glm::normalize(glm::cross(win_hnd->camera.rel_x_axis, win_hnd->camera.eye));
+	win_hnd->camera.move(window);
+	win_hnd->view = glm::lookAt(win_hnd->camera.position, win_hnd->camera.position + win_hnd->camera.eye,
+				    win_hnd->camera.up_axis);
 	win_hnd->inverse_vp = glm::inverse(win_hnd->projection * win_hnd->view);
 
 	if(is_key(GLFW_KEY_ESCAPE) == KEY_PRESS || win_hnd->should_exit)
 	{
-		glfwSetWindowShouldClose(Window, true);
+		glfwSetWindowShouldClose(window, true);
 	}
 	if(is_key(GLFW_KEY_Q) == KEY_PRESS)
 	{
@@ -658,13 +710,9 @@ void ProcessInput(GLFWwindow* Window)
 		return;
 	}
 
-	if(glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+	if(is_mbutton(GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
 	{
-		LMouseWasDown = 1;
-	}
-	if(glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
-	{
-		if(LMouseWasDown)
+		if(was_mbutton(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 		{
 			/*
 			texel_info_t res = win_hnd->PickPass.GetInfo((uint32_t)win_hnd->PrevMouseX,
@@ -685,58 +733,31 @@ void ProcessInput(GLFWwindow* Window)
 			}
 			*/
 		}
-		LMouseWasDown = 0;
 	}
-	if(glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
-	{
-		if(!RMouseWasDown)
-		{
-			glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		}
-		RMouseWasDown = 1;
-	}
-	if(glfwGetMouseButton(Window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE)
-	{
-		if(RMouseWasDown)
-		{
-			glfwSetInputMode(Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		}
 
-		RMouseWasDown = 0;
+	if(is_mbutton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	{
+		if(was_mbutton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE)
+		{
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		}
+	}
+
+	if(is_mbutton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE)
+	{
+		if(was_mbutton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+		{
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
 	}
 }
 
-void MousePosCallback(GLFWwindow* Window, double mx, double my)
+void gen_interface_elements(window_handler_t* win_hnd, bool* HelpWindow, bool* PostWindow, bool* DemoWindow)
 {
-	window_handler_t* win_hnd = (window_handler_t*)glfwGetWindowUserPointer(Window);
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
 
-	// Check if the UI should be pulling focus
-	if(win_hnd->im_io.WantCaptureMouse)
-	{
-		return;
-	}
-
-	if(win_hnd->first_camera_move)
-	{
-		win_hnd->prev_mouse_x = mx;
-		win_hnd->prev_mouse_y = my;
-		win_hnd->first_camera_move = 0;
-	}
-
-	float xoffset = mx - win_hnd->prev_mouse_x;
-	float yoffset = win_hnd->prev_mouse_y - my;
-
-	win_hnd->prev_mouse_x = mx;
-	win_hnd->prev_mouse_y = my;
-
-	if(RMouseWasDown)
-	{
-		win_hnd->camera.LookAtMouse(xoffset, yoffset);
-	}
-}
-
-void GenerateInterfaceElements(window_handler_t* win_hnd, bool* HelpWindow, bool* PostWindow, bool* DemoWindow)
-{
 	if(win_hnd->active_selection)
 	{
 		ImGui::Begin("Object Parameters");

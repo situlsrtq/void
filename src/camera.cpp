@@ -2,56 +2,56 @@
 
 // Uses Euler rotation, capped to prevent gimbal lock. In testing, this proved to be
 // far more in line with what users naturally expected than free-form quat rotation
-void camera_info_t::LookAtMouse(double XOffset, double YOffset)
+void camera_info_t::look_at_mouse(double xoffset, double yoffset)
 {
-	XOffset *= Sensitivity;
-	YOffset *= Sensitivity;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
 
-	Yaw += XOffset;
-	Pitch += YOffset;
+	yaw += xoffset;
+	pitch += yoffset;
 
-	if(Pitch > 89.0f)
+	if(pitch > 89.0f)
 	{
-		Pitch = 89.0f;
+		pitch = 89.0f;
 	}
-	if(Pitch < -89.0f)
+	if(pitch < -89.0f)
 	{
-		Pitch = -89.0f;
+		pitch = -89.0f;
 	}
 
 	glm::vec3 direction = {};
-	direction.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-	direction.y = sin(glm::radians(Pitch));
-	direction.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 
-	Eye = glm::normalize(direction);
+	eye = glm::normalize(direction);
 }
 
 // Wrapper for Camera-specific input handling
-void camera_info_t::Move(GLFWwindow* Window)
+void camera_info_t::move(GLFWwindow* window)
 {
-	if(glfwGetKey(Window, GLFW_KEY_W) == GLFW_PRESS)
+	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
-		Position += Eye * Speed;
+		position += eye * speed;
 	}
-	if(glfwGetKey(Window, GLFW_KEY_S) == GLFW_PRESS)
+	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-		Position -= Eye * Speed;
+		position -= eye * speed;
 	}
-	if(glfwGetKey(Window, GLFW_KEY_A) == GLFW_PRESS)
+	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		Position -= RelativeXAxis * Speed;
+		position -= rel_x_axis * speed;
 	}
-	if(glfwGetKey(Window, GLFW_KEY_D) == GLFW_PRESS)
+	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		Position += RelativeXAxis * Speed;
+		position += rel_x_axis * speed;
 	}
-	if(glfwGetKey(Window, GLFW_KEY_SPACE) == GLFW_PRESS)
+	if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
-		Position += RelativeYAxis * Speed;
+		position += rel_y_axis * speed;
 	}
-	if(glfwGetKey(Window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+	if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{
-		Position -= RelativeYAxis * Speed;
+		position -= rel_y_axis * speed;
 	}
 }

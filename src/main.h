@@ -35,20 +35,19 @@
 #define KEY_PRESS GLFW_PRESS
 #define KEY_RELEASE GLFW_RELEASE
 
-// int RenderSystemsInit(window_handler_t*& WinHND);
+// TODO: Handle in frame loop, not with a callback maybe?
 
-// TODO: Split out into Core/PAL module
-
-void FrameResizeCallback(GLFWwindow* window, int width, int height);
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void frame_resize_callback(GLFWwindow* window, int width, int height);
 
 // TODO: Split out into Input Handling module
 
-void MousePosCallback(GLFWwindow* Window, double mx, double my);
-void ProcessInput(GLFWwindow* Window);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void mouse_pos_callback(GLFWwindow* window, double mx, double my);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void process_input(window_handler_t* win_hnd, GLFWwindow* window);
 
 // TODO: Split out into UI module
 
-void GenerateInterfaceElements(window_handler_t* WinHND, bool* HelpWindow, bool* PostWindow, bool* DemoWindow);
+void gen_interface_elements(window_handler_t* win_hnd, bool* help_window, bool* post_window, bool* demo_window);
 
 #endif

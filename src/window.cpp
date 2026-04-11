@@ -1,5 +1,4 @@
 #include "window.h"
-#include "u_mem.h"
 
 window_handler_t* init_window_handler(float ScreenX, float ScreenY, linear_arena_t* persistent_arena,
 				      linear_arena_t* string_arena)
@@ -23,11 +22,11 @@ window_handler_t* init_window_handler(float ScreenX, float ScreenY, linear_arena
 	res->prev_mouse_x = ScreenX / 2.0f;
 	res->prev_mouse_y = ScreenY / 2.0f;
 
-	res->camera.Sensitivity = 0.1f;
-	res->camera.Yaw = -90.0f;
-	res->camera.Position = {0.0f, 0.0f, 3.0f};
-	res->camera.Eye = {0.0f, 0.0f, -1.0f};
-	res->camera.UpAxis = {0.0f, 1.0f, 0.0f};
+	res->camera.sensitivity = 0.1f;
+	res->camera.yaw = -90.0f;
+	res->camera.position = {0.0f, 0.0f, 3.0f};
+	res->camera.eye = {0.0f, 0.0f, -1.0f};
+	res->camera.up_axis = {0.0f, 1.0f, 0.0f};
 
 	res->active.color = {1.0f, 0.5f, 0.31f};
 
