@@ -375,8 +375,7 @@ int main(void)
 
 		glBindVertexArray(vao);
 
-#ifdef DEBUG
-		// Mouse Picking Pass for Scene Editor
+		// TODO: VISBUFFER. Can also be used for mouse picking
 
 		win_hnd->pick_pass_fb.Bind();
 
@@ -391,7 +390,7 @@ int main(void)
 		{
 			node_create_info_t node = win_hnd->scene.node[command_buffer.command_list[i].node_id];
 
-			glUniform1f(pickingindex_uni, float(i + 1));
+			glUniform1f(pickingindex_uni, float(node.node_id));
 			glUniform1f(pickingtype_uni, float(1));
 
 			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->scene.model_matrix[i]));
@@ -414,7 +413,6 @@ int main(void)
 				}
 			}
 		}
-#endif
 
 		// Object Geometry Pass
 
@@ -434,16 +432,9 @@ int main(void)
 		glUniform3f(viewpos_uni, win_hnd->camera.Position.x, win_hnd->camera.Position.y,
 			    win_hnd->camera.Position.z);
 
-		for(unsigned int i = 0; i < win_hnd->scene.node_position; i++)
+		for(unsigned int i = 0; i < command_buffer.max_command_count; i++)
 		{
-			node will come from draw list, not scene as a whole
-			/*
-			node_create_info_t node = win_hnd->Scene.node[i];
-			if(node.Visible == VIS_STATUS_FREED)
-			{
-				continue;
-			}
-			*/
+			node_create_info_t node = win_hnd->scene.node[command_buffer.command_list[i].node_id];
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->scene.model_matrix[i]));
 
@@ -569,6 +560,7 @@ void FrameResizeCallback(GLFWwindow* Window, int new_screen_width, int new_scree
 }
 
 switch this to not be a callback anymore and to be polled at the start of the render loop
+also make it so that when input is polled a full array of keystate is stored instead of using glfwGetKey
 void ProcessInput(GLFWwindow* Window)
 {
 	window_handler_t* win_hnd = (window_handler_t*)glfwGetWindowUserPointer(Window);

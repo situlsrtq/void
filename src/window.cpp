@@ -35,8 +35,7 @@ window_handler_t* init_window_handler(float ScreenX, float ScreenY, linear_arena
 	if(success == EXIT_FAILURE)
 	{
 		printf("System: hash table failed to allocate\n");
-		UTIL::Free(res);
-		return res;
+		return 0x0;
 	}
 
 	return res;
