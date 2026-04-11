@@ -2,6 +2,7 @@
 #ifdef VOID_PLATFORM_WIN64
 
 #include <windows.h>
+#include <memoryapi.h>
 
 #define VOID_DIR_HEAD "\\void\\"
 
@@ -61,6 +62,30 @@ int PAL::GetPath(char* buf, int64_t size)
 	buf[i] = '\0';
 
 	return EXIT_SUCCESS;
+}
+
+void* PAL::map_mem_page(uint64_t size)
+{
+	void* res = VirtualAlloc(0x0, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	if(res == 0x0)
+	{
+		printf("ERR: %s", GetLastError();
+	}
+
+	return res;
+}
+
+void PAL::free_pages(void* addr, size_t size)
+{
+	(void)size;
+
+	int res = VirtualFree(addr, 0, MEM_RELEASE);
+	if(res == 0)
+	{
+		printf("ERR: %s", GetLastError();
+	}
+
+	addr = 0x0;
 }
 
 void* PAL::AlignedAlloc(size_t size, size_t alignment)

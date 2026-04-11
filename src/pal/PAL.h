@@ -20,6 +20,8 @@ namespace PAL
 int GetPath(char* buf, int64_t size);
 #endif
 
+void* map_mem_page(size_t size);
+void free_pages(void* addr, size_t size);
 void* AlignedAlloc(size_t size, size_t alignment);
 
 } // namespace PAL

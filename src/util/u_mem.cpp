@@ -2,7 +2,7 @@
 
 int linear_arena_t::init(u64 size)
 {
-	base_addr = malloc(size);
+	base_addr = PAL::map_mem_page(size);
 	if(base_addr == 0x0)
 	{
 		printf("System: failed to allocate arena\n");
@@ -23,7 +23,7 @@ void linear_arena_t::reset()
 
 void linear_arena_t::release()
 {
-	UTIL::Free(base_addr);
+	PAL::free_pages(base_addr, size);
 	position = 0;
 	size = 0;
 	return;

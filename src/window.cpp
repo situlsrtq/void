@@ -1,13 +1,17 @@
 #include "window.h"
+#include "u_mem.h"
 
-window_handler_t* init_window_handler(float ScreenX, float ScreenY, linear_arena_t* string_arena)
+window_handler_t* init_window_handler(float ScreenX, float ScreenY, linear_arena_t* persistent_arena,
+				      linear_arena_t* string_arena)
 {
-	window_handler_t* res = (window_handler_t*)calloc(1, sizeof(window_handler_t));
-	if(!res)
+	u64 handle;
+	int alloc_res = arena_alloc(persistent_arena, &handle, sizeof(window_handler_t));
+	if(!alloc_res)
 	{
 		printf("System: window handler failed to allocate\n");
 		return 0x0;
 	}
+	window_handler_t* res = (window_handler_t*)pointer_from_arena(persistent_arena, handle);
 
 	res->width = ScreenX;
 	res->height = ScreenY;

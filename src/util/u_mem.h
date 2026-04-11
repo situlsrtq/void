@@ -3,6 +3,7 @@
 
 #include <math.h>
 
+#include "PAL.h"
 #include "u_types.h"
 #include "u_util.h"
 

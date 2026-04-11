@@ -2,6 +2,8 @@
 #ifdef VOID_PLATFORM_LINUX
 
 #include <unistd.h>
+#include <sys/mman.h>
+#include <errno.h>
 
 // TODO: Move to Core module
 #define VOID_DIR_HEAD "/void/"
@@ -61,6 +63,28 @@ int PAL::GetPath(char* buf, int64_t size)
 	buf[i] = '\0';
 
 	return EXIT_SUCCESS;
+}
+
+void* PAL::map_mem_page(uint64_t size)
+{
+	void* res = mmap(0x0, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE | MAP_POPULATE, -1, 0);
+	if(res == MAP_FAILED)
+	{
+		return 0x0;
+	}
+
+	return res;
+}
+
+void PAL::free_pages(void* addr, size_t size)
+{
+	int res = munmap(addr, size);
+	if(res == -1)
+	{
+		printf("ERR: %s: %s", errno, strerror(errno));
+	}
+	
+	addr = 0x0;
 }
 
 void* PAL::AlignedAlloc(size_t size, size_t alignment)

@@ -1,7 +1,4 @@
 #include "main.h"
-#include "grid.h"
-#include "rendertypes.h"
-#include "u_types.h"
 
 // TODO: Get rid of runtime path discovery in release builds
 
@@ -37,6 +34,10 @@ unsigned int ambistrgth_uni;
 unsigned int exposure_uni;
 float exposure_val;
 
+linear_arena_t* string_arena;
+linear_arena_t* persistent_arena;
+linear_arena_t* scratch_arena;
+
 int main(void)
 {
 	int res = PAL::GetPath(g_PathBuffer_r, VOID_PATH_MAX);
@@ -46,7 +47,6 @@ int main(void)
 	}
 
 	// Persistent, string specific storage
-	linear_arena_t* string_arena;
 	res = string_arena->init(V_MIB(8));
 	if(res != EXIT_SUCCESS)
 	{
@@ -54,7 +54,6 @@ int main(void)
 	}
 
 	// Storage for data that persists between frames. Never cleared by default 
-	linear_arena_t* persistent_arena;
 	res = persistent_arena->init(V_MIB(8));
 	if(res != EXIT_SUCCESS)
 	{
@@ -62,7 +61,6 @@ int main(void)
 	}
 
 	// Storage for per-frame data. Cleared at the end of every frame
-	linear_arena_t* scratch_arena;
 	res = scratch_arena->init(V_MIB(4));
 	if(res != EXIT_SUCCESS)
 	{
