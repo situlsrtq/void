@@ -1,4 +1,5 @@
 #include "main.h"
+#include "GLFW/glfw3.h"
 
 // TODO: Get rid of runtime path discovery in release builds
 
@@ -16,9 +17,14 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 }
 #endif
 
-uint8_t NKeyWasDown;
-uint8_t RKeyWasDown;
-uint8_t PKeyWasDown;
+struct key_state_t
+{
+	u8 keys[GLFW_KEY_LAST];
+};
+
+key_state_t curr_key_inputs;
+key_state_t past_key_inputs;
+
 uint8_t LMouseWasDown;
 uint8_t RMouseWasDown;
 
@@ -123,6 +129,7 @@ int main(void)
 	}
 
 	glfwMakeContextCurrent(window);
+	glfwSetKeyCallback(window, key_callback);
 	glfwSetFramebufferSizeCallback(window, FrameResizeCallback);
 
 	// /!\ gladLoadGLLoader() overwrites all gl functions, can only be called after successfully
@@ -538,6 +545,25 @@ int main(void)
 	return EXIT_SUCCESS;
 }
 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	(void)window, (void)mods, (void)scancode;
+
+	if((key == GLFW_KEY_UNKNOWN) || (action == GLFW_REPEAT)) return;
+	past_key_inputs.keys[key] = curr_key_inputs.keys[key];
+	curr_key_inputs.keys[key] = action;
+}
+
+int is_key(int key)
+{
+	return curr_key_inputs.keys[key];
+}
+
+int was_key(int key)
+{
+	return past_key_inputs.keys[key];
+}
+
 switch this to not be a callback anymore but to run at the start of each render loop if size changes
 void FrameResizeCallback(GLFWwindow* Window, int new_screen_width, int new_screen_height)
 {
@@ -579,25 +605,21 @@ void ProcessInput(GLFWwindow* Window)
 				   win_hnd->camera.UpAxis);
 	win_hnd->inverse_vp = glm::inverse(win_hnd->projection * win_hnd->view);
 
-	if(glfwGetKey(Window, GLFW_KEY_ESCAPE) == GLFW_PRESS || win_hnd->should_exit)
+	if(is_key(GLFW_KEY_ESCAPE) == KEY_PRESS || win_hnd->should_exit)
 	{
 		glfwSetWindowShouldClose(Window, true);
 	}
-	if(glfwGetKey(Window, GLFW_KEY_Q) == GLFW_PRESS)
+	if(is_key(GLFW_KEY_Q) == KEY_PRESS)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
-	if(glfwGetKey(Window, GLFW_KEY_E) == GLFW_PRESS)
+	if(is_key(GLFW_KEY_E) == KEY_PRESS)
 	{
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
-	if(glfwGetKey(Window, GLFW_KEY_P) == GLFW_PRESS)
+	if(is_key(GLFW_KEY_P) == KEY_RELEASE)
 	{
-		PKeyWasDown = 1;
-	}
-	if(glfwGetKey(Window, GLFW_KEY_P) == GLFW_RELEASE)
-	{
-		if(PKeyWasDown || win_hnd->reload_shaders)
+		if((was_key(GLFW_KEY_P) == KEY_PRESS) || win_hnd->reload_shaders)
 		{
 			win_hnd->main_shader.Rebuild();
 			model_uni = glGetUniformLocation(win_hnd->main_shader.ID, "model");
@@ -610,17 +632,12 @@ void ProcessInput(GLFWwindow* Window)
 			light_color_uni = glGetUniformLocation(win_hnd->main_shader.ID, "lightcolor");
 			ambistrgth_uni = glGetUniformLocation(win_hnd->main_shader.ID, "ambientstrength");
 
-			PKeyWasDown = 0;
 			win_hnd->reload_shaders = false;
 		}
 	}
-	if(glfwGetKey(Window, GLFW_KEY_N) == GLFW_PRESS)
+	if(is_key(GLFW_KEY_N) == GLFW_RELEASE)
 	{
-		NKeyWasDown = 1;
-	}
-	if(glfwGetKey(Window, GLFW_KEY_N) == GLFW_RELEASE)
-	{
-		if(NKeyWasDown)
+		if(was_key(GLFW_KEY_N) == KEY_PRESS)
 		{
 			/*
 			uMATH::vec3f_t p = { 0.0f,0.0f,4.5f };
@@ -632,7 +649,6 @@ void ProcessInput(GLFWwindow* Window)
 			win_hnd->ActiveSelection = true;
 			*/
 		}
-		NKeyWasDown = 0;
 	}
 
 	// Have to separately check if the UI should be pulling mouse button inputs, as they aren't

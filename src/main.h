@@ -32,12 +32,15 @@
 #include "gltf.h"
 
 #define VOID_HFOV_DEFAULT 45.0f
+#define KEY_PRESS GLFW_PRESS
+#define KEY_RELEASE GLFW_RELEASE
 
 // int RenderSystemsInit(window_handler_t*& WinHND);
 
 // TODO: Split out into Core/PAL module
 
-void FrameResizeCallback(GLFWwindow* Window, int width, int height);
+void FrameResizeCallback(GLFWwindow* window, int width, int height);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 // TODO: Split out into Input Handling module
 
