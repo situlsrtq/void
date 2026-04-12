@@ -31,7 +31,8 @@ void* pointer_from_arena(linear_arena_t* arena, u64 offset);
 /// </summary>
 struct index_free_list_t
 {
-	u32 next_free_pos = 0;
+	u32 base_array_pos;
+	u32 next_free_pos;
 	u32 open_positions[PROGRAM_MAX_OBJECTS];
 
 	void push(u32 Index);
@@ -54,6 +55,7 @@ struct linked_block_t
 struct block_free_list_t
 {
 	linked_block_t* root;
+	u32 base_array_pos;
 
 	void push(u32 base_index, u32 size);
 	u32 pop(u32 req_size);

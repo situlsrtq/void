@@ -23,6 +23,8 @@ struct mesh_info_t
 	linked_node_t* node_list;
 	u32 base_index;
 	u32 size;
+	glm::vec4 aabb_min;
+	glm::vec4 aabb_max;
 
 	void add_node(u32 index);
 	void remove_node(u32 index);
@@ -34,8 +36,6 @@ struct primitive_create_info_t
 	vertex_info_t vertex_info;
 	texture_info_t texture_info;
 	glm::vec3 color;
-	glm::vec3 min_aabb;
-	glm::vec3 max_aabb;
 	glm::mat3 model_inv_trans;
 };
 
@@ -47,10 +47,6 @@ struct node_create_info_t
 
 struct scene_info_t
 {
-	u32 mesh_position;
-	u32 prim_position;
-	u32 node_position;
-
 	mesh_info_t mesh[PROGRAM_MAX_OBJECTS];
 	primitive_create_info_t prim[PROGRAM_MAX_OBJECTS];
 	node_create_info_t node[PROGRAM_MAX_OBJECTS];
@@ -69,5 +65,36 @@ struct scene_info_t
 	index_free_list_t node_list;
 	block_free_list_t prim_list;
 };
+
+inline void get_world_aabbs(glm::vec4* aabb_min, glm::vec4* aabb_max, glm::mat4* world_matrix)
+{
+	glm::vec4 corners[8] = {{aabb_min->x, aabb_min->y, aabb_min->z, 1.0f},
+				{aabb_min->x, aabb_min->y, aabb_max->z, 1.0f},
+				{aabb_min->x, aabb_max->y, aabb_min->z, 1.0f},
+				{aabb_min->x, aabb_max->y, aabb_max->z, 1.0f},
+				{aabb_max->x, aabb_min->y, aabb_min->z, 1.0f},
+				{aabb_max->x, aabb_min->y, aabb_max->z, 1.0f},
+				{aabb_max->x, aabb_max->y, aabb_min->z, 1.0f},
+				{aabb_max->x, aabb_max->y, aabb_max->z, 1.0f}};
+	for(int i = 0; i < 8; i++)
+	{
+		glm::vec4 ws_corner = *world_matrix * corners[i];
+		ws_corner /= ws_corner.w;
+		*aabb_min = glm::min(*aabb_min, ws_corner);
+		*aabb_max = glm::max(*aabb_max, ws_corner);
+	}
+}
+
+inline void mesh_set_aabbs(u32 mesh_index, scene_info_t* scene, glm::vec4 aabb_min, glm::vec4 aabb_max)
+{
+	scene->mesh[mesh_index].aabb_min = aabb_min;
+	scene->mesh[mesh_index].aabb_max = aabb_max;
+}
+
+inline void mesh_get_aabbs(u32 mesh_index, scene_info_t* scene, glm::vec4* aabb_min, glm::vec4* aabb_max)
+{
+	*aabb_min = scene->mesh[mesh_index].aabb_min;
+	*aabb_max = scene->mesh[mesh_index].aabb_max;
+}
 
 #endif

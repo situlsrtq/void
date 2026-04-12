@@ -52,8 +52,6 @@ linear_arena_t string_arena;
 linear_arena_t persistent_arena;
 linear_arena_t scratch_arena;
 
-dual_grid_t dual_grid;
-
 int main(void)
 {
 	int res = PAL::GetPath(g_PathBuffer_r, VOID_PATH_MAX);
@@ -70,7 +68,7 @@ int main(void)
 	}
 
 	// Storage for data that persists between frames. Never cleared by default
-	res = persistent_arena.init(V_MIB(8));
+	res = persistent_arena.init(V_MIB(50));
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize main thread persistent memory\n");
@@ -82,8 +80,6 @@ int main(void)
 	{
 		printf("System: Failed to initialize main thread scratch space memory\n");
 	}
-
-	dual_grid.init(&persistent_arena, {-500, -500}, {500, 500}, 8, 32);
 
 	const char* res1 = "res/sponza.glb";
 	const char* res2 = "res/chess.glb";
@@ -387,7 +383,7 @@ int main(void)
 
 		command_buffer_frame_start(&scratch_arena, &command_buffer, PROGRAM_MAX_OBJECTS);
 
-		dual_grid_frustum_cull(dual_grid, &command_buffer, win_hnd->inverse_vp);
+		dual_grid_frustum_cull(win_hnd->dual_grid, &command_buffer, win_hnd->inverse_vp);
 
 		// Render passes
 
@@ -532,6 +528,8 @@ int main(void)
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+		command_buffer_frame_end(&command_buffer);
+
 		frame_end_time = glfwGetTime();
 		win_hnd->frame_time_ms = (frame_end_time - frame_start_time) * 1000.0f;
 
@@ -541,6 +539,7 @@ int main(void)
 
 		win_hnd->delta_time = frame_end_time - win_hnd->prev_frame_time;
 		win_hnd->prev_frame_time = frame_end_time;
+		FrameMark;
 	}
 
 	// Free resources and exit - not technically necessary when this is the end of the program,
@@ -551,8 +550,6 @@ int main(void)
 	ImGui::DestroyContext();
 
 	glfwTerminate();
-	free(win_hnd);
-	win_hnd = 0x0;
 
 	return EXIT_SUCCESS;
 }

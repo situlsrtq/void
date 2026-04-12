@@ -23,6 +23,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #endif
 
+#include <tracy/Tracy.hpp>
+
 #include "PAL.h"
 
 #include "window.h"

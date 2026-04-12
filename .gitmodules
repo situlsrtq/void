@@ -1,0 +1,3 @@
+[submodule "vendor/optional/tracy"]
+	path = vendor/optional/tracy
+	url = https://github.com/wolfpld/tracy.git

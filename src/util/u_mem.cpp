@@ -33,7 +33,7 @@ int arena_alloc(linear_arena_t* arena, u64* handle, u64 len)
 {
 	if(arena->position + len > arena->size)
 	{
-		printf("Arena: could not allocate (out of space)\n");
+		printf("Arena: could not allocate (out of space) - %lu bytes\n", (arena->position + len - arena->size));
 		return EXIT_FAILURE;
 	}
 
@@ -50,26 +50,67 @@ void* pointer_from_arena(linear_arena_t* arena, u64 offset)
 
 u32 index_free_list_t::pop()
 {
-	next_free_pos--;
+	if(next_free_pos > 0)
+	{
+		next_free_pos--;
 
-	u32 res = open_positions[next_free_pos];
-	return res;
+		u32 res = open_positions[next_free_pos];
+		return res;
+	}
+	else
+	{
+		u32 res = base_array_pos;
+
+		if(res >= PROGRAM_MAX_OBJECTS)
+		{
+			printf("System: Object Limit Reached\n");
+			return OBJECT_ALLOC_ERROR;
+		}
+
+		base_array_pos++;
+		return res;
+	}
 }
 
-void index_free_list_t::push(u32 FreedIndex)
+void index_free_list_t::push(u32 freed_index)
 {
+	if(base_array_pos == 0)
+	{
+		printf("System: Object array empty, nothing to free\n");
+		return;
+	}
+
+	if(freed_index >= base_array_pos || freed_index >= PROGRAM_MAX_OBJECTS)
+	{
+		printf("System: Out of bounds on free list\n");
+		return;
+	}
+
 	if(next_free_pos == PROGRAM_MAX_OBJECTS)
 	{
 		printf("FreeList: Object Limit Reached\n");
 		return;
 	}
 
-	open_positions[next_free_pos] = FreedIndex;
+	open_positions[next_free_pos] = freed_index;
 	next_free_pos++;
 }
 
 u32 block_free_list_t::pop(u32 req_size)
 {
+	if(root == 0x0 || (root->size < req_size))
+	{
+		if((base_array_pos + req_size) > PROGRAM_MAX_OBJECTS)
+		{
+			printf("System: Object Limit Reached\n");
+			return OBJECT_ALLOC_ERROR;
+		}
+
+		u32 res = base_array_pos;
+		base_array_pos += req_size;
+		return res;
+	}
+
 	u32 res = root->base_index;
 
 	root->base_index += req_size;

@@ -135,17 +135,25 @@ void dual_grid_expand_aabb(dual_grid_t* grid, loose_cell_t* loose_cell, u32 loos
 }
 
 /** Operates on worldspace bounding boxes */
-int dual_grid_insert(dual_grid_t* grid, glm::vec4 world_aabb_min, glm::vec4 world_aabb_max, u32 node_id)
+int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max, u32 node_id)
 {
-	glm::vec4 world_center = (world_aabb_min + world_aabb_max) * 0.5f;
+	ZoneScoped
+	glm::vec3 world_center = (world_aabb_min + world_aabb_max) * 0.5f;
+
+	if(world_center.x < grid->grid_min_x || world_center.y < grid->grid_min_y)
+	{
+		printf("Grid: element world-space position {%f, %f, %f} out of grid bounds", world_center.x,
+		       world_center.y, world_center.z);
+		return EXIT_FAILURE;
+	}
 
 	u32 tile_x = floor((world_center.x - grid->grid_min_x) * grid->inv_tile_size_loose);
 	u32 tile_y = floor((world_center.y - grid->grid_min_y) * grid->inv_tile_size_loose);
 
 	if((tile_x > grid->loose_grid.num_columns) || (tile_y > grid->loose_grid.num_rows))
 	{
-		printf("Grid: element world-space position {%f, %f, %f, %f} out of grid bounds", world_center.x,
-		       world_center.y, world_center.z, world_center.w);
+		printf("Grid: element world-space position {%f, %f, %f} out of grid bounds", world_center.x,
+		       world_center.y, world_center.z);
 		return EXIT_FAILURE;
 	}
 
@@ -185,6 +193,7 @@ void dual_grid_optimize(int usage_flag);
 
 void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_buffer, const glm::mat4& inverse_vp)
 {
+	ZoneScoped;
 	glm::vec4 ndc_coords[8] = {{-1, -1, -1, 1}, {1, -1, -1, 1}, {1, 1, -1, 1}, {-1, 1, -1, 1},
 				   {-1, -1, 1, 1},  {1, -1, 1, 1},  {1, 1, 1, 1},  {-1, 1, 1, 1}};
 

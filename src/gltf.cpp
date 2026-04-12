@@ -1,4 +1,5 @@
 #include "gltf.h"
+#include <cstdlib>
 
 void get_node_matrix(glm::mat4* m, cgltf_node* node)
 {
@@ -14,7 +15,7 @@ void get_node_matrix(glm::mat4* m, cgltf_node* node)
 }
 
 int load_indices(vertex_buffer_info_t* vbuffer_state, primitive_create_info_t* create_info, const cgltf_primitive* prim,
-		const u8* data_base_addr)
+		 const u8* data_base_addr)
 {
 	u8 ebo_padding = 0;
 	u64 count = prim->indices->count;
@@ -79,8 +80,8 @@ cgltf_attribute* find_attr_type(const cgltf_primitive* prim, cgltf_attribute_typ
 	return attr;
 }
 
-int load_vertices(vertex_buffer_info_t* vbuffer_state, primitive_create_info_t* create_info, const cgltf_primitive* prim,
-		 const u8* data_base_addr)
+int load_vertices(vertex_buffer_info_t* vbuffer_state, primitive_create_info_t* create_info,
+		  const cgltf_primitive* prim, const u8* data_base_addr)
 {
 	cgltf_attribute* attr = find_attr_type(prim, cgltf_attribute_type_position);
 	if(!attr)
@@ -225,28 +226,29 @@ int upload_texture_2d(unsigned int texture, const u8* data_base_addr, u64 offset
 	return EXIT_SUCCESS;
 }
 
-int texture_to_gpu(hash_table_t* hash_table, primitive_create_info_t* create_info, const u32 texture, const cgltf_texture* filetex,
-		 const u8* data_base_addr)
+int texture_to_gpu(hash_table_t* hash_table, primitive_create_info_t* create_info, const u32 texture,
+		   const cgltf_texture* filetex, const u8* data_base_addr)
 {
 	int res;
 	u32 hash_res;
 	u32 texsize;
 	u64 absbufferoffset;
 
-	hash_res = rh_hash_find(hash_table, filetex->image->name, strlen(filetex->image->name)+1);
+	hash_res = rh_hash_find(hash_table, filetex->image->name, strlen(filetex->image->name) + 1);
 	if(hash_res == KEY_NOT_FOUND)
 	{
 		texsize = filetex->image->buffer_view->size;
 		absbufferoffset = filetex->image->buffer_view->offset;
 
-		res = upload_texture_2d(create_info->texture_info.tex_array[texture], data_base_addr, absbufferoffset, texsize);
+		res = upload_texture_2d(create_info->texture_info.tex_array[texture], data_base_addr, absbufferoffset,
+					texsize);
 		if(res == EXIT_FAILURE)
 		{
 			return EXIT_FAILURE;
 		}
 
-		rh_hash_insert(hash_table, filetex->image->name, strlen(filetex->image->name)+1,
-				     create_info->texture_info.tex_array[texture]);
+		rh_hash_insert(hash_table, filetex->image->name, strlen(filetex->image->name) + 1,
+			       create_info->texture_info.tex_array[texture]);
 	}
 	else
 	{
@@ -256,8 +258,8 @@ int texture_to_gpu(hash_table_t* hash_table, primitive_create_info_t* create_inf
 	return EXIT_SUCCESS;
 }
 
-int load_textures(hash_table_t* hash_table, u32 tex_count, primitive_create_info_t* create_info, const cgltf_primitive* prim,
-		 const u8* data_base_addr)
+int load_textures(hash_table_t* hash_table, u32 tex_count, primitive_create_info_t* create_info,
+		  const cgltf_primitive* prim, const u8* data_base_addr)
 {
 	int res;
 
@@ -297,8 +299,9 @@ int load_textures(hash_table_t* hash_table, u32 tex_count, primitive_create_info
 }
 
 int load_scene_from_glb(const char* scene_file, window_handler_t*& win_hnd, unsigned int* vao,
-		     vertex_buffer_info_t* vbuffer_state, unsigned int tex_count)
+			vertex_buffer_info_t* vbuffer_state, unsigned int tex_count)
 {
+	ZoneScoped;
 	printf("Validating glb file: %s\n", scene_file);
 
 	int res;
@@ -355,7 +358,7 @@ int load_scene_from_glb(const char* scene_file, window_handler_t*& win_hnd, unsi
 		glm::mat3 node_inv_trans = glm::mat3(inverse(transpose(node_matrix)));
 
 		cgltf_mesh* mesh = node->mesh;
-		mesh_index = rh_hash_find(&win_hnd->hash_table, mesh->name, strlen(mesh->name)+1);
+		mesh_index = rh_hash_find(&win_hnd->hash_table, mesh->name, strlen(mesh->name) + 1);
 		if(mesh_index == KEY_NOT_FOUND)
 		{
 			mesh_index = win_hnd->scene.add_mesh(mesh->primitives_count);
@@ -363,6 +366,9 @@ int load_scene_from_glb(const char* scene_file, window_handler_t*& win_hnd, unsi
 			{
 				return EXIT_FAILURE;
 			}
+
+			glm::vec4 aabb_min = {FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX};
+			glm::vec4 aabb_max = {FLT_MIN, FLT_MIN, FLT_MIN, FLT_MIN};
 
 			for(u32 t = 0; t < mesh->primitives_count; t++)
 			{
@@ -394,16 +400,39 @@ int load_scene_from_glb(const char* scene_file, window_handler_t*& win_hnd, unsi
 				}
 
 				win_hnd->scene.add_primitive(prim_info, win_hnd->scene.mesh[mesh_index].base_index + t);
+
+				cgltf_attribute* attr = find_attr_type(prim, cgltf_attribute_type_position);
+				if(!attr)
+				{
+					printf("GLTF: No position attribute on vertices\n");
+					return EXIT_FAILURE;
+				}
+				glm::vec3 min = {attr->data->min[0], attr->data->min[1], attr->data->min[2]};
+				glm::vec3 max = {attr->data->max[0], attr->data->max[1], attr->data->max[2]};
+
+				aabb_min = glm::min(aabb_min, glm::vec4{min, 1.0f});
+				aabb_max = glm::max(aabb_max, glm::vec4{max, 1.0f});
+
 			}
+
+			mesh_set_aabbs(mesh_index, &win_hnd->scene, aabb_min, aabb_max);
 
 			node_info.mesh_index = mesh_index;
 			win_hnd->scene.add_node(node_info, node_matrix);
 
-			rh_hash_insert(&win_hnd->hash_table, mesh->name, strlen(mesh->name)+1, mesh_index);
+			rh_hash_insert(&win_hnd->hash_table, mesh->name, strlen(mesh->name) + 1, mesh_index);
+		}
+		else
+		{
+			node_info.mesh_index = mesh_index;
+			win_hnd->scene.add_node(node_info, node_matrix);
 		}
 
-		node_info.mesh_index = mesh_index;
-		win_hnd->scene.add_node(node_info, node_matrix);
+		glm::vec4 aabb_min, aabb_max;
+		mesh_get_aabbs(mesh_index, &win_hnd->scene, &aabb_min, &aabb_max);
+		get_world_aabbs(&aabb_min, &aabb_max, &node_matrix);
+
+		dual_grid_insert(&win_hnd->dual_grid, aabb_min, aabb_max, node_info.node_id);
 	}
 
 	cgltf_free(data);
