@@ -4,7 +4,7 @@
 ## Building from Source
 
 Both Windows and Linux are supported by default. The project can be built from source using CMAKE and the provided
-CMakeLists.txt file. Optional modules are controlled by CMake option toggles, it will yell at you if anything is misconfigured
+CMakeLists.txt file. Optional modules are controlled by CMake option toggles, it will yell at you if anything is misconfigured.
 
 Nearly all vendor files required to build the software are already included in the repo. The single exception is 
 OpenGL, which is included by default on standard Windows packages. Linux installations require a version of libGL 
