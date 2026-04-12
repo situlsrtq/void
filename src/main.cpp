@@ -1,4 +1,5 @@
 #include "main.h"
+#include "grid.h"
 
 // TODO: Get rid of runtime path discovery in release builds
 
@@ -47,9 +48,11 @@ key_state_t past_key_inputs;
 mouse_state_t curr_mbutton_inputs;
 mouse_state_t past_mbutton_inputs;
 
-linear_arena_t* string_arena;
-linear_arena_t* persistent_arena;
-linear_arena_t* scratch_arena;
+linear_arena_t string_arena;
+linear_arena_t persistent_arena;
+linear_arena_t scratch_arena;
+
+dual_grid_t dual_grid;
 
 int main(void)
 {
@@ -60,25 +63,27 @@ int main(void)
 	}
 
 	// Persistent, string specific storage
-	res = string_arena->init(V_MIB(8));
+	res = string_arena.init(V_MIB(8));
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize main thread string memory\n");
 	}
 
 	// Storage for data that persists between frames. Never cleared by default
-	res = persistent_arena->init(V_MIB(8));
+	res = persistent_arena.init(V_MIB(8));
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize main thread persistent memory\n");
 	}
 
 	// Storage for per-frame data. Cleared at the end of every frame
-	res = scratch_arena->init(V_MIB(4));
+	res = scratch_arena.init(V_MIB(4));
 	if(res != EXIT_SUCCESS)
 	{
 		printf("System: Failed to initialize main thread scratch space memory\n");
 	}
+
+	dual_grid.init(&persistent_arena, {-500, -500}, {500, 500}, 8, 32);
 
 	const char* res1 = "res/sponza.glb";
 	const char* res2 = "res/chess.glb";
@@ -89,24 +94,24 @@ int main(void)
 	size_t f2len = strlen(res2) + 1;
 
 	u64 f1_handle;
-	res = arena_alloc(string_arena, &f1_handle, pathlen + filelen);
+	res = arena_alloc(&string_arena, &f1_handle, pathlen + filelen);
 	if(res == EXIT_FAILURE)
 	{
 		printf("Scene: file 1 alloc failed\n");
 		return EXIT_FAILURE;
 	}
-	char* scene_file1 = (char*)pointer_from_arena(string_arena, f1_handle);
+	char* scene_file1 = (char*)pointer_from_arena(&string_arena, f1_handle);
 	memcpy(scene_file1, g_OSPath_r, pathlen);
 	memcpy(scene_file1 + pathlen, res1, filelen);
 
 	u64 f2_handle;
-	res = arena_alloc(string_arena, &f2_handle, pathlen + f2len);
+	res = arena_alloc(&string_arena, &f2_handle, pathlen + f2len);
 	if(res == EXIT_FAILURE)
 	{
 		printf("Scene: file 2 alloc failed\n");
 		return EXIT_FAILURE;
 	}
-	char* scene_file2 = (char*)pointer_from_arena(string_arena, f2_handle);
+	char* scene_file2 = (char*)pointer_from_arena(&string_arena, f2_handle);
 	memcpy(scene_file2, g_OSPath_r, pathlen);
 	memcpy(scene_file2 + pathlen, res2, f2len);
 
@@ -152,7 +157,7 @@ int main(void)
 	glDebugMessageCallback(MessageCallback, 0);
 #endif
 
-	window_handler_t* win_hnd = init_window_handler(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT, string_arena);
+	window_handler_t* win_hnd = init_window_handler(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT, &persistent_arena, &string_arena);
 	if(!win_hnd)
 	{
 		printf("System: Could not allocate core window handler\n");
@@ -380,9 +385,9 @@ int main(void)
 
 		// Command buffers and culling
 
-		command_buffer_frame_start(scratch_arena, &command_buffer, PROGRAM_MAX_OBJECTS);
+		command_buffer_frame_start(&scratch_arena, &command_buffer, PROGRAM_MAX_OBJECTS);
 
-		dual_grid_frustum_cull(const dual_grid_t& grid, &command_buffer, win_hnd->inverse_vp);
+		dual_grid_frustum_cull(dual_grid, &command_buffer, win_hnd->inverse_vp);
 
 		// Render passes
 
@@ -532,7 +537,7 @@ int main(void)
 
 		glfwSwapBuffers(window);
 
-		scratch_arena->reset();
+		scratch_arena.reset();
 
 		win_hnd->delta_time = frame_end_time - win_hnd->prev_frame_time;
 		win_hnd->prev_frame_time = frame_end_time;

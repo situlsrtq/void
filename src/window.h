@@ -37,6 +37,8 @@ struct window_handler_t
 	fb_hdr_t hdr_pass_fb;
 	fb_mpick_t pick_pass_fb;
 	camera_info_t camera;
+
+	// TODO: this is scene information, should live in a separate struct, but requires a better platform layer
 	glm::mat4 view;
 	glm::mat4 projection;
 	glm::mat4 inverse_vp;
@@ -47,6 +49,7 @@ struct window_handler_t
 	ImGuiIO im_io;
 };
 
-window_handler_t* init_window_handler(float ScreenX, float ScreenY, linear_arena_t* string_arena);
+window_handler_t* init_window_handler(float ScreenX, float ScreenY, linear_arena_t* persistent_arena,
+				      linear_arena_t* string_arena);
 
 #endif

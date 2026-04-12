@@ -5,7 +5,7 @@ window_handler_t* init_window_handler(float ScreenX, float ScreenY, linear_arena
 {
 	u64 handle;
 	int alloc_res = arena_alloc(persistent_arena, &handle, sizeof(window_handler_t));
-	if(!alloc_res)
+	if(alloc_res == EXIT_FAILURE)
 	{
 		printf("System: window handler failed to allocate\n");
 		return 0x0;

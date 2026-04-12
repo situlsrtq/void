@@ -1,4 +1,5 @@
 #include "grid.h"
+#include "u_types.h"
 
 int dual_grid_t::init(linear_arena_t* arena, glm::ivec2 global_min, glm::ivec2 global_max, u32 loose_cell_size,
 		      u32 tight_cell_size)
@@ -12,25 +13,41 @@ int dual_grid_t::init(linear_arena_t* arena, glm::ivec2 global_min, glm::ivec2 g
 	u32 columns = ceil(global_max.x - global_min.x);
 	u32 rows = ceil(global_max.y - global_min.y);
 
-	loose_grid.num_columns = columns * inv_tile_size_loose;
-	loose_grid.num_rows = rows * inv_tile_size_loose;
+	// Loose grid
+
+	loose_grid.num_columns = ceil(columns * inv_tile_size_loose);
+	loose_grid.num_rows = ceil(rows * inv_tile_size_loose);
 	int res = arena_alloc(arena, &handle, sizeof(loose_cell_t) * loose_grid.num_columns * loose_grid.num_rows);
 	if(res == EXIT_FAILURE)
 	{
 		printf("Grid: could not allocate loose cells\n");
 		return EXIT_FAILURE;
 	}
-	loose_grid.cells = (loose_cell_t*)pointer_from_arena(arena, handle);
 
-	tight_grid.num_columns = columns * inv_tile_size_tight;
-	tight_grid.num_rows = rows * inv_tile_size_tight;
+	loose_grid.cells = (loose_cell_t*)pointer_from_arena(arena, handle);
+	for(u32 i = 0; i < loose_grid.num_columns * loose_grid.num_rows; i++)
+	{
+		loose_grid.cells[i] = {-1, 0.0f, 0.0f, {0.0f,0.0f}};
+	}
+
+	// Tight grid
+
+	tight_grid.num_columns = ceil(columns * inv_tile_size_tight);
+	tight_grid.num_rows = ceil(rows * inv_tile_size_tight);
 	res = arena_alloc(arena, &handle, sizeof(tight_cell_t) * tight_grid.num_columns * tight_grid.num_rows);
 	if(res == EXIT_FAILURE)
 	{
 		printf("Grid: could not allocate tight cells\n");
 		return EXIT_FAILURE;
 	}
+
 	tight_grid.cells = (tight_cell_t*)pointer_from_arena(arena, handle);
+	for(u32 i = 0; i < tight_grid.num_columns * tight_grid.num_rows; i++)
+	{
+		tight_grid.cells[i] = {-1};
+	}
+
+	// Elements
 
 	res = arena_alloc(arena, &handle, sizeof(grid_element_t) * PROGRAM_MAX_OBJECTS);
 	if(res == EXIT_FAILURE)
@@ -38,7 +55,14 @@ int dual_grid_t::init(linear_arena_t* arena, glm::ivec2 global_min, glm::ivec2 g
 		printf("Grid: could not allocate element array\n");
 		return EXIT_FAILURE;
 	}
+
 	elements = (grid_element_t*)pointer_from_arena(arena, handle);
+	for(u32 i = 0; i < PROGRAM_MAX_OBJECTS; i++)
+	{
+		elements[i] = {0, -1};
+	}
+
+	// Nodes
 
 	res = arena_alloc(arena, &handle, sizeof(tight_node_t) * PROGRAM_MAX_OBJECTS);
 	if(res == EXIT_FAILURE)
@@ -46,7 +70,12 @@ int dual_grid_t::init(linear_arena_t* arena, glm::ivec2 global_min, glm::ivec2 g
 		printf("Grid: could not allocate tight node array\n");
 		return EXIT_FAILURE;
 	}
+
 	nodes = (tight_node_t*)pointer_from_arena(arena, handle);
+	for(u32 i = 0; i < PROGRAM_MAX_OBJECTS; i++)
+	{
+		nodes[i] = {0, -1};
+	}
 
 	return EXIT_SUCCESS;
 }

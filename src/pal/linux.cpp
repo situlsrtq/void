@@ -81,7 +81,7 @@ void PAL::free_pages(void* addr, size_t size)
 	int res = munmap(addr, size);
 	if(res == -1)
 	{
-		printf("ERR: %s: %s", errno, strerror(errno));
+		printf("ERR: %s", strerror(errno));
 	}
 	
 	addr = 0x0;

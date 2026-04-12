@@ -35,12 +35,12 @@ heuristic
 struct grid_element_t
 {
 	u32 node_id;
-	i32 next_element = -1;
+	i32 next_element;
 };
 
 struct loose_cell_t
 {
-	i32 first_element = -1;
+	i32 first_element;
 	float half_height, half_width;
 	glm::vec2 center;
 };
@@ -48,12 +48,12 @@ struct loose_cell_t
 struct tight_node_t
 {
 	u32 loose_cell_index;
-	i32 next_node = -1;
+	i32 next_node;
 };
 
 struct tight_cell_t
 {
-	i32 first_node = -1;
+	i32 first_node;
 };
 
 template<typename T>
