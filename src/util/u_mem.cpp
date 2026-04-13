@@ -33,7 +33,7 @@ int arena_alloc(linear_arena_t* arena, u64* handle, u64 len)
 {
 	if(arena->position + len > arena->size)
 	{
-		printf("Arena: could not allocate (out of space) - %lu bytes\n", (arena->position + len - arena->size));
+		printf("Arena: could not allocate (out of space) - %llu bytes\n", (arena->position + len - arena->size));
 		return EXIT_FAILURE;
 	}
 

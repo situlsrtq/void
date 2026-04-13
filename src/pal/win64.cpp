@@ -69,7 +69,7 @@ void* PAL::map_mem_page(uint64_t size)
 	void* res = VirtualAlloc(0x0, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	if(res == 0x0)
 	{
-		printf("ERR: %s", GetLastError();
+		printf("ERR: %u", GetLastError());
 	}
 
 	return res;
@@ -82,7 +82,7 @@ void PAL::free_pages(void* addr, size_t size)
 	int res = VirtualFree(addr, 0, MEM_RELEASE);
 	if(res == 0)
 	{
-		printf("ERR: %s", GetLastError();
+		printf("ERR: %u", GetLastError());
 	}
 
 	addr = 0x0;
