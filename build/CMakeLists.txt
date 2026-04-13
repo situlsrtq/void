@@ -55,6 +55,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE ../src ../src/util ../src/pal
 target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "../vendor/core")
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:Debug>:DEBUG>)
+
+# Strip conflicting global debug tag so vendor libraries can be compiled in 'release' mode
 if(MSVC)
     string(REPLACE "/RTC1" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
     string(REPLACE "/RTC1" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
