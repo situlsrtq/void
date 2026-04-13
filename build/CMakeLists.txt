@@ -56,15 +56,13 @@ target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "../vendor/core")
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:Debug>:DEBUG>)
 
-add_compile_options(
-	$<$<PLATFORM_ID:Linux>:-Wall -Wextra -Werror -fno-exceptions $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>>
-	$<$<PLATFORM_ID:Windows>:/W4 /wd4996 /D_HAS_EXCEPTIONS=0 /GR->
-)
-
 if(MSVC)
-	set_source_files_properties(${VENDOR_CORE_SOURCES} PROPERTIES COMPILE_FLAGS "/W0 /O2 /DNDEBUG")
+	add_compile_options(/W4 /wd4996 /D_HAS_EXCEPTIONS=0 /GR-)
+	set_source_files_properties(${VENDOR_CORE_SOURCES} PROPERTIES COMPILE_OPTIONS "/W0;/O2;/DNDEBUG")
 else()
-	set_source_files_properties(${VENDOR_CORE_SOURCES} PROPERTIES COMPILE_FLAGS "-w -O3 -DNDEBUG -g0")
+	add_compile_options(-Wall -Wextra -Werror -fno-exceptions)
+	add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>)
+	set_source_files_properties(${VENDOR_CORE_SOURCES} PROPERTIES COMPILE_OPTIONS "-w;-O3;-DNDEBUG;-g0")
 endif()
 
 #--------------------------------------------------------------------------------------------------
@@ -80,9 +78,9 @@ if(TRACY_ENABLE)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC TRACY_ENABLE)
 
 	if(MSVC)
-		set_source_files_properties(${ADD_SRC} PROPERTIES COMPILE_FLAGS "/W0 /O2 /DNDEBUG")
+		set_source_files_properties(${ADD_SRC} PROPERTIES COMPILE_OPTIONS "/W0;/O2;/DNDEBUG")
 	else()
-		set_source_files_properties(${ADD_SRC} PROPERTIES COMPILE_FLAGS "-w -O3 -DNDEBUG -g0")
+		set_source_files_properties(${ADD_SRC} PROPERTIES COMPILE_OPTIONS "-w;-O3;-DNDEBUG;-g0")
 	endif()
 endif()
 
@@ -92,7 +90,7 @@ endif()
 get_filename_component(LIB_DIR "../vendor/lib" REALPATH)
 
 if(WIN32)
-	target_link_libraries(${PROJECT_NAME} PRIVATE "${LIB_DIR}/glfw3.lib" opengl32.lib)
+	target_link_libraries(${PROJECT_NAME} PRIVATE "${LIB_DIR}/glfw3.lib" opengl32)
 else()
 	target_link_libraries(${PROJECT_NAME} PRIVATE "${LIB_DIR}/libglfw3.a" GL)
 endif()
