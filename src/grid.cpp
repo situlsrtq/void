@@ -137,7 +137,7 @@ void dual_grid_expand_aabb(dual_grid_t* grid, loose_cell_t* loose_cell, u32 loos
 /** Operates on worldspace bounding boxes */
 int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max, u32 node_id)
 {
-	ZoneScoped
+	ZONE_SCOPED
 	glm::vec3 world_center = (world_aabb_min + world_aabb_max) * 0.5f;
 
 	if(world_center.x < grid->grid_min_x || world_center.y < grid->grid_min_y)
@@ -193,7 +193,7 @@ void dual_grid_optimize(int usage_flag);
 
 void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_buffer, const glm::mat4& inverse_vp)
 {
-	ZoneScoped;
+	ZONE_SCOPED;
 	glm::vec4 ndc_coords[8] = {{-1, -1, -1, 1}, {1, -1, -1, 1}, {1, 1, -1, 1}, {-1, 1, -1, 1},
 				   {-1, -1, 1, 1},  {1, -1, 1, 1},  {1, 1, 1, 1},  {-1, 1, 1, 1}};
 

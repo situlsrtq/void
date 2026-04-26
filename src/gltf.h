@@ -12,6 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include "tracy_wrapper.h"
 #include "window.h"
 #include "rendertypes.h"
 #include "scene.h"

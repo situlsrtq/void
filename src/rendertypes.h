@@ -1,6 +1,7 @@
 #ifndef VOID_RTYPES_H
 #define VOID_RTYPES_H
 
+#include "tracy_wrapper.h"
 #include "u_mem.h"
 #include "u_types.h"
 
@@ -86,12 +87,23 @@ inline void command_buffer_add_command(command_buffer_t* buffer, draw_command_in
 	buffer->curr_command_count++;
 }
 
+inline int compare_commands(const void* c1, const void* c2)
+{
+	draw_command_info_t* dc1 = (draw_command_info_t*)c1;
+	draw_command_info_t* dc2 = (draw_command_info_t*)c2;
+
+	if(dc1->node_id < dc2->node_id) return -1;
+	if(dc1->node_id == dc2->node_id) return 0;
+	else return 1;
+}
+
 ///< summary>
-/// Closes a command list. Assumes scratch space arena, which will be cleared at frame end
+/// Closes a command list. Should always be called before making any draw calls out of the buffer to prevent duplicate draws
 ///</summary>
 inline void command_buffer_frame_end(command_buffer_t* buffer)
 {
-	buffer->command_list = 0x0;
+	ZONE_SCOPED;
+	qsort(buffer->command_list, sizeof(draw_command_info_t), buffer->curr_command_count, compare_commands);
 }
 
 #endif

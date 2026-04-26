@@ -7,8 +7,7 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <tracy/Tracy.hpp>
-
+#include "tracy_wrapper.h"
 #include "u_types.h"
 #include "u_mem.h"
 #include "rendertypes.h"
@@ -86,7 +85,7 @@ struct dual_grid_t
 int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max, u32 node_id);
 void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec2 center);
 void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
-void dual_grid_optimize(int usage_flag);
+void dual_grid_optimize(dual_grid_t* grid);
 void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_buffer, const glm::mat4& inverse_vp);
 
 #endif

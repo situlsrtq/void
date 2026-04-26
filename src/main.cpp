@@ -1,5 +1,4 @@
 #include "main.h"
-#include "grid.h"
 
 // TODO: Get rid of runtime path discovery in release builds
 
@@ -54,7 +53,7 @@ linear_arena_t scratch_arena;
 
 int main(void)
 {
-	int res = PAL::GetPath(g_PathBuffer_r, VOID_PATH_MAX);
+	int res = PAL::get_path(g_PathBuffer_r, VOID_PATH_MAX);
 	if(res != EXIT_SUCCESS)
 	{
 		printf("PAL: Failed to initialize file path\n");
@@ -147,10 +146,19 @@ int main(void)
 		return EXIT_FAILURE;
 	}
 
+	TracyGpuContext;
+	const GLubyte* vendor = glGetString(GL_VENDOR);
+	const GLubyte* card = glGetString(GL_RENDERER);
+
+	printf("GPU: %s %s", vendor, card);
+
 #ifdef DEBUG
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(MessageCallback, 0);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, 
+		       GL_DEBUG_SEVERITY_NOTIFICATION, 
+		       0, nullptr, GL_FALSE);
 #endif
 
 	window_handler_t* win_hnd = init_window_handler(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT, &persistent_arena, &string_arena);
@@ -385,12 +393,16 @@ int main(void)
 
 		dual_grid_frustum_cull(win_hnd->dual_grid, &command_buffer, win_hnd->inverse_vp);
 
+		command_buffer_frame_end(&command_buffer);
+
 		// Render passes
 
 		glBindVertexArray(vao);
 
 		// TODO: VISBUFFER. Can also be used for mouse picking
 
+	{
+		GPU_ZONE("Visbuffer");
 		win_hnd->pick_pass_fb.Bind();
 
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -400,9 +412,20 @@ int main(void)
 		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->projection));
 		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
 
+		u32 id = 0, prev_id = 0;
 		for(unsigned int i = 0; i < command_buffer.max_command_count; i++)
 		{
-			node_create_info_t node = win_hnd->scene.node[command_buffer.command_list[i].node_id];
+			id = command_buffer.command_list[i].node_id;
+			if(i == 0)
+			{
+			}
+			else
+			{
+				if(id == prev_id) continue;
+			}
+			prev_id = id;
+
+			node_create_info_t node = win_hnd->scene.node[id];
 
 			glUniform1f(pickingindex_uni, float(node.node_id));
 			glUniform1f(pickingtype_uni, float(1));
@@ -428,9 +451,12 @@ int main(void)
 				}
 			}
 		}
+	} // SCOPING FOR TRACY
 
 		// Object Geometry Pass
 
+	{
+		GPU_ZONE("Geometry");
 		win_hnd->hdr_pass_fb.Bind();
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -447,8 +473,19 @@ int main(void)
 		glUniform3f(viewpos_uni, win_hnd->camera.position.x, win_hnd->camera.position.y,
 			    win_hnd->camera.position.z);
 
+		u32 id = 0, prev_id = 0;
 		for(unsigned int i = 0; i < command_buffer.max_command_count; i++)
 		{
+			id = command_buffer.command_list[i].node_id;
+			if(i == 0)
+			{
+			}
+			else
+			{
+				if(id == prev_id) continue;
+			}
+			prev_id = id;
+
 			node_create_info_t node = win_hnd->scene.node[command_buffer.command_list[i].node_id];
 
 			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->scene.model_matrix[i]));
@@ -479,6 +516,7 @@ int main(void)
 				}
 			}
 		}
+	} // SCOPING FOR TRACY
 
 		if(win_hnd->active_selection)
 		{
@@ -528,12 +566,11 @@ int main(void)
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-		command_buffer_frame_end(&command_buffer);
-
 		frame_end_time = glfwGetTime();
 		win_hnd->frame_time_ms = (frame_end_time - frame_start_time) * 1000.0f;
 
 		glfwSwapBuffers(window);
+		TracyGpuCollect;
 
 		scratch_arena.reset();
 

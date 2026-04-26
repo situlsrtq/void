@@ -11,7 +11,7 @@
 char g_PathBuffer_r[VOID_PATH_MAX + 1];
 char* g_OSPath_r = g_PathBuffer_r;
 
-int PAL::GetPath(char* buf, int64_t size)
+int PAL::get_path(char* buf, int64_t size)
 {
 	printf("-----WARNING, OBTAINIG EXE PATH AT RUNTIME-----\n");
 	printf("If you are actively working on source code this is fine.\n");
@@ -87,7 +87,7 @@ void PAL::free_pages(void* addr, size_t size)
 	addr = 0x0;
 }
 
-void* PAL::AlignedAlloc(size_t size, size_t alignment)
+void* PAL::aligned_alloc(size_t size, size_t alignment)
 {
 	return aligned_alloc(alignment, size);
 }

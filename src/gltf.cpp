@@ -301,7 +301,7 @@ int load_textures(hash_table_t* hash_table, u32 tex_count, primitive_create_info
 int load_scene_from_glb(const char* scene_file, window_handler_t*& win_hnd, unsigned int* vao,
 			vertex_buffer_info_t* vbuffer_state, unsigned int tex_count)
 {
-	ZoneScoped;
+	ZONE_SCOPED;
 	printf("Validating glb file: %s\n", scene_file);
 
 	int res;
