@@ -1,5 +1,4 @@
 #include "gltf.h"
-#include <cstdlib>
 
 void get_node_matrix(glm::mat4* m, cgltf_node* node)
 {

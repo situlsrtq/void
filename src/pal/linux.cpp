@@ -65,7 +65,7 @@ int PAL::get_path(char* buf, int64_t size)
 	return EXIT_SUCCESS;
 }
 
-void* PAL::map_mem_page(uint64_t size)
+void* PAL::map_mem_page(size_t size)
 {
 	void* res = mmap(0x0, size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE | MAP_POPULATE, -1, 0);
 	if(res == MAP_FAILED)

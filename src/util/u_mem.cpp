@@ -1,6 +1,6 @@
 #include "u_mem.h"
 
-int linear_arena_t::init(u64 size)
+int linear_arena_t::init(size_t size)
 {
 	base_addr = PAL::map_mem_page(size);
 	if(base_addr == 0x0)
@@ -29,7 +29,7 @@ void linear_arena_t::release()
 	return;
 }
 
-int arena_alloc(linear_arena_t* arena, u64* handle, u64 len)
+int arena_alloc(linear_arena_t* arena, size_t* handle, size_t len)
 {
 	if(arena->position + len > arena->size)
 	{
@@ -42,13 +42,13 @@ int arena_alloc(linear_arena_t* arena, u64* handle, u64 len)
 	return EXIT_SUCCESS;
 }
 
-void* pointer_from_arena(linear_arena_t* arena, u64 offset)
+void* pointer_from_arena(linear_arena_t* arena, size_t offset)
 {
 	void* res = (u8*)arena->base_addr + offset;
 	return res;
 }
 
-u32 index_free_list_t::pop()
+size_t index_free_list_t::pop()
 {
 	if(next_free_pos > 0)
 	{
@@ -72,7 +72,7 @@ u32 index_free_list_t::pop()
 	}
 }
 
-void index_free_list_t::push(u32 freed_index)
+void index_free_list_t::push(size_t freed_index)
 {
 	if(base_array_pos == 0)
 	{
@@ -96,7 +96,7 @@ void index_free_list_t::push(u32 freed_index)
 	next_free_pos++;
 }
 
-u32 block_free_list_t::pop(u32 req_size)
+size_t block_free_list_t::pop(size_t req_size)
 {
 	if(root == 0x0 || (root->size < req_size))
 	{
@@ -144,7 +144,7 @@ u32 block_free_list_t::pop(u32 req_size)
 	return res;
 }
 
-void block_free_list_t::push(u32 base_index, u32 size)
+void block_free_list_t::push(size_t base_index, size_t size)
 {
 	if(root == 0x0)
 	{

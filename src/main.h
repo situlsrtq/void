@@ -23,6 +23,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #endif
 
+#include "PAL.h"
+
 #include "tracy_wrapper.h"
 #ifdef TRACY_ENABLE
 	#include <tracy/TracyOpenGL.hpp>
@@ -30,8 +32,6 @@
 #else
 	#define GPU_ZONE(name)
 #endif
-
-#include "PAL.h"
 
 #include "window.h"
 #include "u_mem.h"

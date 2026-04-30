@@ -64,7 +64,7 @@ int PAL::get_path(char* buf, int64_t size)
 	return EXIT_SUCCESS;
 }
 
-void* PAL::map_mem_page(uint64_t size)
+void* PAL::map_mem_page(size_t size)
 {
 	void* res = VirtualAlloc(0x0, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	if(res == 0x0)

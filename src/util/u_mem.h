@@ -12,17 +12,17 @@
 /// </summary>
 struct linear_arena_t
 {
-	u64 position;
-	u64 size;
+	size_t position;
+	size_t size;
 	void* base_addr;
 
-	int init(u64 size);
+	int init(size_t size);
 	void reset();
 	void release();
 };
 
-int arena_alloc(linear_arena_t* arena, u64* handle, u64 len);
-void* pointer_from_arena(linear_arena_t* arena, u64 offset);
+int arena_alloc(linear_arena_t* arena, size_t* handle, size_t len);
+void* pointer_from_arena(linear_arena_t* arena, size_t offset);
 
 /// <summary>
 /// Fixed-size freelist allocator.
@@ -31,20 +31,20 @@ void* pointer_from_arena(linear_arena_t* arena, u64 offset);
 /// </summary>
 struct index_free_list_t
 {
-	u32 base_array_pos;
-	u32 next_free_pos;
-	u32 open_positions[PROGRAM_MAX_OBJECTS];
+	size_t base_array_pos;
+	size_t next_free_pos;
+	size_t open_positions[PROGRAM_MAX_OBJECTS];
 
-	void push(u32 Index);
-	u32 pop();
+	void push(size_t Index);
+	size_t pop();
 };
 
 struct linked_block_t
 {
 	linked_block_t* prev;
 	linked_block_t* next;
-	u32 base_index;
-	u32 size;
+	size_t base_index;
+	size_t size;
 };
 
 /// <summary>
@@ -55,10 +55,10 @@ struct linked_block_t
 struct block_free_list_t
 {
 	linked_block_t* root;
-	u32 base_array_pos;
+	size_t base_array_pos;
 
-	void push(u32 base_index, u32 size);
-	u32 pop(u32 req_size);
+	void push(size_t base_index, size_t size);
+	size_t pop(size_t req_size);
 
 	private: 
 
