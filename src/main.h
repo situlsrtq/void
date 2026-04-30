@@ -28,9 +28,15 @@
 #include "tracy_wrapper.h"
 #ifdef TRACY_ENABLE
 	#include <tracy/TracyOpenGL.hpp>
+	#define GPU_CONTEXT TracyGpuContext
 	#define GPU_ZONE(name) TracyGpuZone(name)
+	#define GPU_COLLECT TracyGpuCollect
+	#define FRAME_MARK FrameMark
 #else
+	#define GPU_CONTEXT
 	#define GPU_ZONE(name)
+	#define GPU_COLLECT
+	#define FRAME_MARK
 #endif
 
 #include "window.h"

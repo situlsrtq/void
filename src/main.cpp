@@ -53,6 +53,8 @@ linear_arena_t scratch_arena;
 
 int main(void)
 {
+	// Intialize memory systems
+
 	int res = PAL::get_path(g_PathBuffer_r, VOID_PATH_MAX);
 	if(res != EXIT_SUCCESS)
 	{
@@ -122,7 +124,6 @@ int main(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	// Resize in config, not in render code
 	// TODO: use glfwSetWindowAttrib() to allow for one-time resizing operations as menu
 	// selections
 	glfwWindowHint(GLFW_RESIZABLE, true);
@@ -146,7 +147,7 @@ int main(void)
 		return EXIT_FAILURE;
 	}
 
-	TracyGpuContext;
+	GPU_CONTEXT;
 	const GLubyte* vendor = glGetString(GL_VENDOR);
 	const GLubyte* card = glGetString(GL_RENDERER);
 
@@ -311,8 +312,7 @@ int main(void)
 
 	exposure_uni = glGetUniformLocation(win_hnd->post_shader.ID, "exposure");
 
-	// Pick pass
-	// Will become visbuffer pass, with picking as an added benefit
+	// Visbuffer pass
 
 	res = win_hnd->pick_pass_fb.Init(win_hnd->width, win_hnd->height);
 	if(res != EXIT_SUCCESS)
@@ -453,7 +453,7 @@ int main(void)
 		}
 	} // SCOPING FOR TRACY
 
-		// Object Geometry Pass
+		// Object Geometry 
 
 	{
 		GPU_ZONE("Geometry");
@@ -528,7 +528,7 @@ int main(void)
 			*/
 		}
 
-		// Light Geometry Pass
+		// Light Geometry 
 
 		glUniform1f(ambistrgth_uni, 1.0f);
 		glUniform3f(objcolor_uni, 1.0f, 1.0f, 1.0f);
@@ -570,13 +570,13 @@ int main(void)
 		win_hnd->frame_time_ms = (frame_end_time - frame_start_time) * 1000.0f;
 
 		glfwSwapBuffers(window);
-		TracyGpuCollect;
+		GPU_COLLECT;
 
 		scratch_arena.reset();
 
 		win_hnd->delta_time = frame_end_time - win_hnd->prev_frame_time;
 		win_hnd->prev_frame_time = frame_end_time;
-		FrameMark;
+		FRAME_MARK;
 	}
 
 	// Free resources and exit - not technically necessary when this is the end of the program,
