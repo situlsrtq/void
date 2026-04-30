@@ -150,7 +150,7 @@ int main(void)
 	const GLubyte* vendor = glGetString(GL_VENDOR);
 	const GLubyte* card = glGetString(GL_RENDERER);
 
-	printf("GPU: %s %s", vendor, card);
+	printf("GPU: %s %s\n", vendor, card);
 
 #ifdef DEBUG
 	glEnable(GL_DEBUG_OUTPUT);
@@ -674,7 +674,7 @@ void mouse_pos_callback(GLFWwindow* Window, double mx, double my)
 	win_hnd->prev_mouse_x = mx;
 	win_hnd->prev_mouse_y = my;
 
-	if(was_mbutton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	if(is_mbutton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
 		win_hnd->camera.look_at_mouse(xoffset, yoffset);
 	}
