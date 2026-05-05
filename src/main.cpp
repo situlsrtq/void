@@ -233,16 +233,16 @@ int main(void)
 	glVertexArrayAttribFormat(vao, 3, 2, GL_FLOAT, GL_FALSE, 0);
 	glVertexArrayAttribBinding(vao, 3, 3);
 
-	res = load_scene_from_glb(scene_file1, win_hnd, &vao, &vbuffer_state, VOID_TEX_COUNT);
+	res = glb_import(scene_file1, win_hnd, &vao, &vbuffer_state, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
 	{
-		printf("System: Could not load scene file: %s\n", scene_file1);
+		printf("System: Could not load glb file: %s\n", scene_file1);
 		return EXIT_FAILURE;
 	}
-	res = load_scene_from_glb(scene_file2, win_hnd, &vao, &vbuffer_state, VOID_TEX_COUNT);
+	res = glb_import(scene_file2, win_hnd, &vao, &vbuffer_state, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
 	{
-		printf("System: Could not load scene file: %s\n", scene_file2);
+		printf("System: Could not load glb file: %s\n", scene_file2);
 		return EXIT_FAILURE;
 	}
 

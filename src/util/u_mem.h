@@ -7,6 +7,8 @@
 #include "u_types.h"
 #include "u_util.h"
 
+#define INVALID_HANDLE 0;
+
 /// <summary>
 /// Fixed-size linear arena. Grows only, does not shrink
 /// </summary>

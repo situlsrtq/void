@@ -297,7 +297,7 @@ int load_textures(hash_table_t* hash_table, u32 tex_count, primitive_create_info
 	return EXIT_SUCCESS;
 }
 
-int load_scene_from_glb(const char* scene_file, window_handler_t*& win_hnd, unsigned int* vao,
+int glb_import(const char* scene_file, window_handler_t*& win_hnd, unsigned int* vao,
 			vertex_buffer_info_t* vbuffer_state, unsigned int tex_count)
 {
 	ZONE_SCOPED;
@@ -365,9 +365,8 @@ int load_scene_from_glb(const char* scene_file, window_handler_t*& win_hnd, unsi
 		cgltf_mesh* mesh = node->mesh;
 		if(mesh == 0x0)
 		{
-			printf("GLTF Load: File contains an empty root, check export settings | %s\n", scene_file);
-			cgltf_free(data);
-			return EXIT_FAILURE;
+			printf("GLTF Load: File contains an empty node, check export settings | %s\n", scene_file);
+			continue;
 		}
 
 		mesh_index = rh_hash_find(&win_hnd->hash_table, mesh->name, strlen(mesh->name) + 1);

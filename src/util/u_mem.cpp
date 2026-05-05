@@ -2,22 +2,23 @@
 
 int linear_arena_t::init(size_t size)
 {
-	base_addr = PAL::map_mem_page(size);
+	// Size + 1, position = 1 because 0 is defined as invalid handle
+	base_addr = PAL::map_mem_page(size + 1);
 	if(base_addr == 0x0)
 	{
 		printf("System: failed to allocate arena\n");
 		return EXIT_FAILURE;
 	}
 
-	position = 0;
-	this->size = size;
+	position = 1;
+	this->size = size + 1;
 
 	return EXIT_SUCCESS;
 }
 
 void linear_arena_t::reset()
 {
-	position = 0;
+	position = 1;
 	return;
 }
 
