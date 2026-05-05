@@ -83,7 +83,7 @@ int main(void)
 	}
 
 	const char* res1 = "res/sponza.glb";
-	const char* res2 = "res/chess.glb";
+	const char* res2 = "res/test_bench.glb";
 	// Drop the null terminator on OSPath intentionally, since it will always be concatenated with
 	// paths. hacky stupid shit, will disappear when a real file picker is implemented
 	size_t pathlen = strlen(g_OSPath_r);
@@ -239,20 +239,12 @@ int main(void)
 		printf("System: Could not load scene file: %s\n", scene_file1);
 		return EXIT_FAILURE;
 	}
-	/*
-	res = LoadSceneFromGLB(SceneFile, win_hnd, &VAO, &VBufferState, VOID_TEX_COUNT);
+	res = load_scene_from_glb(scene_file2, win_hnd, &vao, &vbuffer_state, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
 	{
-		printf("System: Could not load scene file: %s\n", SceneFile);
+		printf("System: Could not load scene file: %s\n", scene_file2);
 		return EXIT_FAILURE;
 	}
-	res = LoadSceneFromGLB(Scene2, win_hnd, &VAO, &VBufferState, VOID_TEX_COUNT);
-	if(res == EXIT_FAILURE)
-	{
-		printf("System: Could not load scene file: %s\n", Scene2);
-		return EXIT_FAILURE;
-	}
-	*/
 
 	// TODO: switch to glDrawElementsIndirectCommand
 	// /!\ remember to make changes where the draw calls actually happen too

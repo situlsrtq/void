@@ -319,25 +319,31 @@ int load_scene_from_glb(const char* scene_file, window_handler_t*& win_hnd, unsi
 	cgltf_result cgl_res = cgltf_parse_file(&opt, scene_file, &data);
 	if(cgl_res != cgltf_result_success)
 	{
-		printf("GLTF Load: could not parse file %s", scene_file);
+		printf("GLTF Load: could not parse file | %s\n", scene_file);
 		return EXIT_FAILURE;
 	}
 
 	cgl_res = cgltf_load_buffers(&opt, data, scene_file);
 	if(cgl_res != cgltf_result_success)
 	{
-		printf("GLTF Load: could not validate file %s", scene_file);
+		printf("GLTF Load: could not validate file | %s\n", scene_file);
 		return EXIT_FAILURE;
 	}
 
 	cgl_res = cgltf_validate(data);
 	if(cgl_res != cgltf_result_success)
 	{
-		printf("GLTF Load: could not validate file %s", scene_file);
+		printf("GLTF Load: could not validate file | %s\n", scene_file);
 		return EXIT_FAILURE;
 	}
 
 	u8* data_base_addr = (u8*)data->buffers->data;
+	if(data_base_addr == 0x0)
+	{
+		printf("GLTF Load: File was empty, check export settings | %s\n", scene_file);
+		cgltf_free(data);
+		return EXIT_FAILURE;
+	}
 
 	glBindVertexArray(*vao);
 
@@ -357,6 +363,13 @@ int load_scene_from_glb(const char* scene_file, window_handler_t*& win_hnd, unsi
 		glm::mat3 node_inv_trans = glm::mat3(inverse(transpose(node_matrix)));
 
 		cgltf_mesh* mesh = node->mesh;
+		if(mesh == 0x0)
+		{
+			printf("GLTF Load: File contains an empty root, check export settings | %s\n", scene_file);
+			cgltf_free(data);
+			return EXIT_FAILURE;
+		}
+
 		mesh_index = rh_hash_find(&win_hnd->hash_table, mesh->name, strlen(mesh->name) + 1);
 		if(mesh_index == KEY_NOT_FOUND)
 		{
