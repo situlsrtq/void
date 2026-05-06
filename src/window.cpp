@@ -37,7 +37,7 @@ window_handler_t* init_window_handler(float ScreenX, float ScreenY, linear_arena
 		return 0x0;
 	}
 
-	res->dual_grid.init(persistent_arena, {-5000, -5000}, {5000, 5000}, 8, 32);
+	res->dual_grid.init(persistent_arena, {-5000, -5000}, {5000, 5000}, LOOSE_GRID_DEFAULT_SIZE, TIGHT_GRID_DEFAULT_SIZE);
 
 	return res;
 }
