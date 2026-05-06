@@ -2,15 +2,22 @@
 
 void get_node_matrix(glm::mat4* m, cgltf_node* node)
 {
-	glm::vec3 trv = {node->translation[0], node->translation[1], node->translation[2]};
-	glm::vec3 scl = {node->scale[0], node->scale[1], node->scale[2]};
-	glm::quat p = {node->rotation[3], node->rotation[0], node->rotation[1], node->rotation[2]};
-	glm::mat4 r = glm::mat4_cast(p);
+	if(!node->has_matrix)
+	{
+		glm::vec3 trv = {node->translation[0], node->translation[1], node->translation[2]};
+		glm::vec3 scl = {node->scale[0], node->scale[1], node->scale[2]};
+		glm::quat p = {node->rotation[3], node->rotation[0], node->rotation[1], node->rotation[2]};
+		glm::mat4 r = glm::mat4_cast(p);
 
-	*m = glm::mat4(1.0f);
-	*m = glm::translate(*m, trv);
-	*m *= r;
-	*m = glm::scale(*m, scl);
+		*m = glm::mat4(1.0f);
+		*m = glm::translate(*m, trv);
+		*m *= r;
+		*m = glm::scale(*m, scl);
+	}
+	else
+	{
+		memcpy(m, node->matrix, sizeof(*node->matrix));
+	}
 }
 
 int load_indices(vertex_buffer_info_t* vbuffer_state, primitive_create_info_t* create_info, const cgltf_primitive* prim,
@@ -45,17 +52,17 @@ int load_indices(vertex_buffer_info_t* vbuffer_state, primitive_create_info_t* c
 		return EXIT_FAILURE;
 	}
 
-	glNamedBufferSubData(vbuffer_state->vbuffer_array[INDEX_BUFFER], vbuffer_state->index_byte_offset,
+	glNamedBufferSubData(vbuffer_state->vbuffer_array[INDEX_BUFFER], vbuffer_state->offsets[INDEX_BUFFER],
 			     count * stride, (void*)(data_base_addr + abs_buffer_offset + rel_buffer_offset));
 
 	create_info->index_info.index_type = indextype;
 	create_info->index_info.index_count = count;
-	create_info->index_info.ebo_byte_offset = vbuffer_state->index_byte_offset;
+	create_info->index_info.ebo_byte_offset = vbuffer_state->offsets[INDEX_BUFFER];
 
 	// Since this is a shared buffer for the entire scene, pad all writes to nearest 32bit
 	// boundary to prevent misalignment when indextype changes from a smaller type to a
 	// larger one
-	vbuffer_state->index_byte_offset += (count * stride) + ebo_padding;
+	vbuffer_state->offsets[INDEX_BUFFER] += (count * stride) + ebo_padding;
 
 	return EXIT_SUCCESS;
 }
@@ -79,9 +86,77 @@ cgltf_attribute* find_attr_type(const cgltf_primitive* prim, cgltf_attribute_typ
 	return attr;
 }
 
-int load_vertices(vertex_buffer_info_t* vbuffer_state, primitive_create_info_t* create_info,
-		  const cgltf_primitive* prim, const u8* data_base_addr)
+struct vload_params_t
 {
+	vertex_buffer_info_t* vbuffer_state;
+	primitive_create_info_t* create_info;
+	const cgltf_primitive* prim;
+	const u8* data_base_addr;
+};
+
+int upload_vertex_attr(cgltf_attribute_type type, u8 buffer, u8 stride_val, const vload_params_t& params)
+{
+	cgltf_attribute* attr = find_attr_type(params.prim, type);
+	if(!attr)
+	{
+		printf("GLTF: unsupported vertex format ");
+		return EXIT_FAILURE;
+	}
+	params.create_info->vertex_info.vattr_count = attr->data->count;
+	u64 relbufferoffset = attr->data->offset;
+	u64 absbufferoffset = attr->data->buffer_view->offset;
+
+	u8 stride = attr->data->stride;
+	if(stride != stride_val)
+	{
+		printf("GLTF: unsupported vertex layout ");
+		return EXIT_FAILURE;
+	}
+
+	glNamedBufferSubData(params.vbuffer_state->vbuffer_array[buffer], params.vbuffer_state->offsets[buffer] * stride,
+			     params.create_info->vertex_info.vattr_count * stride,
+			     (void*)(params.data_base_addr + absbufferoffset + relbufferoffset));
+
+	params.create_info->vertex_info.vertex_offset = params.vbuffer_state->offsets[buffer];
+
+	// No need to pad this offset, because we're tracking the count, not an address
+	params.vbuffer_state->offsets[buffer] += params.create_info->vertex_info.vattr_count;
+	return EXIT_SUCCESS;
+}
+
+int load_vertices(const vload_params_t& params)
+{
+	int res;
+	res = upload_vertex_attr(cgltf_attribute_type_position, POS_BUFFER, 12, params);
+	if(res == EXIT_FAILURE)
+	{
+		printf("(position)\n");
+		return EXIT_FAILURE;
+	}
+	res = upload_vertex_attr(cgltf_attribute_type_normal, NORM_BUFFER, 12, params);
+	if(res == EXIT_FAILURE)
+	{
+		printf("(normal)\n");
+		return EXIT_FAILURE;
+	}
+	// Only requre this attribute if model uses a normal map
+	if(params.prim->material->normal_texture.texture)
+	{
+		res = upload_vertex_attr(cgltf_attribute_type_tangent, TAN_BUFFER, 16, params);
+		if(res == EXIT_FAILURE)
+		{
+			printf("(tangent)\n");
+			return EXIT_FAILURE;
+		}
+	}
+	res = upload_vertex_attr(cgltf_attribute_type_texcoord, TEX_BUFFER, 8, params);
+	if(res == EXIT_FAILURE)
+	{
+		printf("(texcoord)\n");
+		return EXIT_FAILURE;
+	}
+
+	/*
 	cgltf_attribute* attr = find_attr_type(prim, cgltf_attribute_type_position);
 	if(!attr)
 	{
@@ -178,6 +253,7 @@ int load_vertices(vertex_buffer_info_t* vbuffer_state, primitive_create_info_t* 
 			     (void*)(data_base_addr + absbufferoffset + relbufferoffset));
 
 	vbuffer_state->tex_offset += create_info->vertex_info.vattr_count;
+	*/
 
 	return EXIT_SUCCESS;
 }
@@ -398,7 +474,8 @@ int glb_import(const char* scene_file, window_handler_t*& win_hnd, unsigned int*
 					}
 				}
 
-				res = load_vertices(vbuffer_state, &prim_info, prim, data_base_addr);
+				vload_params_t params = {vbuffer_state, &prim_info, prim, data_base_addr};
+				res = load_vertices(params);
 				if(res == EXIT_FAILURE)
 				{
 					return EXIT_FAILURE;

@@ -1,5 +1,4 @@
 #include "grid.h"
-#include "u_types.h"
 
 int dual_grid_t::init(linear_arena_t* arena, glm::ivec2 global_min, glm::ivec2 global_max, u32 loose_cell_size,
 		      u32 tight_cell_size)
@@ -140,7 +139,7 @@ int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 worl
 	ZONE_SCOPED
 	glm::vec3 world_center = (world_aabb_min + world_aabb_max) * 0.5f;
 
-	if(world_center.x < grid->grid_min_x || world_center.y < grid->grid_min_y)
+	if(world_center.x < grid->grid_min_x || world_center.z < grid->grid_min_y)
 	{
 		printf("Grid: element world-space position {%f, %f, %f} out of grid bounds", world_center.x,
 		       world_center.y, world_center.z);
@@ -148,7 +147,7 @@ int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 worl
 	}
 
 	u32 tile_x = floor((world_center.x - grid->grid_min_x) * grid->inv_tile_size_loose);
-	u32 tile_y = floor((world_center.y - grid->grid_min_y) * grid->inv_tile_size_loose);
+	u32 tile_y = floor((world_center.z - grid->grid_min_y) * grid->inv_tile_size_loose);
 
 	if((tile_x > grid->loose_grid.num_columns) || (tile_y > grid->loose_grid.num_rows))
 	{
@@ -178,8 +177,8 @@ int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 worl
 				    loose_cell->center.y - loose_cell->half_height};
 	glm::vec2 loose_aabb_max = {loose_cell->center.x + loose_cell->half_width,
 				    loose_cell->center.y + loose_cell->half_height};
-	glm::vec2 grid_aabb_min = glm::min(loose_aabb_min, {world_aabb_min.x, world_aabb_min.y});
-	glm::vec2 grid_aabb_max = glm::min(loose_aabb_max, {world_aabb_max.x, world_aabb_max.y});
+	glm::vec2 grid_aabb_min = glm::min(loose_aabb_min, {world_aabb_min.x, world_aabb_min.z});
+	glm::vec2 grid_aabb_max = glm::min(loose_aabb_max, {world_aabb_max.x, world_aabb_max.z});
 
 	dual_grid_expand_aabb(grid, loose_cell, loose_cell_index, loose_aabb_min, loose_aabb_max, grid_aabb_min,
 			      grid_aabb_max);
@@ -205,7 +204,7 @@ void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_b
 		glm::vec4 world_pos = inverse_vp * ndc_coords[i];
 		world_pos /= world_pos.w;
 		xy.x = world_pos.x;
-		xy.y = world_pos.y;
+		xy.y = world_pos.z;
 		xy_min = glm::min(xy_min, xy);
 		xy_max = glm::max(xy_max, xy);
 	}

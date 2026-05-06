@@ -157,12 +157,11 @@ int main(void)
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(MessageCallback, 0);
-	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, 
-		       GL_DEBUG_SEVERITY_NOTIFICATION, 
-		       0, nullptr, GL_FALSE);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE);
 #endif
 
-	window_handler_t* win_hnd = init_window_handler(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT, &persistent_arena, &string_arena);
+	window_handler_t* win_hnd = init_window_handler(SCREEN_X_DIM_DEFAULT, SCREEN_Y_DIM_DEFAULT, &persistent_arena,
+							&string_arena);
 	if(!win_hnd)
 	{
 		printf("System: Could not allocate core window handler\n");
@@ -239,12 +238,14 @@ int main(void)
 		printf("System: Could not load glb file: %s\n", scene_file1);
 		return EXIT_FAILURE;
 	}
+	/*
 	res = glb_import(scene_file2, win_hnd, &vao, &vbuffer_state, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
 	{
 		printf("System: Could not load glb file: %s\n", scene_file2);
 		return EXIT_FAILURE;
 	}
+	*/
 
 	// TODO: switch to glDrawElementsIndirectCommand
 	// /!\ remember to make changes where the draw calls actually happen too
@@ -393,122 +394,130 @@ int main(void)
 
 		// TODO: VISBUFFER. Can also be used for mouse picking
 
-	{
-		GPU_ZONE("Visbuffer");
-		win_hnd->pick_pass_fb.Bind();
-
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		win_hnd->pick_shader.Use();
-
-		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->projection));
-		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
-
-		u32 id = 0, prev_id = 0;
-		for(unsigned int i = 0; i < command_buffer.max_command_count; i++)
 		{
-			id = command_buffer.command_list[i].node_id;
-			if(i == 0)
+			GPU_ZONE("Visbuffer");
+			win_hnd->pick_pass_fb.Bind();
+
+			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			win_hnd->pick_shader.Use();
+
+			glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->projection));
+			glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
+
+			u32 id = 0, prev_id = 0;
+			for(unsigned int i = 0; i < command_buffer.max_command_count; i++)
 			{
-			}
-			else
-			{
-				if(id == prev_id) continue;
-			}
-			prev_id = id;
-
-			node_create_info_t node = win_hnd->scene.node[id];
-
-			glUniform1f(pickingindex_uni, float(node.node_id));
-			glUniform1f(pickingtype_uni, float(1));
-
-			glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE,
-					   glm::value_ptr(win_hnd->scene.model_matrix[i]));
-
-			mesh_info_t mesh = win_hnd->scene.mesh[node.mesh_index];
-			for(uint32_t t = 0; t < mesh.size; t++)
-			{
-				primitive_create_info_t prim = win_hnd->scene.prim[mesh.base_index + t];
-				if(prim.index_info.index_count)
+				id = command_buffer.command_list[i].node_id;
+				if(i == 0)
 				{
-					glDrawElementsBaseVertex(render_mode, prim.index_info.index_count,
-								 prim.index_info.index_type,
-								 (void*)prim.index_info.ebo_byte_offset,
-								 prim.vertex_info.vertex_offset);
 				}
 				else
 				{
-					glDrawArrays(render_mode, prim.vertex_info.vertex_offset,
-						     prim.vertex_info.vattr_count);
+					if(id == prev_id)
+					{
+						continue;
+					}
+				}
+				prev_id = id;
+
+				node_create_info_t node = win_hnd->scene.node[id];
+
+				glUniform1f(pickingindex_uni, float(node.node_id));
+				glUniform1f(pickingtype_uni, float(1));
+
+				glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE,
+						   glm::value_ptr(win_hnd->scene.model_matrix[i]));
+
+				mesh_info_t mesh = win_hnd->scene.mesh[node.mesh_index];
+				for(uint32_t t = 0; t < mesh.size; t++)
+				{
+					primitive_create_info_t prim = win_hnd->scene.prim[mesh.base_index + t];
+					if(prim.index_info.index_count)
+					{
+						glDrawElementsBaseVertex(render_mode, prim.index_info.index_count,
+									 prim.index_info.index_type,
+									 (void*)prim.index_info.ebo_byte_offset,
+									 prim.vertex_info.vertex_offset);
+					}
+					else
+					{
+						glDrawArrays(render_mode, prim.vertex_info.vertex_offset,
+							     prim.vertex_info.vattr_count);
+					}
 				}
 			}
-		}
-	} // SCOPING FOR TRACY
+		} // SCOPING FOR TRACY
 
-		// Object Geometry 
+		// Object Geometry
 
-	{
-		GPU_ZONE("Geometry");
-		win_hnd->hdr_pass_fb.Bind();
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		win_hnd->main_shader.Use();
-
-		glUniform1f(ambistrgth_uni, 0.1f);
-		glUniform3f(light_color_uni, 1.0f, 1.0f, 1.0f);
-		glUniform3f(light_dir_uni, light_dir.x, light_dir.y, light_dir.z);
-
-		glUniformMatrix4fv(projection_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->projection));
-
-		glUniformMatrix4fv(view_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
-		glUniform3f(viewpos_uni, win_hnd->camera.position.x, win_hnd->camera.position.y,
-			    win_hnd->camera.position.z);
-
-		u32 id = 0, prev_id = 0;
-		for(unsigned int i = 0; i < command_buffer.max_command_count; i++)
 		{
-			id = command_buffer.command_list[i].node_id;
-			if(i == 0)
+			GPU_ZONE("Geometry");
+			win_hnd->hdr_pass_fb.Bind();
+			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			win_hnd->main_shader.Use();
+
+			glUniform1f(ambistrgth_uni, 0.1f);
+			glUniform3f(light_color_uni, 1.0f, 1.0f, 1.0f);
+			glUniform3f(light_dir_uni, light_dir.x, light_dir.y, light_dir.z);
+
+			glUniformMatrix4fv(projection_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->projection));
+
+			glUniformMatrix4fv(view_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
+			glUniform3f(viewpos_uni, win_hnd->camera.position.x, win_hnd->camera.position.y,
+				    win_hnd->camera.position.z);
+
+			u32 id = 0, prev_id = 0;
+			for(unsigned int i = 0; i < command_buffer.max_command_count; i++)
 			{
-			}
-			else
-			{
-				if(id == prev_id) continue;
-			}
-			prev_id = id;
-
-			node_create_info_t node = win_hnd->scene.node[command_buffer.command_list[i].node_id];
-
-			glUniformMatrix4fv(model_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->scene.model_matrix[i]));
-
-			mesh_info_t mesh = win_hnd->scene.mesh[node.mesh_index];
-			for(uint32_t t = 0; t < mesh.size; t++)
-			{
-				primitive_create_info_t prim = win_hnd->scene.prim[mesh.base_index + t];
-
-				glUniformMatrix3fv(minvt_uni, 1, GL_FALSE, glm::value_ptr(prim.model_inv_trans));
-				glUniform3fv(objcolor_uni, 1, glm::value_ptr(prim.color));
-
-				glBindTextureUnit(0, prim.texture_info.tex_array[0]);
-				glBindTextureUnit(1, prim.texture_info.tex_array[1]);
-				glBindTextureUnit(2, prim.texture_info.tex_array[2]);
-
-				if(prim.index_info.index_count)
+				id = command_buffer.command_list[i].node_id;
+				if(i == 0)
 				{
-					glDrawElementsBaseVertex(render_mode, prim.index_info.index_count,
-								 prim.index_info.index_type,
-								 (void*)prim.index_info.ebo_byte_offset,
-								 prim.vertex_info.vertex_offset);
 				}
 				else
 				{
-					glDrawArrays(render_mode, prim.vertex_info.vertex_offset,
-						     prim.vertex_info.vattr_count);
+					if(id == prev_id)
+					{
+						continue;
+					}
+				}
+				prev_id = id;
+
+				node_create_info_t node = win_hnd->scene.node[command_buffer.command_list[i].node_id];
+
+				glUniformMatrix4fv(model_uni, 1, GL_FALSE,
+						   glm::value_ptr(win_hnd->scene.model_matrix[i]));
+
+				mesh_info_t mesh = win_hnd->scene.mesh[node.mesh_index];
+				for(uint32_t t = 0; t < mesh.size; t++)
+				{
+					primitive_create_info_t prim = win_hnd->scene.prim[mesh.base_index + t];
+
+					glUniformMatrix3fv(minvt_uni, 1, GL_FALSE,
+							   glm::value_ptr(prim.model_inv_trans));
+					glUniform3fv(objcolor_uni, 1, glm::value_ptr(prim.color));
+
+					glBindTextureUnit(0, prim.texture_info.tex_array[0]);
+					glBindTextureUnit(1, prim.texture_info.tex_array[1]);
+					glBindTextureUnit(2, prim.texture_info.tex_array[2]);
+
+					if(prim.index_info.index_count)
+					{
+						glDrawElementsBaseVertex(render_mode, prim.index_info.index_count,
+									 prim.index_info.index_type,
+									 (void*)prim.index_info.ebo_byte_offset,
+									 prim.vertex_info.vertex_offset);
+					}
+					else
+					{
+						glDrawArrays(render_mode, prim.vertex_info.vertex_offset,
+							     prim.vertex_info.vattr_count);
+					}
 				}
 			}
-		}
-	} // SCOPING FOR TRACY
+		} // SCOPING FOR TRACY
 
 		if(win_hnd->active_selection)
 		{
@@ -520,7 +529,7 @@ int main(void)
 			*/
 		}
 
-		// Light Geometry 
+		// Light Geometry
 
 		glUniform1f(ambistrgth_uni, 1.0f);
 		glUniform3f(objcolor_uni, 1.0f, 1.0f, 1.0f);

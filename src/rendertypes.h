@@ -17,11 +17,7 @@
 struct vertex_buffer_info_t
 {
 	u32 vbuffer_array[VOID_VBUFCOUNT_FMT];
-	u64 index_byte_offset;
-	u64 pos_offset;
-	u64 norm_offset;
-	u64 tan_offset;
-	u64 tex_offset;
+	u64 offsets[5];
 };
 
 struct index_info_t

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define PROGRAM_MAX_OBJECTS 512
+#define PROGRAM_MAX_OBJECTS 65535
 #define OBJECT_ALLOC_ERROR PROGRAM_MAX_OBJECTS + 1
 
 #define VOID_PATH_MAX 256
