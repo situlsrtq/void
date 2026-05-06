@@ -99,6 +99,10 @@ inline int compare_commands(const void* c1, const void* c2)
 inline void command_buffer_frame_end(command_buffer_t* buffer)
 {
 	ZONE_SCOPED;
+	if(buffer->curr_command_count <= 1)
+	{
+		return;
+	}
 	qsort(buffer->command_list, sizeof(draw_command_info_t), buffer->curr_command_count, compare_commands);
 }
 
