@@ -506,14 +506,14 @@ int glb_import(const char* scene_file, window_handler_t*& win_hnd, unsigned int*
 			mesh_set_aabbs(mesh_index, &win_hnd->scene, aabb_min, aabb_max);
 
 			node_info.mesh_index = mesh_index;
-			win_hnd->scene.add_node(node_info, node_matrix);
+			node_info.node_id = win_hnd->scene.add_node(node_info, node_matrix);
 
 			rh_hash_insert(&win_hnd->hash_table, mesh->name, strlen(mesh->name) + 1, mesh_index);
 		}
 		else
 		{
 			node_info.mesh_index = mesh_index;
-			win_hnd->scene.add_node(node_info, node_matrix);
+			node_info.node_id = win_hnd->scene.add_node(node_info, node_matrix);
 		}
 
 		glm::vec4 aabb_min, aabb_max;

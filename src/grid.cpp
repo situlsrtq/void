@@ -26,7 +26,7 @@ int dual_grid_t::init(linear_arena_t* arena, glm::ivec2 global_min, glm::ivec2 g
 	loose_grid.cells = (loose_cell_t*)pointer_from_arena(arena, handle);
 	for(u32 i = 0; i < loose_grid.num_columns * loose_grid.num_rows; i++)
 	{
-		loose_grid.cells[i] = {-1, 0.0f, 0.0f, {0.0f,0.0f}};
+		loose_grid.cells[i] = {-1, 0.0f, 0.0f, {0.0f, 0.0f}};
 	}
 
 	// Tight grid
@@ -214,6 +214,7 @@ void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_b
 	u32 min_y_tile = floor((xy_min.y - grid.grid_min_y) * grid.inv_tile_size_tight);
 	u32 max_y_tile = floor((xy_max.y - grid.grid_min_y) * grid.inv_tile_size_tight);
 
+	int res;
 	draw_command_info_t draw_info;
 	for(u32 y = min_y_tile; y <= max_y_tile; y++)
 	{
@@ -230,7 +231,13 @@ void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_b
 					grid_element_t element = grid.elements[element_index];
 
 					draw_info.node_id = element.node_id;
-					command_buffer_add_command(command_buffer, draw_info);
+
+					res = command_buffer_add_command(command_buffer, draw_info);
+					if(res == CMD_BUF_FULL)
+					{
+						return;
+					}
+
 					element_index = element.next_element;
 				}
 

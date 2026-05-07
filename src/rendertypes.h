@@ -14,6 +14,8 @@
 #define TAN_BUFFER 3
 #define TEX_BUFFER 4
 
+#define CMD_BUF_FULL -5
+
 struct vertex_buffer_info_t
 {
 	u32 vbuffer_array[VOID_VBUFCOUNT_FMT];
@@ -56,7 +58,7 @@ struct command_buffer_t
 ///</summary>
 inline int command_buffer_frame_start(linear_arena_t* scratch_arena, command_buffer_t* buffer, u32 max_count)
 {
-	u64 handle;
+	size_t handle;
 	int res = arena_alloc(scratch_arena, &handle, max_count * sizeof(draw_command_info_t));
 	if(res == EXIT_FAILURE)
 	{
@@ -71,16 +73,17 @@ inline int command_buffer_frame_start(linear_arena_t* scratch_arena, command_buf
 	return EXIT_SUCCESS;
 }
 
-inline void command_buffer_add_command(command_buffer_t* buffer, draw_command_info_t command)
+inline int command_buffer_add_command(command_buffer_t* buffer, draw_command_info_t command)
 {
 	if(buffer->curr_command_count == buffer->max_command_count)
 	{
 		printf("Command buffer: call not added - command buffer full\n");
-		return;
+		return CMD_BUF_FULL;
 	}
 
 	buffer->command_list[buffer->curr_command_count] = command;
 	buffer->curr_command_count++;
+	return EXIT_SUCCESS;
 }
 
 inline int compare_commands(const void* c1, const void* c2)
@@ -103,7 +106,7 @@ inline void command_buffer_frame_end(command_buffer_t* buffer)
 	{
 		return;
 	}
-	qsort(buffer->command_list, sizeof(draw_command_info_t), buffer->curr_command_count, compare_commands);
+	qsort(buffer->command_list, buffer->curr_command_count, sizeof(draw_command_info_t), compare_commands);
 }
 
 #endif

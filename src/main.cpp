@@ -238,14 +238,12 @@ int main(void)
 		printf("System: Could not load glb file: %s\n", scene_file1);
 		return EXIT_FAILURE;
 	}
-	/*
 	res = glb_import(scene_file2, win_hnd, &vao, &vbuffer_state, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
 	{
 		printf("System: Could not load glb file: %s\n", scene_file2);
 		return EXIT_FAILURE;
 	}
-	*/
 
 	// TODO: switch to glDrawElementsIndirectCommand
 	// /!\ remember to make changes where the draw calls actually happen too
@@ -406,7 +404,7 @@ int main(void)
 			glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
 
 			u32 id = 0, prev_id = 0;
-			for(unsigned int i = 0; i < command_buffer.max_command_count; i++)
+			for(unsigned int i = 0; i < command_buffer.curr_command_count; i++)
 			{
 				id = command_buffer.command_list[i].node_id;
 				if(i == 0)
@@ -470,7 +468,7 @@ int main(void)
 				    win_hnd->camera.position.z);
 
 			u32 id = 0, prev_id = 0;
-			for(unsigned int i = 0; i < command_buffer.max_command_count; i++)
+			for(unsigned int i = 0; i < command_buffer.curr_command_count; i++)
 			{
 				id = command_buffer.command_list[i].node_id;
 				if(i == 0)
