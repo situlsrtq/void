@@ -16,7 +16,7 @@ void get_node_matrix(glm::mat4* m, cgltf_node* node)
 	}
 	else
 	{
-		memcpy(m, node->matrix, sizeof(*node->matrix));
+		*m = *(glm::mat4*)node->matrix;
 	}
 }
 
