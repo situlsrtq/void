@@ -198,7 +198,7 @@ void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_b
 
 	glm::vec2 xy;
 	glm::vec2 xy_min = {FLT_MAX, FLT_MAX};
-	glm::vec2 xy_max = {FLT_MIN, FLT_MIN};
+	glm::vec2 xy_max = {-FLT_MAX, -FLT_MAX};
 	for(int i = 0; i < 8; i++)
 	{
 		glm::vec4 world_pos = inverse_vp * ndc_coords[i];

@@ -425,7 +425,7 @@ int main(void)
 				glUniform1f(pickingtype_uni, float(1));
 
 				glUniformMatrix4fv(pickingmodel_uni, 1, GL_FALSE,
-						   glm::value_ptr(win_hnd->scene.model_matrix[i]));
+						   glm::value_ptr(win_hnd->scene.model_matrix[node.node_id]));
 
 				mesh_info_t mesh = win_hnd->scene.mesh[node.mesh_index];
 				for(uint32_t t = 0; t < mesh.size; t++)
@@ -486,7 +486,7 @@ int main(void)
 				node_create_info_t node = win_hnd->scene.node[command_buffer.command_list[i].node_id];
 
 				glUniformMatrix4fv(model_uni, 1, GL_FALSE,
-						   glm::value_ptr(win_hnd->scene.model_matrix[i]));
+						   glm::value_ptr(win_hnd->scene.model_matrix[node.node_id]));
 
 				mesh_info_t mesh = win_hnd->scene.mesh[node.mesh_index];
 				for(uint32_t t = 0; t < mesh.size; t++)
