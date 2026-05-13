@@ -101,10 +101,20 @@ void dual_grid_expand_aabb(dual_grid_t* grid, loose_cell_t* loose_cell, u32 loos
 
 	for(u32 y = new_min_y_tile; y <= new_max_y_tile; y++)
 	{
+		if(y > grid->tight_grid.num_rows)
+		{
+			continue;
+		}
+
 		bool y_in_old_bounds = ((old_min_y_tile < y) && (y < old_max_y_tile));
 
 		for(u32 x = new_min_x_tile; x <= new_max_x_tile; x++)
 		{
+			if(y > grid->tight_grid.num_columns)
+			{
+				continue;
+			}
+
 			if(y_in_old_bounds && ((old_min_x_tile < x) && (x < old_max_x_tile)))
 			{
 				continue; // Don't add duplicate loose entries into tight cells
