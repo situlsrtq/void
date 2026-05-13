@@ -39,6 +39,7 @@ struct index_free_list_t
 
 	void push(size_t Index);
 	size_t pop();
+	void reset();
 };
 
 struct linked_block_t

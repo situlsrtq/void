@@ -144,7 +144,7 @@ void dual_grid_expand_aabb(dual_grid_t* grid, loose_cell_t* loose_cell, u32 loos
 }
 
 /** Operates on worldspace bounding boxes */
-int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max, u32 node_id)
+int dual_grid_insert(dual_grid_t* grid, u32 node_id, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max)
 {
 	ZONE_SCOPED
 	glm::vec3 world_center = (world_aabb_min + world_aabb_max) * 0.5f;
@@ -166,19 +166,32 @@ int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 worl
 		return EXIT_FAILURE;
 	}
 
-	u32 element_index = grid->element_freelist.pop();
-
+	u32 element_index;
 	u32 loose_cell_index = (tile_y * grid->loose_grid.num_columns) + tile_x;
 	loose_cell_t* loose_cell = &grid->loose_grid.cells[loose_cell_index];
 	if(loose_cell->first_element < 0)
 	{
+		element_index = grid->element_freelist.pop();
 		loose_cell->first_element = element_index;
 	}
 	else
 	{
-// TODO: prevent duplicate node entries, otherwise delete might not work (delete a node that still exists further down the chain because of a duplicate)
-		if(grid->elements[i])
-		while()
+		// Have to prevent duplicate node entries to avoid the case where a node is moved/deleted but still shows up because it was a duplicate. 
+		// This also means delete() must be called before insert() in move() - the other way round would prevent a node from moving within the bounds of its current loose cell
+		i32 index = loose_cell->first_element;
+		grid_element_t* element;
+		while(index >= 0)
+		{
+			element = &grid->elements[index];
+			if(element->node_id == node_id)
+			{
+				return;
+			}
+
+			index = element->next_element;
+		}
+		
+		element_index = grid->element_freelist.pop();
 		u32 temp = loose_cell->first_element;
 		loose_cell->first_element = element_index;
 		grid->elements[element_index].next_element = temp;
@@ -224,33 +237,54 @@ void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec3 world_aabb_min, 
 	loose_cell_t* loose_cell = &grid->loose_grid.cells[loose_cell_index];
 	if(loose_cell->first_element < 0)
 	{
-		printf("Grid: attempt to remove node that doesn't exist in this cell\n");
+		printf("Grid: attempt to remove node in an empty cell\n");
 		return;
 	}
-
-	grid_element_t* element = &grid->elements[loose_cell->first_element];
-	grid_element_t prev = {};
-	u32 count = 0;
-	while(element->node_id != node_id)
+	else
 	{
-		if(element->next_element < 0)
+		i32 index = loose_cell->first_element;
+		grid_element_t* element;
+		grid_element_t* prev;
+		while(index >= 0)
 		{
-			printf("Grid: attempt to remove node that doesn't exist in this cell\n");
-			return;
+			element = &grid->elements[index];
+			if(element->node_id == node_id)
+			{
+				if(index == loose_cell->first_element)
+				{
+					loose_cell->first_element = element->next_element;
+					grid->element_freelist.push(index);
+					return;
+				}
+
+				prev->next_element = element->next_element;
+				grid->element_freelist.push(index);
+				return;
+			}
+
+			prev = element;
+			index = element->next_element;
 		}
-		prev = *element;
-		element = &grid->elements[element->next_element];
-		count++;
 	}
 
-	if(count == 0)
-	{
-		
-	}
+	printf("Grid: attempt to remove node that doesn't exist in this cell\n");
+	return;
 }
 
-void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max);
-void dual_grid_optimize(int usage_flag);
+void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max)
+{
+	dual_grid_remove(grid, node_id, world_aabb_min, world_aabb_max);
+	dual_grid_insert(grid, node_id, world_aabb_min, world_aabb_max);
+}
+
+void dual_grid_optimize(dual_grid_t* grid)
+{
+	u32 num_tight_tiles = grid->tight_grid.num_columns * grid->tight_grid.num_rows;
+	for(int i = 0; i < num_tight_tiles; i++)
+	{
+
+	}
+}
 
 void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_buffer, const glm::mat4& inverse_vp)
 {
@@ -310,6 +344,7 @@ void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_b
 }
 
 /*
+	// In the event we move to GPU cull
 	// Calculate frustum planes
 	float e2 = view_frustum.focal_length * view_frustum.focal_length;
 	float a2 = view_frustum.aspect_ratio * view_frustum.aspect_ratio;
@@ -326,8 +361,8 @@ void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_b
 	frustum_planes[4] = {0, y_tb, z_tb, 0};				   // Top
 	frustum_planes[5] = {0, -y_tb, z_tb, 0};			   // Bottom
 
-	// Transform grid tile center to view space
+	// Transform object sphere to view space
 
 	// Compare tile center to frustum planes
-	// Cull/Write cell contents
+	// Cull
 */

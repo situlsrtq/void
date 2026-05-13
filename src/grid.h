@@ -82,9 +82,9 @@ struct dual_grid_t
 	void release();
 };
 
-int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max, u32 node_id);
-void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec2 center);
-void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
+int dual_grid_insert(dual_grid_t* grid, u32 node_id, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max);
+void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max);
+void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max);
 void dual_grid_optimize(dual_grid_t* grid);
 void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_buffer, const glm::mat4& inverse_vp);
 

@@ -97,6 +97,12 @@ void index_free_list_t::push(size_t freed_index)
 	next_free_pos++;
 }
 
+void index_free_list_t::reset()
+{
+	base_array_pos = 0;
+	next_free_pos = 0;
+}
+
 size_t block_free_list_t::pop(size_t req_size)
 {
 	if(root == 0x0 || (root->size < req_size))
