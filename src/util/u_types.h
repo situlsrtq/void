@@ -48,6 +48,21 @@ inline constexpr u64 V_TIB(u32 IN)
 	return (u64)(IN * TIB);
 }
 
+inline constexpr u32 bitfield_min_size32(u32 size)
+{
+	return ((size + 3) &~ 3);	
+}
+
+inline bool bitfield_is_set32(u32* bitfield, u32 index)
+{
+	return !!(bitfield[index >> 5] & (1U << (index & 31)));
+}
+
+inline void bitfield_set32(u32* bitfield, u32 index)
+{
+	bitfield[index >> 5] |= (1U << (index & 31));
+}
+
 //------- TODO: Move to Core module when such a thing exists ----------
 #ifdef DEBUG
 extern char g_PathBuffer_r[VOID_PATH_MAX + 1];

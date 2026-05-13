@@ -403,22 +403,10 @@ int main(void)
 			glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->projection));
 			glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
 
-			u32 id = 0, prev_id = 0;
+			u32 id;
 			for(unsigned int i = 0; i < command_buffer.curr_command_count; i++)
 			{
 				id = command_buffer.command_list[i].node_id;
-				if(i == 0)
-				{
-				}
-				else
-				{
-					if(id == prev_id)
-					{
-						continue;
-					}
-				}
-				prev_id = id;
-
 				node_create_info_t node = win_hnd->scene.node[id];
 
 				glUniform1f(pickingindex_uni, float(node.node_id));
@@ -467,23 +455,11 @@ int main(void)
 			glUniform3f(viewpos_uni, win_hnd->camera.position.x, win_hnd->camera.position.y,
 				    win_hnd->camera.position.z);
 
-			u32 id = 0, prev_id = 0;
+			u32 id;
 			for(unsigned int i = 0; i < command_buffer.curr_command_count; i++)
 			{
 				id = command_buffer.command_list[i].node_id;
-				if(i == 0)
-				{
-				}
-				else
-				{
-					if(id == prev_id)
-					{
-						continue;
-					}
-				}
-				prev_id = id;
-
-				node_create_info_t node = win_hnd->scene.node[command_buffer.command_list[i].node_id];
+				node_create_info_t node = win_hnd->scene.node[id];
 
 				glUniformMatrix4fv(model_uni, 1, GL_FALSE,
 						   glm::value_ptr(win_hnd->scene.model_matrix[node.node_id]));

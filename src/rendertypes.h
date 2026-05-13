@@ -49,6 +49,7 @@ struct draw_command_info_t
 struct command_buffer_t
 {
 	draw_command_info_t* command_list;
+	u32* node_bitfield;
 	u32 max_command_count;
 	u32 curr_command_count;
 };
@@ -67,6 +68,17 @@ inline int command_buffer_frame_start(linear_arena_t* scratch_arena, command_buf
 	}
 
 	buffer->command_list = (draw_command_info_t*)pointer_from_arena(scratch_arena, handle);
+
+	res = arena_alloc(scratch_arena, &handle, bitfield_min_size32(max_count));
+	if(res == EXIT_FAILURE)
+	{
+		printf("System: could not allocate command buffer\n");
+		return EXIT_FAILURE;
+	}
+
+	buffer->node_bitfield = (u32*)pointer_from_arena(scratch_arena, handle);
+
+	memset(buffer->node_bitfield, 0, bitfield_min_size32(max_count)); // the scratch arena will likely contain garbage data where this array gets allocated
 	buffer->max_command_count = max_count;
 	buffer->curr_command_count = 0;
 
@@ -81,8 +93,15 @@ inline int command_buffer_add_command(command_buffer_t* buffer, draw_command_inf
 		return CMD_BUF_FULL;
 	}
 
+	if(bitfield_is_set32(buffer->node_bitfield, command.node_id))
+	{
+		// Duplicate node entry attempted
+		return EXIT_SUCCESS;	
+	}
+
 	buffer->command_list[buffer->curr_command_count] = command;
 	buffer->curr_command_count++;
+	bitfield_set32(buffer->node_bitfield, command.node_id);
 	return EXIT_SUCCESS;
 }
 
