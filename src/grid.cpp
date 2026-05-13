@@ -151,7 +151,7 @@ int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 worl
 
 	if(world_center.x < grid->grid_min_x || world_center.z < grid->grid_min_y)
 	{
-		printf("Grid: element world-space position {%f, %f, %f} out of grid bounds", world_center.x,
+		printf("Grid: element world-space position {%f, %f, %f} out of grid bounds\n", world_center.x,
 		       world_center.y, world_center.z);
 		return EXIT_FAILURE;
 	}
@@ -161,7 +161,7 @@ int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 worl
 
 	if((tile_x > grid->loose_grid.num_columns) || (tile_y > grid->loose_grid.num_rows))
 	{
-		printf("Grid: element world-space position {%f, %f, %f} out of grid bounds", world_center.x,
+		printf("Grid: element world-space position {%f, %f, %f} out of grid bounds\n", world_center.x,
 		       world_center.y, world_center.z);
 		return EXIT_FAILURE;
 	}
@@ -176,6 +176,9 @@ int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 worl
 	}
 	else
 	{
+// TODO: prevent duplicate node entries, otherwise delete might not work (delete a node that still exists further down the chain because of a duplicate)
+		if(grid->elements[i])
+		while()
 		u32 temp = loose_cell->first_element;
 		loose_cell->first_element = element_index;
 		grid->elements[element_index].next_element = temp;
@@ -196,8 +199,57 @@ int dual_grid_insert(dual_grid_t* grid, glm::vec3 world_aabb_min, glm::vec3 worl
 	return EXIT_SUCCESS;
 }
 
-void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec2 center);
-void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec2 new_center);
+void dual_grid_remove(dual_grid_t* grid, u32 node_id, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max)
+{
+	glm::vec3 world_center = (world_aabb_min + world_aabb_max) * 0.5f;
+
+	if(world_center.x < grid->grid_min_x || world_center.z < grid->grid_min_y)
+	{
+		printf("Grid: can't remove - element world-space position {%f, %f, %f} out of grid bounds\n", world_center.x,
+		       world_center.y, world_center.z);
+		return;
+	}
+
+	u32 tile_x = floor((world_center.x - grid->grid_min_x) * grid->inv_tile_size_loose);
+	u32 tile_y = floor((world_center.z - grid->grid_min_y) * grid->inv_tile_size_loose);
+
+	if((tile_x > grid->loose_grid.num_columns) || (tile_y > grid->loose_grid.num_rows))
+	{
+		printf("Grid: can't-remove - element world-space position {%f, %f, %f} out of grid bounds\n", world_center.x,
+		       world_center.y, world_center.z);
+		return;
+	}
+
+	u32 loose_cell_index = (tile_y * grid->loose_grid.num_columns) + tile_x;
+	loose_cell_t* loose_cell = &grid->loose_grid.cells[loose_cell_index];
+	if(loose_cell->first_element < 0)
+	{
+		printf("Grid: attempt to remove node that doesn't exist in this cell\n");
+		return;
+	}
+
+	grid_element_t* element = &grid->elements[loose_cell->first_element];
+	grid_element_t prev = {};
+	u32 count = 0;
+	while(element->node_id != node_id)
+	{
+		if(element->next_element < 0)
+		{
+			printf("Grid: attempt to remove node that doesn't exist in this cell\n");
+			return;
+		}
+		prev = *element;
+		element = &grid->elements[element->next_element];
+		count++;
+	}
+
+	if(count == 0)
+	{
+		
+	}
+}
+
+void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec3 world_aabb_min, glm::vec3 world_aabb_max);
 void dual_grid_optimize(int usage_flag);
 
 void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_buffer, const glm::mat4& inverse_vp)
