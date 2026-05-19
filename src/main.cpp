@@ -536,7 +536,7 @@ int main(void)
 
 		win_hnd->post_shader.Use();
 		glUniform1f(exposure_uni, float(exposure_val));
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); // Attributes hard coded in vertex shader
+		glDrawArrays(GL_TRIANGLES, 0, 3); // Attributes hard coded in vertex shader
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

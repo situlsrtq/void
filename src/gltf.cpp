@@ -421,7 +421,7 @@ int glb_import(const char* scene_file, window_handler_t*& win_hnd, unsigned int*
 		mesh_get_aabbs(mesh_index, &win_hnd->scene, &aabb_min, &aabb_max);
 		get_world_aabbs(&aabb_min, &aabb_max, &node_matrix);
 
-		dual_grid_insert(&win_hnd->dual_grid, aabb_min, aabb_max, node_info.node_id);
+		dual_grid_insert(&win_hnd->dual_grid, node_info.node_id, aabb_min, aabb_max);
 	}
 
 	cgltf_free(data);

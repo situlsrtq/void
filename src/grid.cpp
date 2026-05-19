@@ -1,4 +1,5 @@
 #include "grid.h"
+#include <cstdlib>
 
 int dual_grid_t::init(linear_arena_t* arena, glm::ivec2 global_min, glm::ivec2 global_max, u32 loose_cell_size,
 		      u32 tight_cell_size)
@@ -185,7 +186,7 @@ int dual_grid_insert(dual_grid_t* grid, u32 node_id, glm::vec3 world_aabb_min, g
 			element = &grid->elements[index];
 			if(element->node_id == node_id)
 			{
-				return;
+				return EXIT_FAILURE;
 			}
 
 			index = element->next_element;
@@ -279,11 +280,13 @@ void dual_grid_move(dual_grid_t* grid, u32 node_id, glm::vec3 world_aabb_min, gl
 
 void dual_grid_optimize(dual_grid_t* grid)
 {
+/*
 	u32 num_tight_tiles = grid->tight_grid.num_columns * grid->tight_grid.num_rows;
 	for(int i = 0; i < num_tight_tiles; i++)
 	{
 
 	}
+*/
 }
 
 void dual_grid_frustum_cull(const dual_grid_t& grid, command_buffer_t* command_buffer, const glm::mat4& inverse_vp)
