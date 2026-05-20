@@ -20,7 +20,6 @@
 #include "u_hash.h"
 #include "u_types.h"
 
-int glb_import(const char* scene_file, window_handler_t*& win_hnd, unsigned int* vao,
-		     vertex_buffer_info_t* vbuffer_state, unsigned int tex_count);
+int glb_import(const char* scene_file, window_handler_t*& win_hnd, vertex_buffer_info_t* vbuffer_state, unsigned int tex_count);
 
 #endif

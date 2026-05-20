@@ -223,6 +223,8 @@ int texture_to_gpu(hash_table_t* hash_table, primitive_create_info_t* create_inf
 			return EXIT_FAILURE;
 		}
 
+		// MAKERESIDENT HERE
+
 		rh_hash_insert(hash_table, filetex->image->name, strlen(filetex->image->name) + 1,
 			       create_info->texture_info.tex_array[texture]);
 	}
@@ -274,8 +276,7 @@ int load_textures(hash_table_t* hash_table, u32 tex_count, primitive_create_info
 	return EXIT_SUCCESS;
 }
 
-int glb_import(const char* scene_file, window_handler_t*& win_hnd, unsigned int* vao,
-			vertex_buffer_info_t* vbuffer_state, unsigned int tex_count)
+int glb_import(const char* scene_file, window_handler_t*& win_hnd, vertex_buffer_info_t* vbuffer_state, unsigned int tex_count)
 {
 	ZONE_SCOPED;
 	printf("Validating glb file: %s\n", scene_file);
@@ -321,8 +322,6 @@ int glb_import(const char* scene_file, window_handler_t*& win_hnd, unsigned int*
 		cgltf_free(data);
 		return EXIT_FAILURE;
 	}
-
-	glBindVertexArray(*vao);
 
 	printf("Loading gltf data: %s\n", scene_file);
 
