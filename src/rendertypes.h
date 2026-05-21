@@ -6,20 +6,22 @@
 #include "u_types.h"
 
 #define VOID_TEX_COUNT 3
-#define VOID_VBUFCOUNT_FMT 5
+#define VOID_VBUFCOUNT_FMT 4
 #define VOID_TEXCOUNT_FMT 3
-#define INDEX_BUFFER 0
-#define POS_BUFFER 1
-#define NORM_BUFFER 2
-#define TAN_BUFFER 3
-#define TEX_BUFFER 4
+#define POS_BUFFER 0
+#define NORM_BUFFER 1
+#define TAN_BUFFER 2
+#define TEX_BUFFER 3
 
 #define CMD_BUF_FULL -5
 
 struct vertex_buffer_info_t
 {
-	u32 vbuffer_array[VOID_VBUFCOUNT_FMT];
-	u64 offsets[5];
+	u32 vertex_ssbo;
+	u32 ebo;
+	u64 ebo_offset;
+	u64 base_addr[VOID_VBUFCOUNT_FMT];
+	u64 curr_offset[VOID_VBUFCOUNT_FMT];
 };
 
 struct index_info_t

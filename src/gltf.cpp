@@ -52,17 +52,17 @@ int load_indices(vertex_buffer_info_t* vbuffer_state, primitive_create_info_t* c
 		return EXIT_FAILURE;
 	}
 
-	glNamedBufferSubData(vbuffer_state->vbuffer_array[INDEX_BUFFER], vbuffer_state->offsets[INDEX_BUFFER],
+	glNamedBufferSubData(vbuffer_state->ebo, vbuffer_state->ebo_offset,
 			     count * stride, (void*)(data_base_addr + abs_buffer_offset + rel_buffer_offset));
 
 	create_info->index_info.index_type = indextype;
 	create_info->index_info.index_count = count;
-	create_info->index_info.ebo_byte_offset = vbuffer_state->offsets[INDEX_BUFFER];
+	create_info->index_info.ebo_byte_offset = vbuffer_state->ebo_offset;
 
 	// Since this is a shared buffer for the entire scene, pad all writes to nearest 32bit
-	// boundary to prevent misalignment when indextype changes from a smaller type to a
+	// boundary to prevent GPU-side misalignment when indextype changes from a smaller type to a
 	// larger one
-	vbuffer_state->offsets[INDEX_BUFFER] += (count * stride) + ebo_padding;
+	vbuffer_state->ebo_offset += (count * stride) + ebo_padding;
 
 	return EXIT_SUCCESS;
 }
@@ -113,14 +113,13 @@ int upload_vertex_attr(cgltf_attribute_type type, u8 buffer, u8 stride_val, cons
 		return EXIT_FAILURE;
 	}
 
-	glNamedBufferSubData(params.vbuffer_state->vbuffer_array[buffer], params.vbuffer_state->offsets[buffer] * stride,
+	glNamedBufferSubData(params.vbuffer_state->vertex_ssbo, params.vbuffer_state->base_addr[buffer] + (params.vbuffer_state->curr_offset[buffer] * stride),
 			     params.create_info->vertex_info.vattr_count * stride,
 			     (void*)(params.data_base_addr + absbufferoffset + relbufferoffset));
 
-	params.create_info->vertex_info.vertex_offset = params.vbuffer_state->offsets[buffer];
+	params.create_info->vertex_info.vertex_offset = params.vbuffer_state->curr_offset[buffer];
 
-	// No need to pad this offset, because we're tracking the count, not an address
-	params.vbuffer_state->offsets[buffer] += params.create_info->vertex_info.vattr_count;
+	params.vbuffer_state->curr_offset[buffer] += params.create_info->vertex_info.vattr_count * stride;
 	return EXIT_SUCCESS;
 }
 

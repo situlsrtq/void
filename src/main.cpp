@@ -198,40 +198,21 @@ int main(void)
 	}
 
 	// Initialize Render Data Structures
-
 	vertex_buffer_info_t vbuffer_state = {};
-	glCreateBuffers(VOID_VBUFCOUNT_FMT, vbuffer_state.vbuffer_array);
-	glNamedBufferStorage(vbuffer_state.vbuffer_array[INDEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(vbuffer_state.vbuffer_array[POS_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(vbuffer_state.vbuffer_array[NORM_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(vbuffer_state.vbuffer_array[TAN_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	glNamedBufferStorage(vbuffer_state.vbuffer_array[TEX_BUFFER], V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	glCreateBuffers(1, &vbuffer_state.ebo);
+	glNamedBufferStorage(vbuffer_state.ebo, V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	
+	glCreateBuffers(1, &vbuffer_state.vertex_ssbo);
+	glNamedBufferStorage(vbuffer_state.vertex_ssbo, V_MIB(400), 0x0, GL_DYNAMIC_STORAGE_BIT);
+	vbuffer_state.base_addr[POS_BUFFER] = 0;
+	vbuffer_state.base_addr[NORM_BUFFER] = V_MIB(100);
+	vbuffer_state.base_addr[TAN_BUFFER] = V_MIB(200);
+	vbuffer_state.base_addr[TEX_BUFFER] = V_MIB(300);
 
 	unsigned int vao;
 	glCreateVertexArrays(1, &vao);
+	glVertexArrayElementBuffer(vao, vbuffer_state.ebo);
 	glBindVertexArray(vao);
-
-	glVertexArrayElementBuffer(vao, vbuffer_state.vbuffer_array[INDEX_BUFFER]);	    // sizeof(vec3)
-	glVertexArrayVertexBuffer(vao, 0, vbuffer_state.vbuffer_array[POS_BUFFER], 0, 12);  // sizeof(vec3)
-	glVertexArrayVertexBuffer(vao, 1, vbuffer_state.vbuffer_array[NORM_BUFFER], 0, 12); // sizeof(vec3)
-	glVertexArrayVertexBuffer(vao, 2, vbuffer_state.vbuffer_array[TAN_BUFFER], 0, 16);  // sizeof(vec3)
-	glVertexArrayVertexBuffer(vao, 3, vbuffer_state.vbuffer_array[TEX_BUFFER], 0, 8);   // sizeof(vec3)
-
-	glEnableVertexArrayAttrib(vao, 0);
-	glVertexArrayAttribFormat(vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
-	glVertexArrayAttribBinding(vao, 0, 0);
-
-	glEnableVertexArrayAttrib(vao, 1);
-	glVertexArrayAttribFormat(vao, 1, 3, GL_FLOAT, GL_FALSE, 0);
-	glVertexArrayAttribBinding(vao, 1, 1);
-
-	glEnableVertexArrayAttrib(vao, 2);
-	glVertexArrayAttribFormat(vao, 2, 4, GL_FLOAT, GL_FALSE, 0);
-	glVertexArrayAttribBinding(vao, 2, 2);
-
-	glEnableVertexArrayAttrib(vao, 3);
-	glVertexArrayAttribFormat(vao, 3, 2, GL_FLOAT, GL_FALSE, 0);
-	glVertexArrayAttribBinding(vao, 3, 3);
 
 	res = glb_import(scene_file1, win_hnd, &vbuffer_state, VOID_TEX_COUNT);
 	if(res == EXIT_FAILURE)
