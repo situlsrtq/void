@@ -19,22 +19,22 @@ struct vertex_buffer_info_t
 {
 	u32 vertex_ssbo;
 	u32 ebo;
-	u64 ebo_offset;
-	u64 base_addr[VOID_VBUFCOUNT_FMT];
-	u64 curr_offset[VOID_VBUFCOUNT_FMT];
+	u32 ebo_offset;
+	u32 base_addr[VOID_VBUFCOUNT_FMT];
+	u32 curr_offset[VOID_VBUFCOUNT_FMT];
 };
 
 struct index_info_t
 {
-	u64 index_count;
-	u64 ebo_byte_offset;
+	u32 index_count;
+	u32 ebo_byte_offset;
 	u32 index_type;
 };
 
 struct vertex_info_t
 {
-	u64 vattr_count;
-	u64 vertex_offset;
+	u32 vattr_count;
+	u32 vertex_offset;
 };
 
 struct texture_info_t

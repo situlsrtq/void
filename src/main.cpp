@@ -1,4 +1,5 @@
 #include "main.h"
+#include "rendertypes.h"
 
 // TODO: Get rid of runtime path discovery in release builds
 
@@ -17,6 +18,11 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 #endif
 
 // Uniform globals. Garbage doodoo trash, will go when renderer transitions to visbuffer and indirect/bindless
+
+unsigned int pos_offset_uni;
+unsigned int norm_offset_uni;
+unsigned int tan_offset_uni;
+unsigned int tex_offset_uni;
 
 unsigned int model_uni;
 unsigned int minvt_uni;
@@ -199,15 +205,16 @@ int main(void)
 
 	// Initialize Render Data Structures
 	vertex_buffer_info_t vbuffer_state = {};
-	glCreateBuffers(1, &vbuffer_state.ebo);
-	glNamedBufferStorage(vbuffer_state.ebo, V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
-	
 	glCreateBuffers(1, &vbuffer_state.vertex_ssbo);
 	glNamedBufferStorage(vbuffer_state.vertex_ssbo, V_MIB(400), 0x0, GL_DYNAMIC_STORAGE_BIT);
 	vbuffer_state.base_addr[POS_BUFFER] = 0;
 	vbuffer_state.base_addr[NORM_BUFFER] = V_MIB(100);
 	vbuffer_state.base_addr[TAN_BUFFER] = V_MIB(200);
 	vbuffer_state.base_addr[TEX_BUFFER] = V_MIB(300);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vbuffer_state.vertex_ssbo);
+
+	glCreateBuffers(1, &vbuffer_state.ebo);
+	glNamedBufferStorage(vbuffer_state.ebo, V_MIB(100), 0x0, GL_DYNAMIC_STORAGE_BIT);
 
 	unsigned int vao;
 	glCreateVertexArrays(1, &vao);
@@ -229,8 +236,6 @@ int main(void)
 
 	// TODO: switch to glDrawElementsIndirectCommand
 	// /!\ remember to make changes where the draw calls actually happen too
-
-	glBindVertexArray(0);
 
 	// Initialize Render passes
 
@@ -256,6 +261,11 @@ int main(void)
 		printf("System: Failed to initialize main pass shaders\n");
 		return EXIT_FAILURE;
 	}
+
+	pos_offset_uni = glGetUniformLocation(win_hnd->main_shader.ID, "pos_offset");
+	norm_offset_uni = glGetUniformLocation(win_hnd->main_shader.ID, "norm_offset");
+	tan_offset_uni = glGetUniformLocation(win_hnd->main_shader.ID, "tan_offset");
+	tex_offset_uni = glGetUniformLocation(win_hnd->main_shader.ID, "tex_offset");
 
 	model_uni = glGetUniformLocation(win_hnd->main_shader.ID, "model");
 	minvt_uni = glGetUniformLocation(win_hnd->main_shader.ID, "minvt");
@@ -308,6 +318,7 @@ int main(void)
 		return EXIT_FAILURE;
 	}
 
+	unsigned int pickingpos_uni = glGetUniformLocation(win_hnd->pick_shader.ID, "pos_offset");
 	unsigned int pickingmodel_uni = glGetUniformLocation(win_hnd->pick_shader.ID, "model");
 	unsigned int pickingview_uni = glGetUniformLocation(win_hnd->pick_shader.ID, "view");
 	unsigned int pickingprojection_uni = glGetUniformLocation(win_hnd->pick_shader.ID, "projection");
@@ -380,6 +391,7 @@ int main(void)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		win_hnd->pick_shader.Use();
 
+		glUniform1ui(pickingpos_uni, vbuffer_state.base_addr[POS_BUFFER] / 4); 	// Pass in base_addr /4 because the shader reads floats not bytes
 		glUniformMatrix4fv(pickingprojection_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->projection));
 		glUniformMatrix4fv(pickingview_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
 
@@ -403,7 +415,7 @@ int main(void)
 				{
 					glDrawElementsBaseVertex(render_mode, prim.index_info.index_count,
 								 prim.index_info.index_type,
-								 (void*)prim.index_info.ebo_byte_offset,
+								 (void*)(uintptr_t)prim.index_info.ebo_byte_offset,
 								 prim.vertex_info.vertex_offset);
 				}
 				else
@@ -429,6 +441,10 @@ int main(void)
 		glUniform3f(light_color_uni, 1.0f, 1.0f, 1.0f);
 		glUniform3f(light_dir_uni, light_dir.x, light_dir.y, light_dir.z);
 
+		glUniform1ui(pos_offset_uni, vbuffer_state.base_addr[POS_BUFFER] / 4);	// Pass in base_addr /4 because the shader reads floats not bytes. This will be fixed when UBOs are implemented
+		glUniform1ui(norm_offset_uni, vbuffer_state.base_addr[NORM_BUFFER] / 4);
+		glUniform1ui(tan_offset_uni, vbuffer_state.base_addr[TAN_BUFFER] / 4);
+		glUniform1ui(tex_offset_uni, vbuffer_state.base_addr[TEX_BUFFER] / 4);
 		glUniformMatrix4fv(projection_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->projection));
 
 		glUniformMatrix4fv(view_uni, 1, GL_FALSE, glm::value_ptr(win_hnd->view));
@@ -461,7 +477,7 @@ int main(void)
 				{
 					glDrawElementsBaseVertex(render_mode, prim.index_info.index_count,
 								 prim.index_info.index_type,
-								 (void*)prim.index_info.ebo_byte_offset,
+								 (void*)(uintptr_t)prim.index_info.ebo_byte_offset,
 								 prim.vertex_info.vertex_offset);
 				}
 				else

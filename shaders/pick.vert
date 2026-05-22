@@ -1,6 +1,11 @@
 #version 460 core
 
-layout(location = 0) in vec3 apos;
+layout(std430, binding = 0) buffer vertex_ssbo
+{
+        float vert_data[];
+};
+
+uniform uint pos_offset;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -8,5 +13,7 @@ uniform mat4 projection;
 
 void main()
 {
-    gl_Position = projection * view * model * vec4(apos, 1.0);
+        uint pos_idx = pos_offset + (gl_VertexID * 3U);
+        vec3 aPos = vec3(vert_data[pos_idx], vert_data[pos_idx + 1U], vert_data[pos_idx + 2U]);
+        gl_Position = projection * view * model * vec4(aPos, 1.0);
 }

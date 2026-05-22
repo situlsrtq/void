@@ -52,8 +52,8 @@ int load_indices(vertex_buffer_info_t* vbuffer_state, primitive_create_info_t* c
 		return EXIT_FAILURE;
 	}
 
-	glNamedBufferSubData(vbuffer_state->ebo, vbuffer_state->ebo_offset,
-			     count * stride, (void*)(data_base_addr + abs_buffer_offset + rel_buffer_offset));
+	glNamedBufferSubData(vbuffer_state->ebo, vbuffer_state->ebo_offset, count * stride,
+			     (void*)(data_base_addr + abs_buffer_offset + rel_buffer_offset));
 
 	create_info->index_info.index_type = indextype;
 	create_info->index_info.index_count = count;
@@ -113,13 +113,14 @@ int upload_vertex_attr(cgltf_attribute_type type, u8 buffer, u8 stride_val, cons
 		return EXIT_FAILURE;
 	}
 
-	glNamedBufferSubData(params.vbuffer_state->vertex_ssbo, params.vbuffer_state->base_addr[buffer] + (params.vbuffer_state->curr_offset[buffer] * stride),
+	glNamedBufferSubData(params.vbuffer_state->vertex_ssbo,
+			     params.vbuffer_state->base_addr[buffer] + (params.vbuffer_state->curr_offset[buffer] * stride),
 			     params.create_info->vertex_info.vattr_count * stride,
 			     (void*)(params.data_base_addr + absbufferoffset + relbufferoffset));
 
 	params.create_info->vertex_info.vertex_offset = params.vbuffer_state->curr_offset[buffer];
 
-	params.vbuffer_state->curr_offset[buffer] += params.create_info->vertex_info.vattr_count * stride;
+	params.vbuffer_state->curr_offset[buffer] += params.create_info->vertex_info.vattr_count;
 	return EXIT_SUCCESS;
 }
 
@@ -275,7 +276,8 @@ int load_textures(hash_table_t* hash_table, u32 tex_count, primitive_create_info
 	return EXIT_SUCCESS;
 }
 
-int glb_import(const char* scene_file, window_handler_t*& win_hnd, vertex_buffer_info_t* vbuffer_state, unsigned int tex_count)
+int glb_import(const char* scene_file, window_handler_t*& win_hnd, vertex_buffer_info_t* vbuffer_state,
+	       unsigned int tex_count)
 {
 	ZONE_SCOPED;
 	printf("Validating glb file: %s\n", scene_file);
@@ -399,7 +401,6 @@ int glb_import(const char* scene_file, window_handler_t*& win_hnd, vertex_buffer
 
 				aabb_min = glm::min(aabb_min, glm::vec4{min, 1.0f});
 				aabb_max = glm::max(aabb_max, glm::vec4{max, 1.0f});
-
 			}
 
 			mesh_set_aabbs(mesh_index, &win_hnd->scene, aabb_min, aabb_max);
