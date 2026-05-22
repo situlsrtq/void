@@ -234,9 +234,6 @@ int main(void)
 		return EXIT_FAILURE;
 	}
 
-	// TODO: switch to glDrawElementsIndirectCommand
-	// /!\ remember to make changes where the draw calls actually happen too
-
 	// Initialize Render passes
 
 	// Main pass
@@ -330,7 +327,7 @@ int main(void)
 	win_hnd->camera.h_fov = glm::radians(VOID_HFOV_DEFAULT);
 	win_hnd->camera.focal_length = SCREEN_Y_DIM_DEFAULT / (2.0f * tanf(win_hnd->camera.h_fov / 2.0f));
 	win_hnd->camera.aspect_ratio = SCREEN_X_DIM_DEFAULT / SCREEN_Y_DIM_DEFAULT;
-	win_hnd->camera.near_plane_distance = 0.1f;
+	win_hnd->camera.near_plane_distance = 1.0f;
 	win_hnd->camera.far_plane_distance = 100.0f;
 	win_hnd->projection = glm::perspective(win_hnd->camera.h_fov, win_hnd->camera.aspect_ratio,
 					       win_hnd->camera.near_plane_distance, win_hnd->camera.far_plane_distance);
