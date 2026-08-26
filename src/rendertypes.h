@@ -41,6 +41,7 @@ struct texture_info_t
 {
 	u32 tex_count;
 	u32 tex_array[VOID_TEXCOUNT_FMT];
+	u64 handle_array[VOID_TEXCOUNT_FMT];
 };
 
 struct draw_command_info_t
